@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 5, Build the advanced RAG pipeline."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: Which vector retrieval store should the RAG pipeline use? → A: pgvector (PostgreSQL) — already in the Phase 1 stack; no new vector store infrastructure required.
+- Q: Which two embedding model candidates should the pipeline compare? → A: `all-MiniLM-L6-v2` (local, CPU-feasible) vs Azure OpenAI `text-embedding-3-small` (cloud baseline, same provider as Phases 3/4).
+- Q: What type of non-naive chunking strategy should the pipeline use? → A: Parent-document retriever — small child chunks indexed for embedding, full parent document retrieved for generation context.
+- Q: How many conversations should retrieved-chunk snapshots be retained for? → A: Last 50 conversations.
+- Q: What should the frozen local/mockable CI judge be for faithfulness and answer relevancy? → A: Token overlap scorer (unigram F1) — zero-dependency, deterministic, records a stable `judge_id` in the eval report.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Answer Maintainer Questions With Grounded Evidence (Priority: P1)
@@ -136,7 +146,7 @@ ranking.
 - Source content contains secret-like strings or private issue text: logs,
   traces, and reports avoid full raw payload exposure.
 - Retrieved chunks are snapshotted for later conversation review: snapshots are
-  redacted, bounded, and retained only for the configured last N conversations.
+  redacted, bounded, and retained only for the last 50 conversations; older snapshots are evicted.
 - The optional RAGAS-style evaluator is unavailable: CI still uses the frozen
   local/mockable judge and records optional metrics as unavailable.
 
@@ -150,19 +160,28 @@ ranking.
 - **FR-003**: The system MUST avoid leakage between classifier training data and
   held-out RAG/evaluation issue sources.
 - **FR-004**: The system MUST preprocess and chunk source content using a
-  non-naive strategy that preserves useful document or conversation structure.
-- **FR-005**: Each stored chunk MUST include metadata for `chunk_id`,
-  `source_type`, `source_path` or `issue_number`, `source_url`, `title`,
-  `labels`, `created_at` or `updated_at`, `chunk_index`, `content_hash`, and
-  `token_count`.
+  parent-document retriever strategy: small child chunks are embedded and indexed
+  for retrieval; the full parent document (or parent chunk) is retrieved and
+  passed to generation. Child chunk metadata MUST preserve a reference to its
+  parent document identifier.
+- **FR-005**: Each stored child chunk MUST include metadata for `chunk_id`,
+  `parent_id`, `source_type`, `source_path` or `issue_number`, `source_url`,
+  `title`, `labels`, `created_at` or `updated_at`, `chunk_index`,
+  `content_hash`, and `token_count`.
 - **FR-006**: Ingestion MUST be repeatable from the same inputs and safe to
   rerun.
 - **FR-007**: Embedding generation MUST be repeatable and avoid duplicate
   embeddings by `content_hash`.
-- **FR-008**: The system MUST compare at least two embedding model candidates
-  using the RAG evaluation data.
-- **FR-009**: The system MUST store embeddings in a retrieval store that supports
-  vector similarity search.
+- **FR-008**: The system MUST compare exactly two embedding model candidates using
+  the RAG evaluation data: `all-MiniLM-L6-v2` (local, CPU-feasible, 384-dim) and
+  Azure OpenAI `text-embedding-3-small` (cloud, 1536-dim). The local model MUST
+  be usable in automated tests without API credentials. Azure OpenAI embedding
+  credentials are loaded from typed settings and are optional for tests.
+- **FR-009**: The system MUST store embeddings in pgvector (PostgreSQL), which is
+  already included in the Phase 1 default stack. Dense retrieval uses pgvector
+  vector similarity search, sparse retrieval uses PostgreSQL `tsvector` full-text
+  search, and metadata filtering uses SQL predicates over chunk metadata columns.
+  No additional vector store service is introduced.
 - **FR-010**: The retrieval service MUST support sparse retrieval.
 - **FR-011**: The retrieval service MUST support dense retrieval.
 - **FR-012**: The retrieval service MUST support hybrid retrieval with tunable
@@ -185,9 +204,11 @@ ranking.
 - **FR-021**: The RAG evaluation report MUST include hit@5, MRR@10,
   faithfulness, answer relevancy, retrieval latency, generation latency, and
   judge disagreement notes for five hand-labeled examples.
-- **FR-021a**: CI faithfulness and answer relevancy MUST use a frozen
-  local/mockable judge so required generation metrics are deterministic and do
-  not require paid provider credentials.
+- **FR-021a**: CI faithfulness and answer relevancy MUST use a frozen token
+  overlap scorer (unigram F1) as the local judge. This judge MUST be implemented
+  as a zero-dependency local Python function with a stable `judge_id` string
+  (e.g., `"token-overlap-f1-v1"`) recorded in every evaluation report. No paid
+  provider credentials are required for this judge.
 - **FR-021b**: Optional RAGAS-style metrics MAY be recorded outside required CI,
   but they MUST NOT replace the frozen CI judge gate.
 - **FR-022**: The advanced RAG pipeline MUST be compared against a naive
@@ -202,8 +223,9 @@ ranking.
   result schema, duplicate embedding avoidance, and baseline-vs-advanced
   evaluation report shape.
 - **FR-026**: The RAG service MUST expose a reusable operation for storing
-  redacted retrieved-chunk snapshots for the last N conversations when invoked
-  by later chat phases.
+  redacted retrieved-chunk snapshots for the last 50 conversations when invoked
+  by later chat phases. Snapshots beyond the 50-conversation window MUST be
+  evicted or overwritten to maintain the bounded retention limit.
 - **FR-027**: Retrieved-chunk snapshots MUST be redacted and bounded before
   storage and MUST NOT include full sensitive payloads.
 - **FR-028**: This phase MUST NOT implement UI work or full chatbot
@@ -243,13 +265,17 @@ ranking.
 - **Resolved Issue Answer Source**: Held-out issue record with maintainer answer
   content, issue number, labels, source URL, timestamps, and answerable context.
 - **RAG Chunk**: Searchable content unit produced from a source document or issue
-  answer source.
-- **Chunk Metadata**: Provenance and filtering data attached to each chunk:
-  `chunk_id`, `source_type`, `source_path` or `issue_number`, `source_url`,
-  `title`, `labels`, `created_at` or `updated_at`, `chunk_index`,
+  answer source, using the parent-document retriever strategy. A child chunk is
+  the small unit embedded and indexed; a parent chunk or document is the wider
+  context retrieved for generation. Each child chunk carries a `parent_id`
+  reference in its metadata.
+- **Chunk Metadata**: Provenance and filtering data attached to each child chunk:
+  `chunk_id`, `parent_id`, `source_type`, `source_path` or `issue_number`,
+  `source_url`, `title`, `labels`, `created_at` or `updated_at`, `chunk_index`,
   `content_hash`, and `token_count`.
-- **Embedding Candidate**: Candidate representation model evaluated for dense
-  retrieval quality and latency.
+- **Embedding Candidate**: One of two candidate models evaluated for dense
+  retrieval quality and latency: `all-MiniLM-L6-v2` (local, 384-dim) or Azure
+  OpenAI `text-embedding-3-small` (cloud, 1536-dim).
 - **Retrieval Query**: Maintainer question plus optional metadata filters and
   query transformation mode.
 - **Retrieval Result**: Retrieved chunk, retrieval scores, rank, and chunk
@@ -263,8 +289,8 @@ ranking.
   pipeline metrics, latency, generation quality, judge disagreement notes, and
   limitations.
 - **Retrieved Chunk Snapshot**: Redacted bounded record of chunks retrieved for
-  a conversation, retained for the last N conversations for observability and
-  final review.
+  a conversation, retained for the last 50 conversations for observability and
+  final review. Snapshots beyond 50 are evicted.
 - **RAG Decision Record**: `DECISIONS.md` section documenting selected embedding
   model, chunking strategy, retrieval weighting, reranking impact, measured
   results, and rejected alternatives.
@@ -296,14 +322,15 @@ ranking.
   golden-set query and its impact is recorded in the evaluation report.
 - **SC-010**: Five hand-labeled golden examples include documented judge
   disagreement notes.
-- **SC-011**: The RAG eval report records the frozen local/mockable judge
-  identity and any optional RAGAS-style metrics separately.
+- **SC-011**: The RAG eval report records the frozen token overlap scorer
+  (`judge_id: "token-overlap-f1-v1"`) as the CI judge identity and any optional
+  RAGAS-style metrics separately.
 - **SC-012**: Retrieved-chunk snapshot tests prove stored snapshots are redacted,
   bounded, and associated with conversation metadata without raw full chunks.
-- **SC-011**: Grounded answers cite or identify supporting evidence for all
+- **SC-013**: Grounded answers cite or identify supporting evidence for all
   answerable examples and return insufficient-evidence behavior for unanswerable
   examples.
-- **SC-012**: `DECISIONS.md` contains the selected embedding model, chunking
+- **SC-014**: `DECISIONS.md` contains the selected embedding model, chunking
   strategy, retrieval weighting, reranking impact, measured results, rejected
   alternatives, and limitations before the phase is considered complete.
 
@@ -313,8 +340,7 @@ ranking.
   separate from classifier training data and other held-out evaluation data.
 - The naive baseline is fixed-size chunking plus pure dense retrieval without
   hybrid weighting, query transformation, metadata filtering, or reranking.
-- The planning phase will choose the concrete vector retrieval store and
-  embedding candidates from the project-approved stack.
+- The vector retrieval store is pgvector (PostgreSQL), already in the Phase 1 stack. Embedding model candidates will be finalized during planning.
 - The first implementation may use bounded local or external generation and
   judging providers, but automated tests must not require real secrets.
 - RAG answers are intended for later chatbot use, but this phase exposes the
