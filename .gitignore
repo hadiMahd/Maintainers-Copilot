@@ -1,12 +1,17 @@
 PLAN.md
 
 .agents
-.codex
 .vscode
 .specify
 .claude
+.codex
+/*.md
+
+.agents
+.codex
+.vscode
+.specify
 
 AGENTS.md
 PHASE_TECH_STACK.md
 PROJECT_BRIEF.md
-CLAUDE.md
