@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 8, Build the Streamlit internal chatbot and admin app."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: How should the Streamlit chat page handle the Phase 7 SSE streaming response? → A: `st.write_stream()` with an SSE generator adapter via `httpx` — real streaming UX, no polling.
+- Q: What should the default backend API client request timeout be? → A: 30 seconds for REST calls, 70 seconds for SSE chat stream (slightly over server-side 60s to let server close first).
+- Q: Which approach should be used to test the Streamlit app? → A: `streamlit.testing.v1.AppTest` — official headless framework, no browser needed, backend API calls mocked.
+- Q: How should the Streamlit app enforce admin-only page access? → A: Programmatic `st.navigation()` with role-based page list — admin pages excluded from navigation for regular users; no admin backend calls made.
+- Q: How should the Streamlit app store the auth token between page navigations? → A: Browser cookie via `streamlit-cookies-manager` — survives refresh; token cleared on logout; no token logged or exposed in UI.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Log In And Chat Internally (Priority: P1)
@@ -110,8 +120,7 @@ secret usage.
   error and does not hang indefinitely.
 - A user's session expires: the UI prompts for login again and does not retry
   protected calls indefinitely.
-- A regular user opens an admin URL or page: admin content is hidden and backend
-  admin calls are not made.
+- A regular user opens an admin URL or navigates to an admin entry: `st.navigation()` excludes the page from their list; admin content is never rendered and no backend admin API calls are made.
 - The backend returns an authorization error for memory or widget config: the UI
   displays a clean access message.
 - Widget configuration validation fails: the UI shows field-level or general
@@ -120,8 +129,8 @@ secret usage.
   copyable, readable form without corrupting the snippet.
 - Memory data contains redacted or sensitive-looking content: the UI displays
   only backend-authorized, already-safe content and does not log it.
-- Streamlit session state is cleared or refreshed: the app returns to a safe
-  unauthenticated or re-authentication state.
+- The browser is refreshed: the auth token is read back from the cookie and the session resumes without re-login if the token is still valid.
+- The token cookie is missing, expired, or invalid: the app returns to the login page without exposing token details.
 - Backend API base URL is missing or invalid: startup/configuration feedback is
   clear and no secrets are printed.
 
@@ -132,7 +141,10 @@ secret usage.
 - **FR-001**: The internal app MUST provide a Streamlit login page.
 - **FR-002**: Users MUST log in through the backend API.
 - **FR-003**: The internal app MUST provide an authenticated full chat page.
-- **FR-004**: Chat messages and responses MUST go through the backend API.
+- **FR-004**: Chat messages and responses MUST go through the backend API SSE
+  endpoint. The chat page MUST render the streaming response using
+  `st.write_stream()` with a generator adapter that parses the SSE stream via
+  `httpx`. The full chat response MUST NOT be collected before rendering.
 - **FR-005**: The internal app MUST provide an admin widget configuration page.
 - **FR-006**: Admin widget configuration create and edit actions MUST go through
   the backend API.
@@ -142,8 +154,15 @@ secret usage.
 - **FR-009**: Memory inspection MUST go through the backend API and respect
   backend authorization.
 - **FR-010**: Regular users MUST NOT be able to access admin UI capabilities.
+  The app MUST use programmatic `st.navigation()` to build a role-based page list
+  at runtime: admin-only pages (widget configuration, admin memory views) MUST
+  be excluded from the navigation list for regular users and MUST NOT trigger
+  any backend admin API calls for non-admin sessions.
 - **FR-011**: The Streamlit app MUST use a backend API client with explicit
-  request timeouts.
+  request timeouts: 30 seconds for all non-streaming REST calls, and 70 seconds
+  for the SSE chat stream (exceeding the server-side 60-second chatbot timeout
+  so the server closes the stream before the client does). Timeouts MUST be
+  loaded from typed settings, not hardcoded.
 - **FR-012**: The Streamlit app MUST show clean user-facing errors for backend
   validation, authentication, authorization, timeout, and service failures.
 - **FR-013**: The Streamlit app MUST NOT access the database directly.
@@ -151,14 +170,18 @@ secret usage.
   privileged credentials.
 - **FR-015**: The Streamlit app MUST call the same FastAPI backend that the
   widget will use.
-- **FR-016**: Streamlit session state MUST keep authentication state scoped to
-  the current browser session and clear it on logout or invalid session.
+- **FR-016**: The auth token MUST be stored in a browser cookie using
+  `streamlit-cookies-manager` so it survives page refreshes within the same
+  browser session. The token MUST be cleared from the cookie on explicit logout
+  or when the backend returns an authentication error. The token MUST NOT be
+  written to logs, displayed in the UI, or included in error messages.
 - **FR-017**: The UI MUST avoid logging raw chat messages, memory contents,
   tokens, embed snippets containing secret-like values, or backend error traces.
-- **FR-018**: Tests MUST cover login through backend API, chat through backend
-  API, admin-only UI access control, widget configuration API calls, embed
-  snippet display, memory inspector authorization behavior, API timeout handling,
-  and absence of direct DB access/secrets in Streamlit code.
+- **FR-018**: Tests MUST use `streamlit.testing.v1.AppTest` with mocked backend
+  API calls and MUST cover: login through backend API, chat through backend API
+  (SSE generator mocked), admin-only UI access control, widget configuration API
+  calls, embed snippet display, memory inspector authorization behavior, API
+  timeout handling, and absence of direct DB access/secrets in Streamlit code.
 
 ### Constitution Alignment *(mandatory)*
 
@@ -186,15 +209,11 @@ secret usage.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Streamlit Session**: Browser-session state containing authentication status,
-  safe user profile, role, token state reference, selected page, and non-secret
-  UI state.
-- **Backend API Client**: Internal UI client configured with backend base URL,
-  timeout policy, auth token handling, and structured error mapping.
+- **Streamlit Session**: Browser cookie (via `streamlit-cookies-manager`) holding the auth token, plus `st.session_state` for safe user profile, role, selected page, and non-secret UI state. Token cookie is cleared on logout or auth error.
+- **Backend API Client**: Internal UI client configured with backend base URL, 30-second timeout for REST calls, 70-second timeout for SSE chat stream, auth token handling, and structured error mapping. Timeouts loaded from typed settings.
 - **Login Form**: User-entered email/password submitted to the backend API for
   authentication.
-- **Chat Page State**: Conversation identifier, user message draft, displayed
-  response events, and safe UI status for backend chat calls.
+- **Chat Page State**: Conversation identifier, user message draft, displayed response events rendered via `st.write_stream()` from an SSE generator adapter, and safe UI status for backend chat calls.
 - **Widget Configuration Form**: Admin-editable widget settings submitted to the
   backend API.
 - **Embed Snippet View**: Copyable widget embed snippet returned by the backend

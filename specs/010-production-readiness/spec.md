@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 10, Build production readiness, observability, security tests, CI gates, and final documentation."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: Which CI platform should the validation workflow use? → A: GitHub Actions with a `Makefile` for local runs — YAML workflow in `.github/workflows/`, same gates invocable locally via `make`.
+- Q: What rules should define a regression when diffing eval reports? → A: Any tracked metric that drops more than 2 absolute percentage points from the previous green build triggers a workflow failure.
+- Q: Which services should the smoke test start? → A: Full project stack including model server — all services that are production-functional by Phase 10, not just the Phase 1 default profile.
+- Q: What fields must `eval_report.json` contain? → A: `run_id`, `timestamp`, `classifier` (accuracy, macro_f1, per_class_f1, threshold), `rag` (hit_at_5, mrr_at_10, faithfulness, answer_relevancy, threshold), `storage` (bucket, key), `passed`.
+- Q: What Python toolchain should lint, format, and type-check use? → A: `flake8` (lint) + `black` (format) + `isort` (import order) + `mypy` (type-check).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Prove A Clean Repo Is Release-Ready (Priority: P1)
@@ -54,9 +64,7 @@ threshold eval results and verify the workflow fails with a clear reason.
    metric.
 3. **Given** RAG results fall below configured threshold, **When** the RAG eval
    gate runs, **Then** the workflow fails and reports the failing metric.
-4. **Given** the current combined eval report regresses from the previous green
-   build according to configured regression rules, **When** report diffing runs,
-   **Then** the workflow fails with a safe comparison summary.
+4. **Given** the current combined eval report shows any tracked metric dropping more than 2 absolute percentage points from the previous green build, **When** report diffing runs, **Then** the workflow fails with a safe comparison summary naming the regressing metric(s).
 
 ---
 
@@ -142,11 +150,14 @@ unstated context.
 
 ### Functional Requirements
 
-- **FR-001**: The project MUST provide a validation workflow that runs on a clean
-  repository state.
-- **FR-002**: The validation workflow MUST run lint checks.
-- **FR-003**: The validation workflow MUST run format checks.
-- **FR-004**: The validation workflow MUST run type-checking.
+- **FR-001**: The project MUST provide a validation workflow implemented as a
+  GitHub Actions YAML workflow (`.github/workflows/`) and a `Makefile` that
+  exposes the same gates for local runs. Both paths MUST produce equivalent
+  pass/fail results for every required gate.
+- **FR-002**: The validation workflow MUST run lint checks using `flake8`.
+- **FR-003**: The validation workflow MUST run format checks using `black` and
+  import-order checks using `isort`.
+- **FR-004**: The validation workflow MUST run type-checking using `mypy`.
 - **FR-005**: The validation workflow MUST run the test suite.
 - **FR-006**: The validation workflow MUST run the classification evaluation.
 - **FR-007**: The validation workflow MUST run the RAG evaluation.
@@ -156,12 +167,23 @@ unstated context.
   unsafe `sk-` and `password` patterns.
 - **FR-010**: The validation workflow MUST run Docker build validation.
 - **FR-011**: The validation workflow MUST run a stack smoke test that starts
-  the core stack and reaches a health endpoint.
-- **FR-012**: The validation workflow MUST write a combined `eval_report.json`.
+  the full project stack — all services that are production-functional by
+  Phase 10, including the model server — and reaches the backend health endpoint.
+  Skeletal-only services (chatbot, widget host demo if not production-functional)
+  are excluded from the smoke test profile. The smoke test command MUST be
+  documented in the README and repeatable from a clean state.
+- **FR-012**: The validation workflow MUST write a combined `eval_report.json`
+  containing: `run_id`, `timestamp`, `classifier` (with `accuracy`, `macro_f1`,
+  `per_class_f1`, `threshold`), `rag` (with `hit_at_5`, `mrr_at_10`,
+  `faithfulness`, `answer_relevancy`, `threshold`), `storage` (with `bucket`
+  and `key`), and `passed` (boolean). All numeric fields are floats in [0, 1].
 - **FR-013**: CI MUST store `eval_report.json` from every run in MinIO; a
   MinIO-compatible local path is allowed only as a dev/test adapter.
 - **FR-014**: The validation workflow MUST diff the current `eval_report.json`
-  against the previous green build and fail on configured regressions.
+  against the previous green build and fail if any tracked metric drops by more
+  than 2 absolute percentage points from the previous green value. The diffing
+  tool MUST emit a safe comparison summary naming the regressing metric(s) and
+  their values.
 - **FR-015**: The validation workflow MUST fail if any eval threshold is zero,
   disabled, missing, negative, or malformed.
 - **FR-016**: The validation workflow MUST fail if classifier eval results are
@@ -230,15 +252,11 @@ unstated context.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Validation Workflow**: The full release-readiness run that combines quality,
-  test, eval, security, build, smoke, artifact, tracing, and documentation gates.
-- **Quality Gate**: A pass/fail check such as lint, format, type-check, tests,
-  Docker build, smoke test, redaction leak test, static secret grep, or
-  documentation completeness.
+- **Validation Workflow**: The full release-readiness run implemented as a GitHub Actions YAML workflow and a `Makefile`, combining quality, test, eval, security, build, smoke, artifact, tracing, and documentation gates.
+- **Quality Gate**: A pass/fail check such as `flake8` lint, `black`+`isort` format, `mypy` type-check, tests, Docker build, smoke test, redaction leak test, static secret grep, or documentation completeness.
 - **Evaluation Thresholds**: Non-zero committed limits used to decide whether
   classifier and RAG eval results are acceptable.
-- **Evaluation Report**: Combined `eval_report.json` containing classifier and
-  RAG results, threshold comparisons, timestamps, and storage metadata.
+- **Evaluation Report**: Combined `eval_report.json` with required fields: `run_id`, `timestamp`, `classifier` (`accuracy`, `macro_f1`, `per_class_f1`, `threshold`), `rag` (`hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`, `threshold`), `storage` (`bucket`, `key`), and `passed`. All numeric metric fields are floats in [0, 1].
 - **Previous Green Eval Report**: Most recent passing CI eval report used for
   regression diffing.
 - **Redaction Leak Probe**: A test input containing fake secret-like values used
@@ -263,8 +281,7 @@ unstated context.
   eval results are below threshold.
 - **SC-005**: The validation workflow fails in 100% of tests where RAG eval
   results are below threshold.
-- **SC-006**: The smoke test starts the core stack and reaches a health endpoint
-  in a documented repeatable command.
+- **SC-006**: The smoke test starts the full project stack (all production-functional services including model server) and reaches the backend health endpoint via a documented repeatable command in the README.
 - **SC-007**: `eval_report.json` is generated and stored in the configured
   MinIO target for every successful CI validation run.
 - **SC-008**: Model artifact hash validation detects missing or mismatched

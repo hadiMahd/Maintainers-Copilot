@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Build the dataset pipeline for Maintainer's Copilot."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: Which GitHub API approach should the pipeline use? → A: GitHub REST API v3 via `httpx` directly — thin infra adapter, full control over rate-limit headers and pagination.
+- Q: How many closed issues should the pipeline target fetching? → A: Up to 1000 closed issues per run.
+- Q: When the GitHub API rate-limits the pipeline, what should happen? → A: Fail fast — emit a clear rate-limit message, exit non-zero, preserve any output written so far so the run is safe to rerun.
+- Q: What are the approximate train/validation/test/held-out split ratios? → A: 70% train / 15% validation / 10% test / 5% held-out.
+- Q: What is the safe-rerun behavior when output files already exist? → A: Always overwrite existing output files atomically — no skip, append, or flag required.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Fetch Reproducible Raw Issue Data (Priority: P1)
@@ -93,8 +103,7 @@ not leak into classifier training.
 
 - The configured repository has too few closed issues or too few mapped labels:
   the pipeline reports insufficient data and records the limitation.
-- The remote service rate-limits requests: the pipeline fails clearly or resumes
-  safely without corrupting existing output.
+- The remote service rate-limits requests: the pipeline emits a clear rate-limit message distinguishing it from other errors, exits with a non-zero code, and preserves any output already written so the run can be safely rerun from scratch or resumed once the limit resets. No automatic retry or blocking wait is performed.
 - Issues have empty titles, empty bodies, deleted comments, missing timestamps, or
   unavailable authors: records are normalized or rejected according to documented
   validation rules.
@@ -102,8 +111,7 @@ not leak into classifier training.
   or rejects the record deterministically.
 - Comments are paginated, unavailable, or duplicated: enrichment remains
   idempotent and avoids duplicate comment text.
-- The pipeline is rerun after partial output exists: outputs are overwritten,
-  resumed, or skipped according to a documented safe-rerun policy.
+- The pipeline is rerun after partial or complete output exists: all output files are overwritten atomically; no resume or skip logic is required.
 - The optional token is present locally: it is loaded through typed settings and
   never written to data artifacts, logs, reports, or docs.
 - Temporal split boundaries create class imbalance: statistics expose the tradeoff
@@ -118,13 +126,17 @@ not leak into classifier training.
 - **FR-002**: The selected repository MUST be a public open-source repository with
   closed issues suitable for the four project labels.
 - **FR-003**: The pipeline MUST fetch closed issue records into
-  `data/raw/issues.jsonl`.
+  `data/raw/issues.jsonl`, targeting up to 1000 closed issues per run. All
+  GitHub API calls MUST use the GitHub REST API v3 via `httpx` wrapped in a
+  dedicated infra adapter; no higher-level GitHub SDK MAY be introduced.
 - **FR-004**: Raw issue records MUST include repository owner/name, issue number,
   title, body, labels, state, created time, closed time, updated time, author
   association when available, comment count, comment URL or fetched comments, and
   HTML URL.
 - **FR-005**: The pipeline MUST enrich or create raw issue data with issue
   comments while preserving a safe record when comments are unavailable.
+  Comment pagination MUST be handled by the infra adapter using the `Link`
+  response header from the GitHub REST API v3.
 - **FR-006**: The pipeline MUST preprocess raw issues into
   `data/processed/issues_labeled.jsonl`.
 - **FR-007**: Processed records MUST include id, repository, issue number, title,
@@ -134,8 +146,11 @@ not leak into classifier training.
   `question`.
 - **FR-009**: Label mapping MUST live in a configuration file and MUST NOT be
   duplicated as unrelated hardcoded mappings across scripts.
-- **FR-010**: The pipeline MUST create deterministic train, validation, and test
-  split files from processed records.
+- **FR-010**: The pipeline MUST create deterministic train, validation, test, and
+  held-out split files from processed records using approximate ratios of
+  70% train / 15% validation / 10% test / 5% held-out. Temporal ordering takes
+  precedence over exact ratio adherence; actual counts MUST be reported in the
+  dataset report.
 - **FR-011**: The test split MUST be strictly newer in time than the training
   split.
 - **FR-012**: The split policy MUST attempt to preserve class balance as much as
@@ -147,7 +162,11 @@ not leak into classifier training.
 - **FR-015**: The pipeline MUST record the chosen repository, label mapping
   policy, split policy, limitations, and known data risks in `DECISIONS.md`.
 - **FR-016**: The fetch, enrichment, preprocessing, split, and reporting commands
-  MUST be idempotent or safe to rerun.
+  MUST be safe to rerun by always overwriting existing output files atomically.
+  No skip, append, resume, or `--force` flag is required. On a GitHub API
+  rate-limit error the command MUST emit a clear distinguishing message and exit
+  non-zero; any partially written output from that run MUST NOT leave the output
+  file in a corrupted or partial state.
 - **FR-017**: Pipeline scripts MUST use typed settings for configuration.
 - **FR-018**: A GitHub token MAY be used when present, but it MUST be optional and
   loaded through settings.
@@ -184,7 +203,7 @@ not leak into classifier training.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Repository Selection**: Configured public repository owner/name, fetch limits,
+- **Repository Selection**: Configured public repository owner/name, fetch limit of up to 1000 closed issues per run,
   and optional local authentication setting used by the raw data commands.
 - **Label Mapping**: Configured mapping from repository labels to the project
   classes `bug`, `feature`, `docs`, and `question`, including the policy for
@@ -197,8 +216,9 @@ not leak into classifier training.
 - **Processed Issue Record**: Clean normalized issue record with mapped label,
   original labels, text prepared for classifier use, text prepared for RAG use,
   and source traceability.
-- **Dataset Split**: Deterministic assignment of processed records into train,
-  validation, test, and held-out evaluation groups.
+- **Dataset Split**: Deterministic assignment of processed records into train
+  (~70%), validation (~15%), test (~10%), and held-out evaluation (~5%) groups
+  using temporal ordering as the primary partitioning criterion.
 - **Dataset Report**: Statistics for record counts, class distribution, split
   distribution, excluded records, split date boundaries, and known limitations.
 - **Dataset Decision Record**: Documentation entry describing the chosen

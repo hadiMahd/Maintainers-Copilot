@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 7, Build the single tool-calling chatbot backend."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: Which streaming transport should the chat endpoint use? → A: SSE (Server-Sent Events) — unidirectional, plain HTTP, standard for LLM streaming.
+- Q: Which LLM should the chatbot use for tool-calling orchestration? → A: Azure OpenAI via LangChain with LangSmith tracing — consistent with Phases 3/4/5; LangChain fake adapter in automated tests.
+- Q: What should the default maximum tool-call count per user message be? → A: 5 tool calls — covers all five supported tools; configurable via typed settings.
+- Q: What should the default full chatbot response timeout be? → A: 60 seconds — covers worst-case 5-tool chain with Azure OpenAI latency; configurable via typed settings.
+- Q: Which local tracing backend should the dev/demo stack use? → A: LangSmith — already integrated across all LLM phases; no Jaeger/Tempo service needed. LangSmith run IDs used for log correlation.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Chat With The Maintainer Copilot (Priority: P1)
@@ -97,9 +107,9 @@ redaction before telemetry, especially now that user messages, tool payloads,
 retrieved chunks, and generated answers flow through one system.
 
 **Independent Test**: Run a chat request that calls a tool and RAG retrieval,
-then verify that a trace root exists for the user message, trace IDs appear in
-structured logs, the conversation is visible in the local Jaeger/Tempo tracing
-UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
+then verify that a trace root exists for the user message, LangSmith run IDs
+appear in structured logs, the conversation is visible in LangSmith, and LLM,
+tool, and RAG spans contain safe redacted metadata only.
 
 **Acceptance Scenarios**:
 
@@ -111,8 +121,8 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
 3. **Given** the chatbot uses RAG, **When** retrieval runs, **Then** RAG
    retrieval spans are recorded with safe metadata and without full raw chunks.
 4. **Given** a chat request succeeds or recovers from a failed tool, **When** the
-   reviewer opens the tracing UI, **Then** the trace tree is visible and can be
-   correlated to structured logs through the trace ID.
+   reviewer opens LangSmith, **Then** the trace tree is visible and can be
+   correlated to structured logs through the LangSmith run ID.
 
 ### Edge Cases
 
@@ -149,9 +159,16 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
 ### Functional Requirements
 
 - **FR-001**: The system MUST provide an authenticated chat capability.
-- **FR-002**: The chat capability MUST support streaming responses.
-- **FR-003**: The chatbot MUST use one tool-calling LLM and MUST NOT be a
-  multi-agent system.
+- **FR-002**: The chat capability MUST support streaming responses delivered via
+  Server-Sent Events (SSE). The SSE stream MUST emit text chunk events, safe
+  tool-status events, a completion event, and safe error events. Raw tool inputs,
+  raw tool outputs, full retrieved chunks, and unredacted prompts MUST NOT be
+  emitted as SSE events.
+- **FR-003**: The chatbot MUST use Azure OpenAI via LangChain (`AzureChatOpenAI`)
+  as the single tool-calling LLM and MUST NOT be a multi-agent system. LangSmith
+  MUST be configured as the tracing backend for LLM calls when a LangSmith API
+  key is present. Automated tests MUST use a LangChain fake/mock provider; no
+  real Azure OpenAI credentials are required for tests.
 - **FR-004**: The system MUST define tool schemas for issue classification,
   entity extraction, summarization, RAG question answering, and explicit
   write_memory.
@@ -165,19 +182,24 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
   retrieval span.
 - **FR-010a**: Each RAG tool call MUST create a redacted retrieved-chunk snapshot
   through the RAG snapshot service.
-- **FR-010b**: Chat tracing MUST use OpenTelemetry-compatible instrumentation
-  with local Jaeger or Tempo as the dev/demo backend unless replaced by a later
-  documented decision.
-- **FR-010c**: Structured logs for chat requests MUST include the trace ID when
-  available so logs and traces are joinable.
+- **FR-010b**: Chat tracing MUST use LangSmith as the tracing backend for all
+  LLM calls, tool calls, and RAG retrieval spans, consistent with Phases 3–6.
+  LangSmith is configured when a LangSmith API key is present in typed settings.
+  No Jaeger or Tempo service is added to the local stack.
+- **FR-010c**: Structured logs for chat requests MUST include the LangSmith run
+  ID when available so logs and LangSmith traces are joinable.
 - **FR-011**: Tool inputs, tool outputs, user messages, retrieved chunks, and LLM
   payloads MUST be redacted or bounded before logs and traces.
 - **FR-012**: The chatbot MUST recover gracefully from tool failure and return a
   partial answer when possible instead of an unhandled server error.
 - **FR-013**: The chatbot MUST enforce a configurable maximum tool-call limit per
-  user message.
-- **FR-014**: The chatbot MUST enforce a configurable timeout for the full
-  chatbot response.
+  user message with a default of 5. When the limit is reached, the chatbot MUST
+  stop further tool calls and return the best safe response available. The limit
+  MUST be loaded from typed settings.
+- **FR-014**: The chatbot MUST enforce a configurable full-response timeout with
+  a default of 60 seconds. When the timeout is reached, the SSE stream MUST end
+  gracefully with a bounded partial response or safe timeout event. The timeout
+  MUST be loaded from typed settings.
 - **FR-015**: The chat capability MUST enforce request size limits before LLM or
   tool execution.
 - **FR-016**: The chatbot MUST enforce context size limits before sending context
@@ -218,10 +240,9 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
   persistence. Long-term memory may be written only through explicit
   write_memory.
 - **Observability And Errors**: Every user message needs a trace root. LLM calls,
-  tool calls, and RAG retrievals need spans. OpenTelemetry-compatible tracing
-  must support a local Jaeger/Tempo demo, and chat logs must include trace IDs.
-  Tool failures, timeouts, and limit-exceeded cases must return structured
-  errors or partial responses with safe metadata.
+  tool calls, and RAG retrievals need spans. Chat logs must include the LangSmith
+  run ID for correlation. Tool failures, timeouts, and limit-exceeded cases must
+  return structured errors or partial responses with safe metadata.
 - **Evidence And Evals**: This phase uses already selected/evaluated classifier
   and RAG capabilities. It must not change model, embedding, retrieval, or memory
   decisions without updating `DECISIONS.md`.
@@ -235,8 +256,7 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
 
 - **Chat Request**: Authenticated user message, conversation identifier, optional
   safe context references, and streaming preference.
-- **Chat Response Stream**: Ordered response events including assistant text,
-  safe tool-status events, completion, and safe error events.
+- **Chat Response Stream**: SSE stream of ordered events: assistant text chunks, safe tool-status events, a completion event, and safe error events. Delivered over a plain HTTP SSE connection.
 - **Conversation State**: User-scoped short-term state used to maintain recent
   conversation context.
 - **Tool Definition**: Registered tool name, description, input schema, output
@@ -245,18 +265,15 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
   redacted output or structured failure, duration, and trace span reference.
 - **Tool Execution Result**: Successful tool result or safe failure payload used
   by the chatbot to continue or recover.
-- **LLM Call**: One call to the single tool-calling LLM, including redacted
-  prompt metadata, selected tool call requests, response metadata, and latency.
+- **LLM Call**: One call to Azure OpenAI via LangChain `AzureChatOpenAI`, including redacted prompt metadata, tool call requests, response metadata, latency, and a LangSmith trace when configured.
 - **RAG Retrieval Span**: Trace record for a RAG retrieval performed during chat,
   including safe query metadata, result counts, source metadata, and latency.
 - **Retrieved Chunk Snapshot**: Redacted bounded snapshot of chunk IDs, scores,
   source metadata, and previews stored after a RAG tool call.
-- **Conversation Trace Root**: Trace root created for each user message and
-  linked to LLM, tool, and RAG spans.
+- **Conversation Trace Root**: LangSmith run root created for each user message, linked to LLM call, tool call, and RAG retrieval child spans.
 - **Memory Write Intent**: Explicit user intent marker that allows the chatbot to
   call write_memory.
-- **Chat Limits**: Configured request size, context size, max tool-call count,
-  per-tool timeout, and full-response timeout.
+- **Chat Limits**: Configured request size limit, context size limit, max tool-call count (default 5), per-tool timeout, and full-response timeout (default 60 seconds). All limits are loaded from typed settings.
 
 ## Success Criteria *(mandatory)*
 
@@ -279,8 +296,7 @@ UI, and LLM, tool, and RAG spans contain safe redacted metadata only.
   retrieval performed.
 - **SC-007a**: RAG-backed chat tests create redacted retrieved-chunk snapshots
   without storing full raw chunks.
-- **SC-007b**: Successful and failed-tool chat traces are visible in the local
-  tracing backend and include trace IDs that also appear in structured logs.
+- **SC-007b**: Successful and failed-tool chat runs are visible in LangSmith and include LangSmith run IDs that also appear in structured logs.
 - **SC-008**: Request size, context size, tool-call limit, and full-response
   timeout tests all stop processing at the configured bounds.
 - **SC-009**: Fake secret values in user messages, tool payloads, retrieved
