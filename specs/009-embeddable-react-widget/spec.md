@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 9, Build the embeddable React widget, loader script, widget config API, and host demo."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: How does the embedded widget authenticate chat requests to the backend? → A: Widget-scoped anonymous session token issued by the backend at widget load time, validated against the widget's allowed origin; expires with the session.
+- Q: Where is the loader script served from? → A: FastAPI backend route (`GET /widget/loader.js`) — one origin, no CDN or separate static host required.
+- Q: How should the widget iframe consume the backend SSE chat stream? → A: Native `EventSource` API — built-in, no library, auto-reconnect; session token passed as query parameter.
+- Q: What is the maximum acceptable widget bundle size? → A: 150 KB gzipped — covers React + lean chat UI; any exception must be documented with measured size and rationale.
+- Q: What format should the public widget identifier use? → A: UUID4 — random, non-enumerable, generated at config creation time.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Configure A Widget As Admin (Priority: P1)
@@ -59,8 +69,9 @@ unallowed origin.
 2. **Given** the widget frame loads, **When** it initializes, **Then** it reads
    its current configuration before showing the user-facing chat surface.
 3. **Given** an unallowed origin attempts to use the same widget identifier,
-   **When** the embed loads or requests configuration, **Then** the widget is
-   blocked and no chat session starts.
+   **When** the embed loads or requests configuration or a session token, **Then**
+   the widget is blocked, no anonymous session token is issued, and no chat
+   session starts.
 
 ---
 
@@ -137,8 +148,9 @@ no widget code references the internal Streamlit app.
 ### Functional Requirements
 
 - **FR-001**: The system MUST support persisted widget configurations with a
-  public widget identifier, allowed origins, theme, greeting, enabled tools,
-  enabled status, creator, creation timestamp, and update timestamp.
+  UUID4 public widget identifier (generated at creation, non-enumerable), allowed
+  origins, theme, greeting, enabled tools, enabled status, creator, creation
+  timestamp, and update timestamp.
 - **FR-002**: Admins MUST be able to create widget configurations.
 - **FR-002a**: Widget configuration create, update, and delete workflows MUST
   create audit rows using `widget_config.create`, `widget_config.update`, and
@@ -148,18 +160,31 @@ no widget code references the internal Streamlit app.
 - **FR-004**: Regular users MUST NOT be able to create, edit, or view admin-only
   widget configuration capabilities.
 - **FR-005**: Host pages MUST be able to embed a widget using one script tag
-  containing the widget identifier.
+  whose `src` points to `GET /widget/loader.js` on the FastAPI backend, with
+  the widget identifier supplied as a `data-widget-id` attribute or query
+  parameter on the script tag.
 - **FR-006**: The loader MUST create an isolated widget frame using the widget
-  identifier from the host page.
-- **FR-007**: The widget MUST read its current public configuration at load time.
+  identifier from the host page. The FastAPI backend MUST serve the loader
+  JavaScript at `GET /widget/loader.js` with appropriate `Cache-Control` and
+  `Content-Type` headers.
+- **FR-007**: The widget MUST read its current public configuration at load time
+  and MUST request a widget-scoped anonymous session token from the backend.
+  The token is issued only for enabled widgets from approved host origins and
+  expires at the end of the visitor's session.
+- **FR-007a**: The backend MUST provide a token-issuance endpoint that validates
+  the requesting origin against the widget configuration's allowed origins before
+  issuing a widget-scoped anonymous session token.
 - **FR-008**: Public widget configuration reads MUST be allowed only for enabled
-  widgets and approved host origins.
+  widgets and approved host origins. Widget chat calls MUST require a valid
+  widget-scoped anonymous session token issued for that widget.
 - **FR-009**: The widget MUST support a collapsed bubble state and an expanded
   chat panel state.
 - **FR-010**: The widget MUST show the configured greeting, theme, position, and
   enabled tool availability at runtime.
 - **FR-011**: The widget MUST support streamed chat messages through the shared
-  backend chat capability.
+  backend chat capability using the native browser `EventSource` API. The
+  widget-scoped anonymous session token MUST be passed as a query parameter on
+  the SSE URL. The widget MUST NOT use a third-party SSE client library.
 - **FR-012**: The widget frame MUST communicate resize changes to the host page
   through a constrained message channel.
 - **FR-013**: The host page MUST accept resize messages only from the expected
@@ -172,7 +197,10 @@ no widget code references the internal Streamlit app.
   widget through one script tag.
 - **FR-017**: The project MUST include either a blocked-origin demo page or a
   documented blocked-origin test case.
-- **FR-018**: The widget bundle size MUST be measured and documented.
+- **FR-018**: The widget bundle size MUST be measured (gzipped) and documented.
+  The standalone initial bundle MUST NOT exceed 150 KB gzipped. If it does, the
+  exception MUST be documented with measured size, root cause, and reviewer-visible
+  rationale before the phase is considered complete.
 - **FR-018a**: Vite MUST emit one standalone initial widget JavaScript bundle for
   the React widget, or the phase documentation MUST explain any unavoidable
   exception with measured size and impact.
@@ -222,23 +250,21 @@ no widget code references the internal Streamlit app.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Widget Configuration**: Admin-managed configuration containing public widget
-  identifier, allowed origins, theme, greeting, enabled tools, enabled status,
-  creator, creation timestamp, and update timestamp.
+- **Widget Configuration**: Admin-managed configuration containing UUID4 public widget identifier (generated at creation), allowed origins, theme, greeting, enabled tools, enabled status, creator, creation timestamp, and update timestamp.
 - **Widget Config Audit Entry**: Audit row created by backend services for
   widget configuration create, update, or delete actions.
-- **Widget Script Snippet**: The admin-visible installation snippet that a host
-  page owner places on an allowed page to load a specific widget.
+- **Widget Script Snippet**: The admin-visible installation snippet — a single `<script src="{backend}/widget/loader.js" data-widget-id="{id}">` tag — that a host page owner places on an allowed page to load a specific widget.
+- **Widget Anonymous Session Token**: Short-lived backend-issued token scoped
+  to one widget identifier and one approved host origin, used to authenticate
+  visitor chat requests without requiring user registration.
 - **Public Widget Configuration View**: The limited configuration returned to an
   approved host at load time, excluding admin-only or sensitive fields.
-- **Embedded Widget Session**: A visitor-facing chat session created from an
-  enabled widget on an approved host.
+- **Embedded Widget Session**: A visitor-facing chat session created from an enabled widget on an approved host, authenticated using a widget anonymous session token.
 - **Host Origin**: The origin of the page attempting to embed or communicate
   with the widget.
 - **Widget Frame**: The isolated embedded surface that renders the chatbot and
   communicates safe resize messages to the host page.
-- **Bundle Size Report**: The documented measurement of the standalone widget
-  bundle used by reviewers to assess embed weight.
+- **Bundle Size Report**: The documented gzipped measurement of the standalone widget bundle (target ≤ 150 KB gzipped) used by reviewers to assess embed weight. Any exceedance is documented with root cause and rationale.
 
 ## Success Criteria *(mandatory)*
 
@@ -258,8 +284,7 @@ no widget code references the internal Streamlit app.
   rejects unexpected message sources in security tests.
 - **SC-007**: Frame ancestor protection is present for widget embed responses in
   security tests.
-- **SC-008**: Bundle size is measured and documented before the phase is marked
-  complete.
+- **SC-008**: The standalone initial widget bundle is ≤ 150 KB gzipped, measured and documented before the phase is marked complete. Any exception is approved with measured size and written rationale.
 - **SC-008a**: The widget build produces one standalone initial JavaScript bundle
   or documents an approved exception with measured size and rationale.
 - **SC-009**: Automated checks find zero references from widget code to the
