@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 3, Build the issue classification track."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: Which run logger backend should transformer fine-tuning use? → A: MLflow — self-hosted, MinIO-compatible artifact store, no external account required.
+- Q: Which transformer base model should be used for fine-tuning? → A: `distilbert-base-uncased` — 66M params, CPU-feasible, fast enough for a bootcamp environment.
+- Q: Which LLM provider should the LLM baseline use? → A: Azure OpenAI via LangChain with LangSmith tracing — consistent with Phases 3/4/5; LangChain fake adapter in automated tests.
+- Q: What format should the model version field use in classifier prediction responses? → A: Semantic version string from the model card (e.g., `"1.0.0"`).
+- Q: What is the maximum acceptable inference latency for the classifier endpoint? → A: 500ms p95 for a single classification request.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Compare Classification Approaches (Priority: P1)
@@ -101,9 +111,7 @@ valid artifact and verify the structured unavailable error.
   before producing misleading metrics.
 - A class is absent or rare in the test split: the report records the issue and
   still handles per-class metrics deterministically.
-- An LLM baseline provider is unavailable, rate-limited, or missing local
-  credentials: the baseline reports a controlled failure or uses an explicit fake
-  provider for tests, without leaking secrets.
+- The Azure OpenAI endpoint is unavailable, rate-limited, or credentials are absent locally: the baseline reports a controlled failure; automated tests always use a LangChain fake/mock provider and never require real credentials.
 - Transformer training is interrupted or produces a partial artifact: partial
   artifacts are not treated as deployable and hash validation fails.
 - A model artifact exists but hash verification fails: the model server refuses
@@ -129,9 +137,15 @@ valid artifact and verify the structured unavailable error.
   the classical baseline, fine-tuned transformer, and LLM baseline.
 - **FR-002**: The system MUST provide a command to train a classical ML baseline.
 - **FR-003**: The system MUST provide a command to train a fine-tuned transformer
-  classifier.
+  classifier using `distilbert-base-uncased` as the base model. The architecture
+  name `distilbert-base-uncased` MUST be recorded in the model card and MLflow
+  run parameters.
 - **FR-004**: The system MUST provide a command to run an LLM baseline evaluation
-  on the same test split.
+  on the same test split. The LLM baseline MUST use Azure OpenAI via the LangChain
+  `AzureChatOpenAI` interface. LangSmith MUST be configured as the tracing backend
+  for all LLM calls when a LangSmith API key is present in typed settings. In
+  automated tests, a LangChain fake/mock provider MUST be used so no real Azure
+  OpenAI credentials are required.
 - **FR-005**: The system MUST provide one shared classifier evaluation module used
   to compare prediction outputs from all three approaches.
 - **FR-006**: The evaluation report MUST include accuracy, macro-F1, per-class
@@ -143,9 +157,10 @@ valid artifact and verify the structured unavailable error.
 - **FR-009**: The fine-tuned transformer artifact MUST include model weights,
   tokenizer files, `model_card.json`, `metrics.json`, artifact SHA-256, training
   data hash, architecture name, hyperparameters, freeze policy, and final metrics.
-- **FR-009a**: Transformer fine-tuning MUST use a real run logger that records a
-  run ID, run logger backend, safe hyperparameters, metrics, artifact
-  references, and final run status.
+- **FR-009a**: Transformer fine-tuning MUST use MLflow as the run logger. MLflow
+  MUST record a run ID, the `mlflow` backend name, safe hyperparameters, metrics,
+  artifact references, and final run status. The MLflow tracking server MUST be
+  included in the local Compose stack and MUST use MinIO as its artifact store.
 - **FR-009b**: Transformer training MUST save training plots and record plot
   artifact references in the model card.
 - **FR-009c**: The selected classifier artifact or a manifest for it MUST be
@@ -159,7 +174,9 @@ valid artifact and verify the structured unavailable error.
 - **FR-013**: The model server MUST load the selected classifier during service
   lifespan and MUST NOT load it at import time or per request.
 - **FR-014**: Classifier responses MUST return a typed prediction containing a
-  label, confidence when available, and model version.
+  label, confidence when available, and model version. The model version MUST be
+  a semantic version string (e.g., `"1.0.0"`) read from the `model_card.json`
+  of the loaded artifact and returned verbatim in every prediction response.
 - **FR-015**: The only valid prediction labels are `bug`, `feature`, `docs`, and
   `question`.
 - **FR-016**: The model server MUST return a structured error when the model is
@@ -180,9 +197,11 @@ valid artifact and verify the structured unavailable error.
   shared evaluation modules. Runtime serving belongs in the model server. API
   routes must stay thin and must not load models, train models, or calculate
   metrics directly.
-- **Security And Redaction**: LLM baseline credentials are optional local secrets
-  loaded through settings or test fakes only. Reports and logs must not contain
-  provider keys, raw secret values, or unnecessary full issue payload dumps.
+- **Security And Redaction**: Azure OpenAI endpoint, API key, and LangSmith API
+  key are optional local secrets loaded through typed settings only. Tests MUST
+  use LangChain fake/mock providers so no real credentials are required. Reports,
+  logs, and LangSmith traces must not contain raw secret values or unnecessary
+  full issue payload dumps.
 - **Observability And Errors**: Training/evaluation commands must produce clear
   progress and failure messages. Model-server prediction requests must use
   structured errors and include request correlation where the foundation supports
@@ -214,16 +233,17 @@ valid artifact and verify the structured unavailable error.
   files, model card, metrics, artifact hash, training data hash, architecture
   name, hyperparameters, freeze policy, run logger metadata, training plot
   references, MinIO reference, and final metrics.
-- **Training Run Record**: Run logger record for transformer fine-tuning,
-  including run ID, logger backend, parameters, metrics, status, and artifact
-  references.
+- **Training Run Record**: MLflow run record for transformer fine-tuning,
+  including MLflow run ID, `mlflow` as the logger backend, parameters, metrics,
+  status, and artifact references stored in MinIO via the MLflow artifact store.
 - **Model Card**: Artifact metadata document that identifies the transformer
   model, data used, hash values, metrics, intended use, limitations, and serving
   version.
 - **Classifier Inference Request**: Input payload for issue classification,
   including title/body/comments text as available.
 - **Classifier Prediction Response**: Typed model-server response containing one
-  project label, optional confidence, and model version.
+  project label, optional confidence, and model version as a semantic version
+  string (e.g., `"1.0.0"`) sourced from the loaded artifact's `model_card.json`.
 - **Classifier Decision Record**: `DECISIONS.md` section comparing approaches and
   selecting the deployment candidate.
 
@@ -247,7 +267,9 @@ valid artifact and verify the structured unavailable error.
 - **SC-006**: `DECISIONS.md` records the selected classifier approach with metrics,
   latency, cost where applicable, limitations, and rejected alternatives.
 - **SC-007**: The classifier endpoint returns a valid project label and model
-  version for a valid test input when a deployable model is configured.
+  version for a valid test input when a deployable model is configured. End-to-end
+  inference latency (request received to response sent) MUST be ≤ 500ms at p95
+  for a single classification request under normal load.
 - **SC-008**: The classifier endpoint returns a structured unavailable-model error
   when no valid model artifact is configured.
 - **SC-009**: Automated tests cover metric calculation and model-server response
@@ -257,8 +279,7 @@ valid artifact and verify the structured unavailable error.
 
 - Phase 2 has produced compatible dataset splits before classifier training and
   evaluation are treated as complete.
-- The fine-tuned transformer will be lightweight enough for a bootcamp project;
-  the exact architecture and hyperparameters will be finalized during planning.
+- The fine-tuned transformer uses `distilbert-base-uncased` (66M parameters), which is CPU-feasible for a bootcamp environment. Specific hyperparameters (learning rate, batch size, epochs, freeze policy) will be finalized during planning.
 - LLM baseline evaluation may use a fake provider in automated tests and a real
   provider only when local credentials are available.
 - Latency values are measured as part of evaluation and reported with enough
