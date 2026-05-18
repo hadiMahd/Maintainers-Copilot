@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Phase 6, Build authentication, authorization, memory, and audit logging."
 
+## Clarifications
+
+### Session 2026-05-18
+
+- Q: Which JWT algorithm should the system use for token signing? → A: RS256 — asymmetric; private key stored in Vault, public key used for validation.
+- Q: Which long-term memory type should the system support? → A: Semantic memory — stores user-approved facts/preferences retrieved by meaning via pgvector similarity search.
+- Q: What should the default short-term memory TTL be? → A: 30 minutes — covers one conversation session; configurable via typed settings.
+- Q: Which password hashing algorithm should the system use? → A: `argon2id` — PHC winner, OWASP-recommended, memory-hard; implemented via `argon2-cffi`.
+- Q: How long should admin invitations remain valid before expiring? → A: 48 hours.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Register And Log In Securely (Priority: P1)
@@ -142,6 +152,7 @@ that user and only because it was explicitly written.
   refresh fails safely.
 - JWT signing key is missing or unavailable at startup: token issuance is
   disabled and startup behavior is safe.
+- Vault is reachable but AppRole authentication fails (wrong role ID or secret ID): startup fails loudly with a clear authentication error; no secrets are read and the application does not start.
 - Admin invitation is expired, already accepted, malformed, or revoked: role
   activation is rejected and the failure is auditable where appropriate.
 - A regular user attempts an admin-only operation: access is rejected and no role
@@ -149,7 +160,7 @@ that user and only because it was explicitly written.
 - Short-term memory TTL is missing or invalid: startup or configuration
   validation fails safely.
 - Short-term memory has expired: reads return no value rather than stale context.
-- Long-term memory type is not the chosen supported type: the write is rejected.
+- A long-term memory write request specifies a type other than semantic: the write is rejected with a structured validation error.
 - Redaction detects secret-like content: unredacted content is not persisted to
   memory, audit metadata, logs, or traces.
 - Long-term memory persistence succeeds but audit logging fails: the operation
@@ -166,19 +177,24 @@ that user and only because it was explicitly written.
 ### Functional Requirements
 
 - **FR-001**: The system MUST support email/password registration for regular
-  users.
+  users. Passwords MUST be hashed using `argon2id` via the `argon2-cffi` library
+  before storage. Plaintext passwords MUST NOT be stored, logged, or included
+  in audit metadata.
 - **FR-002**: The system MUST support login that issues an access token and a
   refresh token.
-- **FR-003**: The system MUST load the JWT signing key from Vault at startup
-  before issuing tokens.
-- **FR-004**: The system MUST reject token issuance when the signing key is
-  unavailable or invalid.
+- **FR-003**: The system MUST load the RS256 private key from Vault at startup
+  using AppRole authentication before issuing tokens. The corresponding RS256
+  public key MUST be used for token validation. Both keys are loaded from Vault;
+  the private key MUST NOT be stored outside Vault.
+- **FR-004**: The system MUST reject token issuance when the RS256 private key
+  is unavailable or invalid at startup.
 - **FR-005**: The system MUST support user and admin roles.
 - **FR-006**: The system MUST provide authorization dependencies or guards for
   authenticated users and admins.
 - **FR-007**: Admin-only capabilities MUST reject regular users.
 - **FR-008**: The system MUST support an admin invitation flow for granting admin
-  access.
+  access. Admin invitations MUST expire after 48 hours from creation. Expired,
+  already-accepted, revoked, or malformed invitations MUST be rejected.
 - **FR-009**: Role changes and admin invitation actions MUST be recorded in audit
   logs.
 - **FR-009a**: The audit service MUST define stable action names for
@@ -188,14 +204,19 @@ that user and only because it was explicitly written.
 - **FR-009b**: Later widget configuration and conversation deletion workflows
   MUST use the reserved audit action names and service transaction boundaries.
 - **FR-010**: The system MUST support short-term conversation memory in Redis.
-- **FR-011**: Short-term memory MUST have an explicit configurable TTL.
-- **FR-012**: The selected short-term memory TTL MUST be documented in
-  `DECISIONS.md`.
-- **FR-013**: The system MUST support long-term memory in Postgres with pgvector.
-- **FR-014**: The long-term memory type MUST be exactly one of episodic,
-  semantic, or procedural.
-- **FR-015**: The selected long-term memory type and rationale MUST be defended
-  in `DECISIONS.md`.
+- **FR-011**: Short-term memory MUST have an explicit configurable TTL with a
+  default of 30 minutes. The TTL MUST be loaded from typed settings and MUST
+  NOT be hardcoded in business logic.
+- **FR-012**: The 30-minute default short-term memory TTL and its rationale
+  (one conversation session boundary) MUST be documented in `DECISIONS.md`.
+- **FR-013**: The system MUST support long-term memory in PostgreSQL with
+  pgvector. Long-term memory is stored as semantic memory: user-approved facts
+  and preferences embedded as vectors and retrieved by pgvector similarity search.
+- **FR-014**: The long-term memory type is semantic. Episodic and procedural
+  memory types are not implemented in Phase 6.
+- **FR-015**: The semantic memory type selection and rationale MUST be documented
+  in `DECISIONS.md`, including the retrieval approach (pgvector similarity),
+  embedding model used, and the explicit-consent boundary.
 - **FR-016**: The system MUST provide an explicit write-memory service or tool
   for long-term memory writes.
 - **FR-017**: The system MUST NOT automatically write to long-term memory from
@@ -248,23 +269,19 @@ that user and only because it was explicitly written.
 
 ### Key Entities *(include if feature involves data)*
 
-- **User Account**: Registered user identity with email, password credential
-  state, role, timestamps, and active/disabled status.
+- **User Account**: Registered user identity with email, `argon2id`-hashed password credential, role, timestamps, and active/disabled status.
 - **Role**: Authorization category, either regular user or admin.
 - **Token Session**: Access and refresh token state associated with a user,
   including expiry, rotation, and revocation status.
-- **JWT Signing Key**: Secret signing material resolved from Vault at startup and
-  required for token issuance and validation.
+- **JWT Signing Key**: RS256 private key resolved from Vault via AppRole at startup; required for token issuance. The RS256 public key is used for validation and is also loaded from Vault. The private key never leaves Vault.
 - **Admin Invitation**: Admin-created invitation used to grant admin role,
-  including inviter, invitee email, status, expiry, and acceptance metadata.
+  including inviter, invitee email, status, 48-hour expiry timestamp, and acceptance metadata.
 - **Authorization Context**: Authenticated user identity, role, request
   correlation data, and permissions used by guarded capabilities.
 - **Short-Term Memory Entry**: User-scoped conversation memory stored with a
   configurable expiry time.
-- **Long-Term Memory Entry**: Explicitly written redacted memory with selected
-  memory type, owner, content, vector metadata, and source traceability.
-- **Memory Type**: Supported long-term memory category: episodic, semantic, or
-  procedural.
+- **Long-Term Memory Entry**: Explicitly written redacted semantic memory — a user-approved fact or preference — with owner, embedded content vector, redacted text, and source traceability. Retrieved by pgvector similarity search.
+- **Memory Type**: Semantic — the only supported long-term memory category in Phase 6. Stores user-approved facts and preferences retrieved by meaning.
 - **Write Memory Request**: Explicit request to persist long-term memory,
   including actor, target user or scope, memory type, content, and safe metadata.
 - **Redaction Result**: Sanitized content plus safe metadata describing what was
@@ -285,10 +302,8 @@ that user and only because it was explicitly written.
   available, and fails safely in 100% of tested missing-key cases.
 - **SC-003**: Regular users are rejected from admin-only capabilities in 100% of
   admin-guard tests.
-- **SC-004**: Admin invitation acceptance grants admin role only for valid,
-  unexpired, unused invitations.
-- **SC-005**: Short-term memory write/read returns the stored value for the same
-  user before expiry and returns no value after the configured TTL.
+- **SC-004**: Admin invitation acceptance grants admin role only for valid, unexpired (within 48 hours), unused invitations; expired or already-accepted invitations are rejected in 100% of tested cases.
+- **SC-005**: Short-term memory write/read returns the stored value for the same user before expiry and returns no value after the configured TTL (default 30 minutes; tests use an injected short TTL to avoid real-time waits).
 - **SC-006**: Long-term memory is written only through the explicit write-memory
   capability in 100% of tested flows.
 - **SC-007**: Every successful long-term memory write creates exactly one audit
