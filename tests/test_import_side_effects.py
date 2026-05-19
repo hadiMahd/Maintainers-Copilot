@@ -14,6 +14,12 @@ MODULES = [
     "app.infra.redis_client",
     "app.infra.vault_client",
     "app.infra.minio_client",
+    "app.infra.redaction",
+    "app.domain.classifier",
+    "app.infra.llm.classifier_baseline",
+    "app.infra.storage.classifier_artifacts",
+    "app.infra.mlflow.tracking",
+    "app.services.classifier_evaluation",
 ]
 
 
@@ -24,8 +30,7 @@ def test_import_no_network(module):
         **dict(subprocess.os.environ),
         "VAULT_ADDR": "http://127.0.0.1:1",
         "ENVIRONMENT": "test",
-        "VAULT_ROLE_ID": "fake",
-        "VAULT_SECRET_ID": "fake",
+        "VAULT_TOKEN": "fake-token",
     }
     result = subprocess.run(
         [sys.executable, "-c", f"import {module}"],

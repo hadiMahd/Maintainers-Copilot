@@ -24,9 +24,9 @@ independently implementable and testable.
 **Purpose**: Add the Phase 3 dependencies, bootstrap configuration, and local
 services needed by training and artifact logging.
 
-- [ ] T001 Add Phase 3 runtime and dev dependencies for scikit-learn, Transformers, safetensors, MLflow, LangChain Azure OpenAI, and LangSmith in `pyproject.toml`
-- [ ] T002 [P] Add Phase 3 bootstrap environment variables for classifier artifacts, MLflow, MinIO, Vault-backed Azure OpenAI, and Vault-backed LangSmith settings in `.env.example`
-- [ ] T003 [P] Add a self-hosted `mlflow` service wired to `minio` for local Phase 3 runs in `docker-compose.yml`
+- [X] T001 Add Phase 3 runtime and dev dependencies for scikit-learn, Transformers, safetensors, MLflow, LangChain Azure OpenAI, and LangSmith in `pyproject.toml`
+- [X] T002 [P] Add Phase 3 bootstrap environment variables for classifier artifacts, MLflow, MinIO, Vault-backed Azure OpenAI, and Vault-backed LangSmith settings in `.env.example`
+- [X] T003 [P] Add a self-hosted `mlflow` service wired to `minio` for local Phase 3 runs in `docker-compose.yml`
 
 ---
 
@@ -37,17 +37,17 @@ redaction helpers that all Phase 3 user stories depend on.
 
 **⚠️ CRITICAL**: No user story implementation should start before this phase is complete.
 
-- [ ] T004 Create classifier label, prediction, report, artifact, and error schemas in `app/domain/classifier.py` and update exports in `app/domain/__init__.py`
-- [ ] T005 [P] Extend Phase 3 dataset, prediction, artifact, and endpoint fixtures in `tests/conftest.py`
-- [ ] T006 [P] Create foundational Vault secret-resolution and bootstrap-setting tests in `tests/test_config.py` and `tests/test_no_secrets.py`
-- [ ] T007 [P] Create telemetry and artifact redaction tests in `tests/unit/test_classifier_redaction.py`
-- [ ] T008 Extend Phase 3 Vault secret-resolution helpers for Azure OpenAI and LangSmith in `app/infra/vault_client.py`
-- [ ] T009 Create the infra redaction helper for MLflow, LangSmith, model cards, and manifests in `app/infra/redaction.py` and update exports in `app/infra/__init__.py`
-- [ ] T010 [P] Create MLflow tracking helpers in `app/infra/mlflow/tracking.py` and package exports in `app/infra/mlflow/__init__.py`
-- [ ] T011 [P] Create MinIO classifier artifact and manifest helpers in `app/infra/storage/classifier_artifacts.py` and package exports in `app/infra/storage/__init__.py`
-- [ ] T012 [P] Create the Azure OpenAI / fake-provider classifier baseline adapter in `app/infra/llm/classifier_baseline.py` and package exports in `app/infra/llm/__init__.py`
-- [ ] T013 Extend typed bootstrap and runtime Phase 3 settings in `app/core/config.py`
-- [ ] T014 Create shared metric, hashing, and evaluation report builders in `app/services/classifier_evaluation.py`
+- [X] T004 Create classifier label, prediction, report, artifact, and error schemas in `app/domain/classifier.py` and update exports in `app/domain/__init__.py`
+- [X] T005 [P] Extend Phase 3 dataset, prediction, artifact, and endpoint fixtures in `tests/conftest.py`
+- [X] T006 [P] Create foundational Vault secret-resolution and bootstrap-setting tests in `tests/test_config.py` and `tests/test_no_secrets.py`
+- [X] T007 [P] Create telemetry and artifact redaction tests in `tests/unit/test_classifier_redaction.py`
+- [X] T008 Extend Phase 3 Vault secret-resolution helpers for Azure OpenAI and LangSmith in `app/infra/vault_client.py`
+- [X] T009 Create the infra redaction helper for MLflow, LangSmith, model cards, and manifests in `app/infra/redaction.py` and update exports in `app/infra/__init__.py`
+- [X] T010 [P] Create MLflow tracking helpers in `app/infra/mlflow/tracking.py` and package exports in `app/infra/mlflow/__init__.py`
+- [X] T011 [P] Create MinIO classifier artifact and manifest helpers in `app/infra/storage/classifier_artifacts.py` and package exports in `app/infra/storage/__init__.py`
+- [X] T012 [P] Create the Azure OpenAI / fake-provider classifier baseline adapter in `app/infra/llm/classifier_baseline.py` and package exports in `app/infra/llm/__init__.py`
+- [X] T013 Extend typed bootstrap and runtime Phase 3 settings in `app/core/config.py`
+- [X] T014 Create shared metric, hashing, and evaluation report builders in `app/services/classifier_evaluation.py`
 
 **Checkpoint**: Foundation ready. Shared schemas, fixtures, Vault resolution,
 redaction, and adapters exist for classifier training, artifact evidence, and
@@ -70,17 +70,17 @@ confusion matrix, latency, and cost/skip data for the completed approaches.
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T015 [P] [US1] Create metric and shared-report unit tests in `tests/unit/test_classifier_metrics.py`
-- [ ] T016 [P] [US1] Create fake-provider, Vault-backed provider-config, and LangSmith-toggle integration tests in `tests/integration/test_llm_classifier_fake_provider.py`
+- [X] T015 [P] [US1] Create metric and shared-report unit tests in `tests/unit/test_classifier_metrics.py`
+- [X] T016 [P] [US1] Create fake-provider, Vault-backed provider-config, and LangSmith-toggle integration tests in `tests/integration/test_llm_classifier_fake_provider.py`
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Create the 25-example golden set in `evals/classification_golden_set.jsonl`
-- [ ] T018 [P] [US1] Implement the classical baseline training command in `scripts/train_classical_classifier.py`
-- [ ] T019 [P] [US1] Implement the transformer training command shell with shared evaluation and Vault-aware MLflow wiring in `scripts/train_transformer_classifier.py`
-- [ ] T020 [P] [US1] Implement the Azure OpenAI / fake-provider baseline command with redacted tracing metadata in `scripts/run_llm_classifier_baseline.py`
-- [ ] T021 [US1] Implement the shared evaluation command and report writer in `scripts/evaluate_classifiers.py`
-- [ ] T022 [US1] Document classifier metrics, fake-provider mode, Vault/LangSmith rules, and Phase 3 evaluation commands in `docs/evals.md`
+- [X] T017 [P] [US1] Create the 25-example golden set in `evals/classification_golden_set.jsonl`
+- [X] T018 [P] [US1] Implement the classical baseline training command in `scripts/train_classical_classifier.py`
+- [X] T019 [P] [US1] Implement the transformer training command shell with shared evaluation and Vault-aware MLflow wiring in `scripts/train_transformer_classifier.py`
+- [X] T020 [P] [US1] Implement the Azure OpenAI / fake-provider baseline command with redacted tracing metadata in `scripts/run_llm_classifier_baseline.py`
+- [X] T021 [US1] Implement the shared evaluation command and report writer in `scripts/evaluate_classifiers.py`
+- [X] T022 [US1] Document classifier metrics, fake-provider mode, Vault/LangSmith rules, and Phase 3 evaluation commands in `docs/evals.md`
 
 **Checkpoint**: User Story 1 is independently testable. All three approaches can
 produce or report comparable outputs on the same test split.
@@ -102,15 +102,15 @@ references, and a MinIO artifact or manifest reference.
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
-- [ ] T023 [P] [US2] Create artifact-hash and model-card validation tests in `tests/unit/test_classifier_artifact_hash.py` and `tests/unit/test_classifier_model_card.py`
-- [ ] T024 [P] [US2] Create MLflow run metadata, MinIO manifest, and redacted-telemetry tests in `tests/unit/test_classifier_run_metadata.py` and `tests/unit/test_classifier_redaction.py`
+- [X] T023 [P] [US2] Create artifact-hash and model-card validation tests in `tests/unit/test_classifier_artifact_hash.py` and `tests/unit/test_classifier_model_card.py`
+- [X] T024 [P] [US2] Create MLflow run metadata, MinIO manifest, and redacted-telemetry tests in `tests/unit/test_classifier_run_metadata.py` and `tests/unit/test_classifier_redaction.py`
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] Extend transformer artifact generation with model card, metrics, plots, hashes, redacted metadata, and deployable-status rules in `scripts/train_transformer_classifier.py`
-- [ ] T026 [US2] Implement the selected-artifact upload or manifest command in `scripts/upload_classifier_artifact_manifest.py`
-- [ ] T027 [US2] Finalize MLflow completion, redaction, and MinIO artifact enforcement in `app/infra/mlflow/tracking.py` and `app/infra/storage/classifier_artifacts.py`
-- [ ] T028 [US2] Record classifier comparison evidence, selected approach, and artifact references in `docs/decisions.md`
+- [X] T025 [US2] Extend transformer artifact generation with model card, metrics, plots, hashes, redacted metadata, and deployable-status rules in `scripts/train_transformer_classifier.py`
+- [X] T026 [US2] Implement the selected-artifact upload or manifest command in `scripts/upload_classifier_artifact_manifest.py`
+- [X] T027 [US2] Finalize MLflow completion, redaction, and MinIO artifact enforcement in `app/infra/mlflow/tracking.py` and `app/infra/storage/classifier_artifacts.py`
+- [X] T028 [US2] Record classifier comparison evidence, selected approach, and artifact references in `docs/decisions.md`
 
 **Checkpoint**: User Story 2 is independently testable. The selected classifier
 artifact is hash-validated, traceable, redacted safely, and documented for review.
@@ -130,19 +130,19 @@ semantic `model_version`. Start without a valid artifact and verify a structured
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T029 [P] [US3] Create classifier schema and endpoint contract tests including semantic version and unavailable reasons in `tests/unit/test_classifier_schemas.py` and `tests/contract/test_classifier_endpoint_contract.py`
-- [ ] T030 [P] [US3] Create oversized-input and structured-`422` validation tests in `tests/integration/test_classifier_request_validation.py`
-- [ ] T031 [P] [US3] Create classifier lifespan, hash-mismatch, and import-side-effect tests in `tests/integration/test_classifier_model_lifecycle.py` and `tests/test_import_side_effects.py`
+- [X] T029 [P] [US3] Create classifier schema and endpoint contract tests including semantic version and unavailable reasons in `tests/unit/test_classifier_schemas.py` and `tests/contract/test_classifier_endpoint_contract.py`
+- [X] T030 [P] [US3] Create oversized-input and structured-`422` validation tests in `tests/integration/test_classifier_request_validation.py`
+- [X] T031 [P] [US3] Create classifier lifespan, hash-mismatch, and import-side-effect tests in `tests/integration/test_classifier_model_lifecycle.py` and `tests/test_import_side_effects.py`
 
 ### Implementation for User Story 3
 
-- [ ] T032 [P] [US3] Create model-server classifier request, response, and error models in `model_server/domain/classifier.py` and `model_server/domain/__init__.py`
-- [ ] T033 [P] [US3] Implement artifact loading, hash validation, and Vault-backed runtime setup in `model_server/infra/classifier_loader.py` and `model_server/infra/__init__.py`
-- [ ] T034 [US3] Implement classifier inference orchestration with input-size checks, confidence omission, and redacted logging in `model_server/services/classifier_service.py` and `model_server/services/__init__.py`
-- [ ] T035 [US3] Implement the thin classifier route in `model_server/api/classifier.py` and `model_server/api/__init__.py`
-- [ ] T036 [US3] Replace the model-server stub with a FastAPI lifespan app and Phase 3 startup wiring in `model_server/main.py` and `model_server/Dockerfile`
-- [ ] T037 [US3] Add the latency measurement command for 30 warm sequential representative requests in `scripts/measure_classifier_latency.py`
-- [ ] T038 [US3] Document classifier endpoint startup, input limits, latency method, and unavailable-model behavior in `docs/architecture.md` and `docs/runbook.md`
+- [X] T032 [P] [US3] Create model-server classifier request, response, and error models in `model_server/domain/classifier.py` and `model_server/domain/__init__.py`
+- [X] T033 [P] [US3] Implement artifact loading, hash validation, and Vault-backed runtime setup in `model_server/infra/classifier_loader.py` and `model_server/infra/__init__.py`
+- [X] T034 [US3] Implement classifier inference orchestration with input-size checks, confidence omission, and redacted logging in `model_server/services/classifier_service.py` and `model_server/services/__init__.py`
+- [X] T035 [US3] Implement the thin classifier route in `model_server/api/classifier.py` and `model_server/api/__init__.py`
+- [X] T036 [US3] Replace the model-server stub with a FastAPI lifespan app and Phase 3 startup wiring in `model_server/main.py` and `model_server/Dockerfile`
+- [X] T037 [US3] Add the latency measurement command for 30 warm sequential representative requests in `scripts/measure_classifier_latency.py`
+- [X] T038 [US3] Document classifier endpoint startup, input limits, latency method, and unavailable-model behavior in `docs/architecture.md` and `docs/runbook.md`
 
 **Checkpoint**: User Story 3 is independently testable. Later phases can call
 the classifier endpoint without per-request model loading or ambiguous failures.
@@ -154,10 +154,10 @@ the classifier endpoint without per-request model loading or ambiguous failures.
 **Purpose**: Finish docs, ignore rules, and final validation across the full
 Phase 3 surface.
 
-- [ ] T039 [P] Update classifier artifact, plot, and eval-output ignore rules in `.gitignore`
-- [ ] T040 [P] Sync Phase 3 usage and security notes in `README.md` and `docs/security.md`
-- [ ] T041 [P] Sync Phase 3 command examples and expected outputs in `specs/003-issue-classification/quickstart.md`
-- [ ] T042 Run the full Phase 3 validation suite referenced by `tests/`, `scripts/`, and `specs/003-issue-classification/quickstart.md`
+- [X] T039 [P] Update classifier artifact, plot, and eval-output ignore rules in `.gitignore`
+- [X] T040 [P] Sync Phase 3 usage and security notes in `README.md` and `docs/security.md`
+- [X] T041 [P] Sync Phase 3 command examples and expected outputs in `specs/003-issue-classification/quickstart.md`
+- [X] T042 Run the full Phase 3 validation suite referenced by `tests/`, `scripts/`, and `specs/003-issue-classification/quickstart.md`
 
 ---
 

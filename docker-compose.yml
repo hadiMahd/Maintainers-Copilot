@@ -2,9 +2,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: maintainer
-      POSTGRES_USER: maintainer
-      POSTGRES_PASSWORD: maintainer
+      POSTGRES_DB: ${POSTGRES_DB:-maintainer}
+      POSTGRES_USER: ${POSTGRES_USER:-maintainer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-maintainer}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U maintainer"]
       interval: 5s
@@ -27,8 +27,8 @@ services:
     image: minio/minio:latest
     command: server /data
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:9000/minio/health/live"]
       interval: 5s
@@ -37,10 +37,37 @@ services:
     ports:
       - "9000:9000"
 
+  mlflow:
+    image: python:3.11-slim
+    command: >
+      bash -c "
+        pip install mlflow>=2.10.0 boto3 &&
+        mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --default-artifact-root s3://mlflow/artifacts
+        --backend-store-uri sqlite:///mlflow.db
+      "
+    environment:
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+    depends_on:
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    ports:
+      - "5000:5000"
+
   vault:
     image: hashicorp/vault:1.15
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: dev-root-token
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN:-dev-root-token}
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
     cap_add:
       - IPC_LOCK
@@ -52,6 +79,20 @@ services:
     ports:
       - "8200:8200"
 
+  vault_seed:
+    image: hashicorp/vault:1.15
+    depends_on:
+      vault:
+        condition: service_healthy
+    volumes:
+      - ./scripts/seed_vault_from_env.sh:/seed_vault_from_env.sh:ro
+      - ./.env:/run/secrets/maintainer-copilot.env:ro
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
+    command: ["sh", "/seed_vault_from_env.sh", "/run/secrets/maintainer-copilot.env"]
+    restart: "no"
+
   migrations:
     build:
       context: ./
@@ -59,7 +100,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+asyncpg://maintainer:maintainer@postgres:5432/maintainer
+      DATABASE_URL: ${APP_DATABASE_URL:-postgresql+asyncpg://maintainer:maintainer@postgres:5432/maintainer}
     command: ["uv", "run", "alembic", "upgrade", "head"]
     restart: "no"
 
@@ -75,10 +116,13 @@ services:
         condition: service_healthy
       vault:
         condition: service_healthy
+      vault_seed:
+        condition: service_completed_successfully
       migrations:
         condition: service_completed_successfully
-    env_file:
-      - .env
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
     ports:
       - "8000:8000"
 
