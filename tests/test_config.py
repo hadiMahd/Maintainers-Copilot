@@ -12,9 +12,8 @@ def test_valid_settings_construction(monkeypatch):
     """Construct AppSettings with all required fields."""
     monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
-    monkeypatch.setenv("VAULT_ROLE_ID", "role")
-    monkeypatch.setenv("VAULT_SECRET_ID", "secret")
-    settings = AppSettings()
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    settings = AppSettings(_env_file=None)
     assert settings.environment == "test"
     assert settings.vault_addr == "http://localhost:8200"
 
@@ -22,52 +21,69 @@ def test_valid_settings_construction(monkeypatch):
 def test_missing_vault_addr_raises(monkeypatch):
     """Omit VAULT_ADDR and assert ValidationError is raised."""
     monkeypatch.delenv("VAULT_ADDR", raising=False)
-    monkeypatch.setenv("ENVIRONMENT", "test")
-    monkeypatch.setenv("VAULT_ROLE_ID", "role")
-    monkeypatch.setenv("VAULT_SECRET_ID", "secret")
+    monkeypatch.setenv("VAULT_TOKEN", "token")
     with pytest.raises(ValidationError):
-        AppSettings()
+        AppSettings(_env_file=None)
 
 
-def test_missing_vault_role_id_raises(monkeypatch):
-    """Omit VAULT_ROLE_ID and assert ValidationError is raised."""
-    monkeypatch.delenv("VAULT_ROLE_ID", raising=False)
-    monkeypatch.setenv("ENVIRONMENT", "test")
+def test_missing_vault_token_raises(monkeypatch):
+    """Omit VAULT_TOKEN and assert ValidationError is raised."""
+    monkeypatch.delenv("VAULT_TOKEN", raising=False)
     monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
-    monkeypatch.setenv("VAULT_SECRET_ID", "secret")
     with pytest.raises(ValidationError):
-        AppSettings()
+        AppSettings(_env_file=None)
 
 
-def test_missing_vault_secret_id_raises(monkeypatch):
-    """Omit VAULT_SECRET_ID and assert ValidationError is raised."""
-    monkeypatch.delenv("VAULT_SECRET_ID", raising=False)
-    monkeypatch.setenv("ENVIRONMENT", "test")
-    monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
-    monkeypatch.setenv("VAULT_ROLE_ID", "role")
-    with pytest.raises(ValidationError):
-        AppSettings()
-
-
-def test_missing_environment_raises(monkeypatch):
-    """Omit ENVIRONMENT and assert ValidationError is raised."""
+def test_missing_environment_uses_default(monkeypatch):
+    """Omit ENVIRONMENT and assert the default is used."""
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
-    monkeypatch.setenv("VAULT_ROLE_ID", "role")
-    monkeypatch.setenv("VAULT_SECRET_ID", "secret")
-    with pytest.raises(ValidationError):
-        AppSettings()
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    settings = AppSettings(_env_file=None)
+    assert settings.environment == "local"
 
 
 def test_vault_resolved_fields_default_none(monkeypatch):
     """Construct valid AppSettings and assert vault-resolved fields are None."""
-    monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
-    monkeypatch.setenv("VAULT_ROLE_ID", "role")
-    monkeypatch.setenv("VAULT_SECRET_ID", "secret")
-    settings = AppSettings()
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    settings = AppSettings(_env_file=None)
     assert settings.database_url is None
     assert settings.redis_url is None
     assert settings.minio_endpoint is None
     assert settings.minio_access_key is None
     assert settings.minio_secret_key is None
+
+
+# ── Phase 3: Classifier / MLflow / Vault-Resolved Settings ──
+
+
+def test_classifier_settings_defaults(monkeypatch):
+    """Classifier artifact and eval settings have sensible defaults."""
+    monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    settings = AppSettings(_env_file=None)
+    assert settings.classifier_artifact_dir == "artifacts/classifiers"
+    assert settings.classifier_golden_set_path == "evals/classification_golden_set.jsonl"
+    assert settings.eval_output_dir == "evals"
+
+
+def test_mlflow_settings_defaults(monkeypatch):
+    """MLflow tracking settings have sensible defaults."""
+    monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    settings = AppSettings(_env_file=None)
+    assert settings.mlflow_tracking_uri == "http://localhost:5000"
+    assert settings.mlflow_artifact_root == "mlruns"
+
+
+def test_vault_resolved_llm_fields_default_none(monkeypatch):
+    """Azure OpenAI and LangSmith fields default to None until Vault resolves them."""
+    monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    settings = AppSettings(_env_file=None)
+    assert settings.azure_openai_endpoint is None
+    assert settings.azure_openai_api_key is None
+    assert settings.azure_openai_model is None
+    assert settings.azure_openai_embedding_model is None
+    assert settings.langchain_api_key is None

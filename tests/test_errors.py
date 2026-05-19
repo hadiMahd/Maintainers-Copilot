@@ -16,8 +16,7 @@ async def error_app():
     settings = AppSettings(
         environment="test",
         vault_addr="http://fake",
-        vault_role_id="fake",
-        vault_secret_id="fake",
+        vault_token="fake-token",
     )
     test_app = FastAPI()
     test_app.add_middleware(RequestIDMiddleware, settings=settings)

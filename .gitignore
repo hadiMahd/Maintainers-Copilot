@@ -42,6 +42,23 @@ data/raw/
 data/processed/
 artifacts/
 
+# Phase 3 classifier outputs
+evals/classifier_eval_report.json
+evals/classification_golden_set.jsonl
+evals/latency_report.json
+*.safetensors
+*.bin
+*.onnx
+*.joblib
+*.pt
+models/
+
+# MLflow
+mlruns/
+
+# Logs
+*.log
+
 # IDE
 .idea/
 *.swp
@@ -50,6 +67,7 @@ artifacts/
 # OS
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
 /*.md
 
 .agents
@@ -60,3 +78,7 @@ Thumbs.db
 AGENTS.md
 PHASE_TECH_STACK.md
 PROJECT_BRIEF.md
+
+
+.ruff_cache/
+dump/

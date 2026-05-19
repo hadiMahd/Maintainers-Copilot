@@ -1,4 +1,6 @@
-"""Vault AppRole client."""
+"""Vault bootstrap client."""
+
+from __future__ import annotations
 
 import hvac
 
@@ -7,25 +9,25 @@ from app.domain.errors import ConfigError
 
 
 def init_vault_client(settings: AppSettings) -> hvac.Client:
-    """Initialize and authenticate a Vault client using AppRole.
+    """Initialize and authenticate a Vault client using a bootstrap token.
 
     Raises ConfigError if authentication fails.
     """
-    client = hvac.Client(url=settings.vault_addr)
+    client = hvac.Client(
+        url=settings.vault_addr,
+        token=settings.vault_token.get_secret_value(),
+    )
     try:
-        client.auth.approle.login(
-            role_id=settings.vault_role_id,
-            secret_id=settings.vault_secret_id,
-        )
+        authenticated = client.is_authenticated()
     except Exception as exc:
         raise ConfigError(
-            "Vault AppRole authentication failed",
+            "Vault token authentication failed",
             details={"vault_addr": settings.vault_addr},
         ) from exc
 
-    if not client.is_authenticated():
+    if not authenticated:
         raise ConfigError(
-            "Vault AppRole authentication failed",
+            "Vault token authentication failed",
             details={"vault_addr": settings.vault_addr},
         )
 
@@ -56,3 +58,42 @@ def fetch_secrets(client: hvac.Client, mount: str, path: str) -> dict:
         )
 
     return data
+
+
+def resolve_classifier_secrets(client: hvac.Client, settings: AppSettings) -> dict:
+    """Resolve Phase 3 classifier secrets from Vault.
+
+    Returns a dict with Azure OpenAI and LangSmith keys when present.
+    Never raises for missing optional secrets; returns empty values instead.
+    """
+    result: dict = {}
+
+    try:
+        azure_secrets = fetch_secrets(
+            client, settings.vault_secret_mount, "maintainer-copilot/azure-openai"
+        )
+        result["azure_openai_endpoint"] = azure_secrets.get("endpoint")
+        result["azure_openai_api_key"] = azure_secrets.get("api_key")
+        result["azure_openai_model"] = azure_secrets.get("openai_model")
+        result["azure_openai_embedding_model"] = azure_secrets.get("embedding_model")
+    except ConfigError:
+        result.setdefault("azure_openai_endpoint", None)
+        result.setdefault("azure_openai_api_key", None)
+        result.setdefault("azure_openai_model", None)
+        result.setdefault("azure_openai_embedding_model", None)
+
+    try:
+        langsmith_secrets = fetch_secrets(
+            client, settings.vault_secret_mount, "maintainer-copilot/langsmith"
+        )
+        result["langchain_api_key"] = langsmith_secrets.get("api_key")
+        result["langchain_endpoint"] = langsmith_secrets.get("endpoint")
+        result["langchain_project"] = langsmith_secrets.get("project")
+        result["langchain_tracing"] = langsmith_secrets.get("tracing")
+    except ConfigError:
+        result.setdefault("langchain_api_key", None)
+        result.setdefault("langchain_endpoint", None)
+        result.setdefault("langchain_project", None)
+        result.setdefault("langchain_tracing", None)
+
+    return result

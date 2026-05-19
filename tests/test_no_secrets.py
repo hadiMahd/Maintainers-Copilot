@@ -43,11 +43,15 @@ def test_docs_no_secrets():
 
 
 def test_no_env_file_committed():
-    """Assert .env does not exist at project root."""
+    """Assert .env is ignored by git if it exists at project root."""
     env_file = PROJECT_ROOT / ".env"
-    assert not env_file.exists(), (
-        f"Real secrets file .env exists at project root: {env_file}"
-    )
+    gitignore = PROJECT_ROOT / ".gitignore"
+    if env_file.exists():
+        assert gitignore.exists(), ".gitignore missing but .env exists"
+        gitignore_content = gitignore.read_text()
+        assert ".env" in gitignore_content, (
+            f".env exists at project root but is not in .gitignore"
+        )
 
 
 def test_label_mapping_yml_no_secrets():

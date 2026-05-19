@@ -27,6 +27,15 @@ data/raw/
 data/processed/
 artifacts/
 
+# Phase 3 classifier outputs
+evals/
+*.safetensors
+*.bin
+*.onnx
+
+# MLflow
+mlruns/
+
 # Environment and secrets
 .env
 .env.local

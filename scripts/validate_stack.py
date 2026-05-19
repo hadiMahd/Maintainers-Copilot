@@ -19,25 +19,16 @@ def main() -> None:
         print("ERROR: VAULT_ADDR is not set or empty")
         sys.exit(1)
 
-    # 2. VAULT_ROLE_ID
-    role_id = subprocess.os.environ.get("VAULT_ROLE_ID", "").strip()
-    if role_id:
-        checks.append(("VAULT_ROLE_ID set", True))
+    # 2. VAULT_TOKEN
+    vault_token = subprocess.os.environ.get("VAULT_TOKEN", "").strip()
+    if vault_token:
+        checks.append(("VAULT_TOKEN set", True))
     else:
-        checks.append(("VAULT_ROLE_ID set", False))
-        print("ERROR: VAULT_ROLE_ID is not set or empty")
+        checks.append(("VAULT_TOKEN set", False))
+        print("ERROR: VAULT_TOKEN is not set or empty")
         sys.exit(1)
 
-    # 3. VAULT_SECRET_ID
-    secret_id = subprocess.os.environ.get("VAULT_SECRET_ID", "").strip()
-    if secret_id:
-        checks.append(("VAULT_SECRET_ID set", True))
-    else:
-        checks.append(("VAULT_SECRET_ID set", False))
-        print("ERROR: VAULT_SECRET_ID is not set or empty")
-        sys.exit(1)
-
-    # 4. docker compose config
+    # 3. docker compose config
     result = subprocess.run(
         ["docker", "compose", "config"],
         capture_output=True,
@@ -50,7 +41,7 @@ def main() -> None:
         print(f"ERROR: docker compose config failed:\n{result.stderr}")
         sys.exit(1)
 
-    # 5. Vault health endpoint
+    # 4. Vault health endpoint
     health_url = vault_addr.rstrip("/") + "/v1/sys/health"
     try:
         req = urllib.request.Request(health_url, method="GET")
