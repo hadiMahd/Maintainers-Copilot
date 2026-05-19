@@ -11,6 +11,9 @@ os.environ.setdefault("VAULT_ADDR", "http://fake-vault:8200")
 os.environ.setdefault("VAULT_ROLE_ID", "fake-role")
 os.environ.setdefault("VAULT_SECRET_ID", "fake-secret")
 
+import pytest
+from unittest.mock import MagicMock
+
 from app.core.config import AppSettings
 from app.domain.models import ReadinessCheck
 

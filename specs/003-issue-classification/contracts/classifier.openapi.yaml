@@ -1,0 +1,97 @@
+openapi: 3.1.0
+info:
+  title: Maintainer's Copilot Classifier Model Server
+  version: 0.1.0
+  description: Phase 3 classifier inference contract.
+paths:
+  /classifier/predict:
+    post:
+      summary: Predict issue label
+      description: Returns a typed issue classification using the preloaded classifier model.
+      operationId: predictIssueLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassifierRequest"
+      responses:
+        "200":
+          description: Classifier prediction.
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassifierPrediction"
+        "422":
+          description: Invalid classifier input.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Classifier model unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ClassifierRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        comments:
+          type: array
+          items:
+            type: string
+      anyOf:
+        - required: [title]
+        - required: [body]
+        - required: [comments]
+    ClassifierPrediction:
+      type: object
+      required:
+        - label
+        - model_version
+      properties:
+        label:
+          type: string
+          enum: [bug, feature, docs, question]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        model_version:
+          type: string
+        request_id:
+          type: string
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+    ErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum: [invalid_classifier_input, classifier_model_unavailable, internal_error]
+        message:
+          type: string
+        request_id:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
