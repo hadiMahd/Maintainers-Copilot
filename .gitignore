@@ -50,3 +50,13 @@ artifacts/
 # OS
 .DS_Store
 Thumbs.db
+/*.md
+
+.agents
+.codex
+.vscode
+.specify
+
+AGENTS.md
+PHASE_TECH_STACK.md
+PROJECT_BRIEF.md
