@@ -8,6 +8,8 @@ import re
 import time
 from typing import Any, Protocol
 
+from prompts.classifier import CLASSIFIER_SYSTEM_PROMPT, classifier_user_prompt
+
 from app.domain.classifier import VALID_LABELS, PredictionRecord
 
 FAKE_PROVIDER = "fake_provider"
@@ -107,8 +109,8 @@ class AzureOpenAIClassifierProvider:
         started = time.monotonic()
         response = self._model.invoke(
             [
-                self._system_message_cls(content=_system_prompt()),
-                self._human_message_cls(content=_user_prompt(text)),
+                self._system_message_cls(content=CLASSIFIER_SYSTEM_PROMPT),
+                self._human_message_cls(content=classifier_user_prompt(text)),
             ]
         )
         elapsed_ms = (time.monotonic() - started) * 1000
@@ -168,23 +170,6 @@ def create_classifier_provider(
     raise ValueError(
         f"Unsupported provider backend: {provider_backend}. "
         f"Supported values are '{FAKE_PROVIDER}' and '{AZURE_OPENAI_PROVIDER}'."
-    )
-
-
-def _system_prompt() -> str:
-    return (
-        "You classify GitHub issues into exactly one label: "
-        "bug, feature, docs, or question. "
-        "Return strict JSON with keys 'label' and optional 'confidence'."
-    )
-
-
-def _user_prompt(text: str) -> str:
-    return (
-        "Issue text:\n"
-        f"{text}\n\n"
-        "Respond with JSON only, for example: "
-        '{"label":"bug","confidence":0.87}'
     )
 
 
