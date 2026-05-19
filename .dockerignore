@@ -1,20 +1,6 @@
-# Project-specific
-PLAN.md
-AGENTS.md
-PHASE_TECH_STACK.md
-PROJECT_BRIEF.md
-/*.md
-
-# Agent/tool directories
-.agents
-.vscode
-.specify
-.claude
-.codex
-
-# Environment and secrets
-.env
-.env.local
+# Git
+.git
+.gitignore
 
 # Python
 __pycache__/
@@ -24,7 +10,6 @@ __pycache__/
 *.so
 .venv/
 venv/
-.env/
 
 # Build artifacts
 dist/
@@ -42,7 +27,15 @@ data/raw/
 data/processed/
 artifacts/
 
+# Environment and secrets
+.env
+.env.local
+
+# Logs
+*.log
+
 # IDE
+.vscode/
 .idea/
 *.swp
 *.tmp
@@ -50,3 +43,9 @@ artifacts/
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml
+.dockerignore
