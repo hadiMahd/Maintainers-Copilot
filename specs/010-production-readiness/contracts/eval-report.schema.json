@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maintainer-copilot.local/contracts/eval-report.schema.json",
+  "title": "Maintainer Copilot Evaluation Report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "created_at",
+    "thresholds",
+    "classifier",
+    "rag",
+    "redaction",
+    "static_secret_grep",
+    "artifact_integrity",
+    "startup",
+    "tracing",
+    "storage",
+    "previous_green_comparison",
+    "overall_passed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "git_sha": {
+      "type": ["string", "null"]
+    },
+    "thresholds": {
+      "$ref": "#/$defs/thresholds"
+    },
+    "classifier": {
+      "$ref": "#/$defs/eval_result"
+    },
+    "rag": {
+      "$ref": "#/$defs/eval_result"
+    },
+    "redaction": {
+      "$ref": "#/$defs/gate_summary"
+    },
+    "static_secret_grep": {
+      "$ref": "#/$defs/gate_summary"
+    },
+    "artifact_integrity": {
+      "$ref": "#/$defs/gate_summary"
+    },
+    "startup": {
+      "$ref": "#/$defs/gate_summary"
+    },
+    "tracing": {
+      "$ref": "#/$defs/gate_summary"
+    },
+    "storage": {
+      "type": "object",
+      "required": ["destination", "stored", "uri"],
+      "additionalProperties": false,
+      "properties": {
+        "destination": {
+          "type": "string",
+          "enum": ["minio", "local-compatible"]
+        },
+        "stored": {
+          "type": "boolean"
+        },
+        "uri": {
+          "type": "string"
+        }
+      }
+    },
+    "previous_green_comparison": {
+      "type": "object",
+      "required": ["available", "passed", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "previous_report_uri": {
+          "type": ["string", "null"]
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "regressions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "overall_passed": {
+      "type": "boolean"
+    }
+  },
+  "$defs": {
+    "thresholds": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "classifier_accuracy_min",
+        "classifier_macro_f1_min",
+        "rag_hit_at_5_min",
+        "rag_mrr_at_10_min"
+      ],
+      "additionalProperties": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "const": true
+        },
+        "classifier_accuracy_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "classifier_macro_f1_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rag_hit_at_5_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rag_mrr_at_10_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rag_faithfulness_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rag_answer_relevancy_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["track", "dataset_id", "metrics", "thresholds", "passed", "failures"],
+      "additionalProperties": false,
+      "properties": {
+        "track": {
+          "type": "string",
+          "enum": ["classifier", "rag"]
+        },
+        "dataset_id": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": ["string", "null"]
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "latency": {
+          "type": ["object", "null"],
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "gate_summary": {
+      "type": "object",
+      "required": ["passed", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
