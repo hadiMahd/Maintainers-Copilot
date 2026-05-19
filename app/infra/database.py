@@ -2,6 +2,7 @@
 
 from typing import AsyncGenerator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from app.domain.errors import DependencyError
@@ -33,7 +34,7 @@ async def probe_database(engine: AsyncEngine, timeout: float = 3.0) -> Readiness
     """Probe the database by executing SELECT 1."""
     try:
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")  # type: ignore[arg-type]
+            await conn.execute(text("SELECT 1"))
         return ReadinessCheck(name="postgres", status="ok")
     except Exception:
         return ReadinessCheck(

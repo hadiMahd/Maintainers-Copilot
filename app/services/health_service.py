@@ -2,7 +2,8 @@
 
 import asyncio
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.core.config import AppSettings
 from app.domain.models import HealthStatus, ReadinessCheck
@@ -25,7 +26,7 @@ async def probe_pgvector(db_engine: AsyncEngine, timeout: float = 3.0) -> Readin
     try:
         async with db_engine.connect() as conn:
             result = await conn.execute(
-                "SELECT extname FROM pg_extension WHERE extname = 'vector'"  # type: ignore[arg-type]
+                text("SELECT extname FROM pg_extension WHERE extname = 'vector'")
             )
             row = result.fetchone()
             if row:
