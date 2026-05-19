@@ -13,10 +13,10 @@
 Run:
 
 ```bash
-uv run pytest tests/unit/test_entity_ruler_pipeline.py tests/unit/test_ner_service.py
+uv run pytest tests/unit/test_entity_ruler_pipeline.py tests/unit/test_ner_service.py -v
 ```
 
-Expected result: the spaCy `EntityRuler` pipeline detects representative file
+Expected result: the spaCy EntityRuler pipeline detects representative file
 paths, function names, class names, package names, version numbers, error
 codes, URLs, stack-trace markers, environment names, and command snippets with
 deterministic ordering and best-effort spans.
@@ -26,7 +26,7 @@ deterministic ordering and best-effort spans.
 Run:
 
 ```bash
-uv run pytest tests/unit/test_summarization_service.py
+uv run pytest tests/unit/test_summarization_service.py tests/unit/test_summarization_adapter.py -v
 ```
 
 Expected result: the summarization service returns `summary`, `key_facts`,
@@ -39,7 +39,7 @@ stub summary content.
 Run:
 
 ```bash
-uv run pytest tests/contract/test_issue_analysis_endpoints.py
+uv run pytest tests/contract/test_issue_analysis_endpoints.py -v
 ```
 
 Expected result: `/ner` and `/summarize` accept title/body/comments payloads,
@@ -52,13 +52,21 @@ summarizer timeout or unavailability.
 Run:
 
 ```bash
-uv run pytest tests/integration/test_issue_analysis_lifecycle.py tests/unit/test_issue_analysis_redaction.py
+uv run pytest tests/integration/test_issue_analysis_lifecycle.py tests/unit/test_issue_analysis_redaction.py tests/unit/test_issue_analysis_tracing.py tests/test_model_server_route_boundaries.py -v
 ```
 
 Expected result: the model server initializes the spaCy pipeline and
 summarization adapter during lifespan, keeps failures isolated to tool
 responses, and never logs full title/body/comment payloads or fake secret
 values unredacted.
+
+## Run Full Phase 4 Test Suite
+
+```bash
+uv run pytest tests/unit/test_entity_ruler_pipeline.py tests/unit/test_ner_service.py tests/unit/test_summarization_service.py tests/unit/test_summarization_adapter.py tests/unit/test_issue_analysis_redaction.py tests/unit/test_issue_analysis_tracing.py tests/contract/test_issue_analysis_endpoints.py tests/integration/test_issue_analysis_lifecycle.py tests/test_model_server_route_boundaries.py -q
+```
+
+Expected: 105 tests pass with no failures.
 
 ## Try The NER Endpoint Locally
 

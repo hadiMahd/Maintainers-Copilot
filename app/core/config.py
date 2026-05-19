@@ -47,6 +47,12 @@ class AppSettings(BaseSettings):
     # Phase 3 — LangSmith tracing (resolved from Vault at runtime)
     langchain_api_key: SecretStr | None = None
 
+    # Phase 4 — Summarization adapter settings
+    summarization_timeout_seconds: int = 15
+    summarization_max_input_chars: int = 8_000
+    langsmith_endpoint: str | None = None
+    langsmith_project: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

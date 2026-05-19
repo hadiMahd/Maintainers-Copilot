@@ -131,6 +131,52 @@ Runners-up and rationale:
 - PyTorch-based CNN: too heavy for the scope
 - Pickle-only weights: safetensors is safer
 
+## Phase 4 NER and Summarization Decisions
+
+**NER Approach**: Deterministic code-shaped entity extraction via regex-based spaCy pipeline.
+
+- **Method**: Custom regex patterns organized by entity type priority, matched sequentially with non-overlapping span exclusion. spaCy blank English pipeline provides the framework; all 10 entity types covered: `file_path`, `function_name`, `class_name`, `package_name`, `version_number`, `error_code`, `url`, `stack_trace_marker`, `environment_name`, `command_snippet`.
+- **Priority Order**: Higher-specificity types (stack_trace_marker, url, file_path) matched before lower-specificity types (class_name, environment_name) to prevent greedy matches.
+- **Duplicate Handling**: Entities with identical (text, type, source_field, start, end) tuples are collapsed. Different spans of the same text are preserved.
+- **Confidence**: Optional field, not populated — EntityRuler matches are deterministic, not probabilistic. Future phases may add confidence if a model-based NER approach is adopted.
+- **Alternatives Rejected**: Pure spaCy EntityRuler token patterns (tokenization breaks code paths), pretrained NER model (does not cover code-shaped entities).
+
+**Summarization Approach**: Azure OpenAI via LangChain `AzureChatOpenAI` with fake adapter test seam.
+
+- **Provider Stack**: `langchain-openai` + `langchain-core`, same Azure OpenAI credentials (endpoint, api_key, model) as Phase 3 LLM baseline.
+- **Timeout**: Fixed 15-second hard timeout per the spec requirement. Exceeded timeout produces `summarizer_timeout` error, never fallback content.
+- **Fake Adapter**: `FakeSummarizationAdapter` returns deterministic hash-based summaries for automated tests. Supports configurable failure modes (timeout, unavailable) for testing error paths.
+- **LangSmith**: Tracing enabled when `LANGCHAIN_API_KEY` is present in environment. Disabled by default for test/dev without credentials.
+- **Response Shape**: `summary`, `key_facts`, `unresolved_questions` always present. `suggested_next_step` optional — omitted when the adapter cannot produce one.
+
+**Input Validation**:
+- Combined character count (title + body + all comments) must not exceed 8,000. Exceeding returns `invalid_tool_input` (422).
+- At least one non-blank field required. Empty comments (whitespace-only) are normalized and excluded before entity extraction and prompt assembly.
+
+**Error Handling**:
+- `invalid_tool_input` (422): Combined input over 8,000 chars or no non-blank content.
+- `ner_extraction_failed` (500): Pipeline not initialized or execution error.
+- `summarizer_unavailable` (503): Adapter not configured or explicitly set unavailable.
+- `summarizer_timeout` (503): Request exceeded 15-second timeout.
+- `tool_execution_failed` (500): Unexpected summarization adapter failure.
+- `internal_error` (500): Unexpected NER pipeline failure.
+
+**Redaction**:
+- Full title/body/comments never logged — only length metadata.
+- `redact_issue_analysis_metadata()` keeps only safe keys (request_id, tool_name, combined_characters, entity_count, entity_types, etc.).
+- `redact_log_payload()` replaces title/body/comments with length-only fields.
+
+**Tracing**:
+- Each request receives a `request_id` (from `X-Request-ID` header or auto-generated UUID4) and a `trace_id` (always auto-generated UUID4).
+- Both IDs are returned in response headers: `X-Request-ID`, `X-Trace-ID`.
+- Redaction applied before any metadata reaches logs or trace spans.
+
+**Alternatives Rejected**:
+- Direct `httpx` to Azure OpenAI: rejected in favor of LangChain adapter pattern for test seam and consistency with Phase 3.
+- Silent truncation of oversized input: rejected because callers wouldn't know output is incomplete.
+- Fallback summary content when Azure unavailable: rejected per spec requirement — explicit errors prevent callers from treating synthetic text as real model output.
+- spaCy `en_core_web_sm` model: rejected — blank English pipeline with regex patterns is sufficient and avoids 11MB model download.
+
 ## Phase 2+ Decisions
 
 To be added as phases progress.
