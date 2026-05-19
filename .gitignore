@@ -1,10 +1,55 @@
+# Project-specific
 PLAN.md
+AGENTS.md
+PHASE_TECH_STACK.md
+PROJECT_BRIEF.md
+/*.md
 
+# Agent/tool directories
 .agents
 .vscode
 .specify
 .claude
 .codex
+
+# Environment and secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+.env/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Data and artifacts
+data/raw/
+data/processed/
+artifacts/
+
+# IDE
+.idea/
+*.swp
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
 /*.md
 
 .agents
