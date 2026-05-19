@@ -1,5 +1,16 @@
 """Pytest configuration and shared fixtures."""
 
+import os
+
+import pytest
+from unittest.mock import MagicMock
+
+# Set required env vars BEFORE importing any app modules that create AppSettings
+os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("VAULT_ADDR", "http://fake-vault:8200")
+os.environ.setdefault("VAULT_ROLE_ID", "fake-role")
+os.environ.setdefault("VAULT_SECRET_ID", "fake-secret")
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -117,3 +128,63 @@ async def app(settings, mock_vault, mock_db, mock_redis, mock_minio, mock_vault_
             transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test"
         ) as client:
             yield client
+
+
+# ── Phase 2: Dataset Pipeline Fixtures ──
+
+
+@pytest.fixture
+def raw_issue_record():
+    """Return a sample raw issue record."""
+    return {
+        "repo": "test/repo",
+        "issue_number": 1,
+        "title": "Test issue",
+        "body": "Body text",
+        "labels": ["bug"],
+        "state": "closed",
+        "created_at": "2024-01-01T00:00:00Z",
+        "closed_at": "2024-01-02T00:00:00Z",
+        "updated_at": "2024-01-02T00:00:00Z",
+        "author_association": "CONTRIBUTOR",
+        "comments_count": 2,
+        "comments_url": "https://api.github.com/repos/test/repo/issues/1/comments",
+        "comments": [],
+        "html_url": "https://github.com/test/repo/issues/1",
+    }
+
+
+@pytest.fixture
+def processed_issue_record():
+    """Return a sample processed issue record."""
+    return {
+        "id": "test/repo#1",
+        "repo": "test/repo",
+        "issue_number": 1,
+        "title": "Test issue",
+        "body": "Body text",
+        "comments": [],
+        "original_labels": ["bug"],
+        "mapped_label": "bug",
+        "created_at": "2024-01-01T00:00:00Z",
+        "closed_at": "2024-01-02T00:00:00Z",
+        "classifier_text": "Test issue\n\nBody text",
+        "rag_text": "Test issue\n\nBody text",
+        "source_url": "https://github.com/test/repo/issues/1",
+    }
+
+
+@pytest.fixture
+def sample_label_mapping():
+    """Return a sample label mapping dict."""
+    return {
+        "classes": {
+            "bug": ["bug", "Bug", "type:bug"],
+            "feature": ["feature", "enhancement", "type:feature"],
+            "docs": ["documentation", "docs", "type:documentation"],
+            "question": ["question", "help wanted", "type:question"],
+        },
+        "unmapped_policy": "exclude",
+        "ambiguous_policy": "first_match",
+        "priority_order": ["bug", "feature", "docs", "question"],
+    }
