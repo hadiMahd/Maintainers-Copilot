@@ -72,3 +72,58 @@ def redact_run_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
     """Redact MLflow run metadata before persistence."""
     text_fields = {"tracking_uri", "artifact_uri"}
     return redact_dict(metadata, text_fields)
+
+
+_SAFE_ISSUE_ANALYSIS_KEYS = {
+    "request_id",
+    "tool_name",
+    "combined_characters",
+    "normalized_comment_count",
+    "entity_count",
+    "entity_types",
+    "status",
+    "code",
+    "trace_id",
+    "provider_backend",
+    "tracing_backend",
+    "timeout_seconds",
+    "limitations",
+    "error_code",
+}
+
+
+def redact_issue_analysis_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Keep only safe, bounded keys for issue-analysis logging and tracing."""
+    safe: dict[str, Any] = {}
+    for key, value in metadata.items():
+        if key in _SAFE_ISSUE_ANALYSIS_KEYS:
+            if isinstance(value, str):
+                safe[key] = redact_string(value)
+            elif isinstance(value, (int, float, bool)):
+                safe[key] = value
+            elif isinstance(value, list):
+                safe[key] = [
+                    redact_string(item) if isinstance(item, str) else item
+                    for item in value
+                ]
+            else:
+                safe[key] = str(value)
+    return safe
+
+
+def redact_log_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Strip full title/body/comments before logging — retain only length metadata."""
+    safe: dict[str, Any] = {}
+    for key, value in payload.items():
+        if key in {"title", "body", "comments"}:
+            if isinstance(value, str):
+                safe[f"{key}_len"] = len(value)
+            elif isinstance(value, list):
+                safe[f"{key}_len"] = len(value)
+                safe[f"{key}_count"] = sum(len(c) for c in value if isinstance(c, str))
+            continue
+        if isinstance(value, str):
+            safe[key] = redact_string(value)
+        else:
+            safe[key] = value
+    return safe

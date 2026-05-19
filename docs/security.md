@@ -25,6 +25,13 @@
 - `redaction_applied: true` must be set on all persisted model cards and run metadata.
 - Tests prove that fake secrets do not appear unredacted in logs, traces, or audit records.
 
+### Phase 4 Redaction Rules
+
+- `redact_issue_analysis_metadata()` keeps only safe keys: `request_id`, `tool_name`, `combined_characters`, `entity_count`, `entity_types`, `status`, `code`, `trace_id`, `provider_backend`, `tracing_backend`, `timeout_seconds`, `limitations`, `error_code`. All other keys are stripped.
+- `redact_log_payload()` replaces `title`, `body`, and `comments` fields with length-only metadata (`title_len`, `body_len`, `comments_len`, `comments_count`). Non-content fields are redacted for secret patterns before logging.
+- No raw title, body, comment text, prompts, credentials, provider responses, or stack traces reach logs or traces.
+- Request IDs and trace IDs are preserved in redacted metadata for correlation without exposing payloads.
+
 ## Model Artifact Security
 
 - Only hash-validated classifier artifacts can be marked deployable or uploaded to MinIO.

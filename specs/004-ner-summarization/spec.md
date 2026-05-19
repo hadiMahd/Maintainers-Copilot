@@ -89,8 +89,9 @@ does not crash the model server, and does not log full issue payloads.
 1. **Given** invalid or empty tool input, **When** the tool endpoint is called,
    **Then** it returns a structured validation error.
 2. **Given** an external summarization adapter times out or fails, **When** the
-   summarization endpoint is called, **Then** the tool returns a clear fallback or
-   structured tool error without crashing the model server.
+   summarization endpoint is called, **Then** the tool returns a structured tool
+   error without crashing the model server and does not emit stub summary
+   content.
 3. **Given** issue text contains sensitive-looking values, **When** a tool call
    succeeds or fails, **Then** logs do not include full raw issue payloads.
 
