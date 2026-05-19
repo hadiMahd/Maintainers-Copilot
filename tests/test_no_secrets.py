@@ -48,3 +48,40 @@ def test_no_env_file_committed():
     assert not env_file.exists(), (
         f"Real secrets file .env exists at project root: {env_file}"
     )
+
+
+def test_label_mapping_yml_no_secrets():
+    """Assert label_mapping.yml contains no token/password/key patterns."""
+    mapping_file = PROJECT_ROOT / "config" / "label_mapping.yml"
+    if not mapping_file.exists():
+        pytest.skip("config/label_mapping.yml does not exist")
+    content = mapping_file.read_text()
+    forbidden_patterns = [
+        re.compile(r"token", re.IGNORECASE),
+        re.compile(r"password", re.IGNORECASE),
+        re.compile(r"secret", re.IGNORECASE),
+        re.compile(r"api[_\s]?key", re.IGNORECASE),
+        re.compile(r"sk-[A-Za-z0-9]{20,}"),
+    ]
+    for pattern in forbidden_patterns:
+        matches = pattern.findall(content)
+        assert not matches, f"Found potential secret pattern in {mapping_file}: {matches}"
+
+
+def test_dataset_settings_token_not_logged():
+    """Assert DatasetSettings with fake token does not leak token in repr."""
+    from pydantic import SecretStr
+    from config.dataset_settings import DatasetSettings
+
+    settings = DatasetSettings(
+        repo_owner="test",
+        repo_name="repo",
+        github_token=SecretStr("fake-token-12345"),
+    )
+    repr_str = repr(settings)
+    assert "fake-token-12345" not in repr_str, (
+        f"Secret token leaked in repr: {repr_str}"
+    )
+    # Also verify get_secret_value() works
+    assert settings.github_token is not None
+    assert settings.github_token.get_secret_value() == "fake-token-12345"
