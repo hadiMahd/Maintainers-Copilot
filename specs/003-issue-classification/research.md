@@ -2,118 +2,176 @@
 
 ## Decision: Use TF-IDF plus Logistic Regression for the classical baseline
 
-**Rationale**: A TF-IDF text representation with a logistic regression classifier
-is fast, explainable, strong enough as a baseline, and can expose class
-probabilities for confidence-like outputs when needed. It is easy to train on a
-bootcamp machine and simple to compare with transformer and LLM results.
+**Rationale**: TF-IDF with Logistic Regression is fast, explainable, and
+strong enough to act as a credible non-neural baseline on issue text. It also
+provides class probabilities that can be surfaced as confidence scores.
 
 **Alternatives considered**:
-- Linear SVM: strong baseline, but confidence requires calibration.
-- Naive Bayes: very fast, but often weaker for mixed issue text and less useful
-  as the main classical comparison.
+- Linear SVM: competitive baseline, but confidence requires extra calibration.
+- Naive Bayes: simpler, but usually weaker on mixed issue-title/body/comment
+  text.
 
-## Decision: Use `distilbert-base-uncased` as the default transformer encoder
+## Decision: Fine-tune `distilbert-base-uncased` as the transformer candidate
 
-**Rationale**: DistilBERT is lightweight enough for the project while still
-representing a real transformer fine-tuning workflow. The implementation can
-allow a config override for a similarly small encoder, but the default remains
-explicit for reproducibility.
-
-**Alternatives considered**:
-- Larger BERT/RoBERTa models: rejected because they increase training cost and
-  are harder to defend for a bootcamp project.
-- Tiny random models only: useful for tests, but not a credible final
-  transformer comparison.
-
-## Decision: Save transformer weights with safetensors when practical
-
-**Rationale**: Safetensors avoids pickle-style model loading risks and gives a
-cleaner artifact story. If a dependency or model path cannot emit safetensors,
-the reason must be documented in the model card.
+**Rationale**: DistilBERT is small enough for a bootcamp environment while
+still representing a real fine-tuning workflow and a deployable transformer
+artifact.
 
 **Alternatives considered**:
-- Pickle-only model artifacts: rejected for the transformer deployment candidate
-  because artifact safety and portability matter.
-- No saved artifact: rejected because model-server inference requires a stable
-  deployable package.
+- Larger BERT or RoBERTa variants: stronger in some settings, but heavier to
+  train and harder to justify for this scope.
+- Tiny random-test models only: useful for tests, but not credible as the phase
+  comparison target.
 
-## Decision: Use sklearn metrics for all comparable classification metrics
+## Decision: Prefer safetensors for transformer weights
 
-**Rationale**: Accuracy, macro-F1, per-class F1, and confusion matrix should be
-computed by one shared implementation so all approaches are compared the same
-way.
-
-**Alternatives considered**:
-- Per-script metric calculations: rejected because small differences can make
-  comparisons unreliable.
-- Manual metric calculations: rejected because tested library behavior is less
-  error-prone.
-
-## Decision: Store predictions, metrics, model cards, and reports as JSON artifacts
-
-**Rationale**: JSON artifacts are easy to inspect, diff, validate in tests, and
-consume from future CI or model-serving checks.
+**Rationale**: Safetensors gives a cleaner and safer artifact story than
+pickle-style weight loading. If a non-safetensors fallback is ever needed, that
+exception must be documented in the model card.
 
 **Alternatives considered**:
-- Markdown-only reports: useful for humans, but harder to validate.
-- Database-only metric storage: unnecessary for this phase and less portable.
+- Pickle-only weights: rejected because deployable artifact safety matters.
+- No saved artifact: rejected because later serving depends on stable model
+  files.
 
-## Decision: Make the LLM baseline optional for real providers and mandatory with a fake provider in tests
+## Decision: Use one shared sklearn-based evaluator for comparable metrics
 
-**Rationale**: A real LLM baseline needs local credentials and may have cost.
-Automated tests must not depend on paid services or secrets, so fake-provider
-mode validates prompt/output parsing, cost accounting shape, and report
-integration.
-
-**Alternatives considered**:
-- Require real LLM credentials for all runs: rejected because tests and local
-  setup must work without secrets.
-- Omit LLM baseline when credentials are absent: rejected for tests because the
-  code path still needs coverage.
-
-## Decision: Load classifier artifact during model-server lifespan
-
-**Rationale**: Lifespan loading follows the constitution and prevents model
-loading at import time or per request. It also lets startup fail or mark the model
-unavailable before prediction calls.
+**Rationale**: Accuracy, macro-F1, per-class F1, and confusion matrix must be
+computed the same way for every approach. A shared evaluator avoids drift
+between scripts.
 
 **Alternatives considered**:
-- Load at module import: rejected because it creates hidden side effects.
-- Load on each request: rejected because it is slow and wastes resources.
+- Per-script metric logic: rejected because comparison would become fragile.
+- Manual metric calculations: rejected because library behavior is easier to
+  test and trust.
 
-## Decision: Record model and training data hashes before serving
+## Decision: Keep predictions, metrics, model cards, and reports in JSON/JSONL
 
-**Rationale**: Hashes tie a served model to a known training dataset and artifact
-contents. Hash validation prevents accidental or partial artifacts from being
-served.
-
-**Alternatives considered**:
-- Trust artifact paths alone: rejected because paths can point to changed
-  contents.
-- Hash only the model weights: rejected because tokenizer and metadata also
-  affect behavior.
-
-## Decision: Log transformer training with a real local run logger
-
-**Rationale**: The project brief requires a real run logger. A local
-MLflow-style file store or structured JSONL run-log backend is enough for the
-bootcamp scope while still recording run ID, parameters, metrics, artifact
-references, plots, and final status.
+**Rationale**: JSON artifacts are easy to diff, validate in tests, and reuse in
+later CI and serving gates. JSONL remains appropriate for per-record
+predictions.
 
 **Alternatives considered**:
-- Print training metrics only: rejected because console output is not durable
+- Markdown-only reporting: readable, but weak for automated validation.
+- Database-only storage: unnecessary complexity for this phase.
+
+## Decision: Use Azure OpenAI via LangChain `AzureChatOpenAI` for the LLM baseline
+
+**Rationale**: The project already leans toward Azure/OpenAI-backed model usage
+in later phases. Using LangChain keeps provider-specific code inside an adapter
+and makes fake/mock providers straightforward in tests.
+
+**Alternatives considered**:
+- Direct provider SDK calls: workable, but less consistent with later
+  tool-calling/chatbot phases.
+- Require a different hosted LLM provider: rejected because it fragments the
+  stack without adding value.
+
+## Decision: Resolve real Azure OpenAI and LangSmith credentials through Vault bootstrap settings
+
+**Rationale**: The constitution requires LLM and tracing secrets to resolve
+from Vault or test fakes. Phase 3 should keep `.env` limited to bootstrap
+settings and never require real provider keys in committed files or automated
+tests.
+
+**Alternatives considered**:
+- Read Azure OpenAI or LangSmith keys directly from `.env`: rejected because it
+  conflicts with the constitution secret policy.
+- Make all real-provider runs impossible before the auth phase: rejected because
+  local evaluator runs still need an escape hatch for real comparisons.
+
+## Decision: Enable LangSmith tracing only when a Vault-resolved API key is configured
+
+**Rationale**: LangSmith provides trace evidence for real LLM baseline runs, but
+the phase must still work without external accounts. When the key is absent, the
+baseline still runs locally without tracing.
+
+**Alternatives considered**:
+- Make LangSmith mandatory: rejected because local and CI runs must remain
+  credential-optional.
+- Skip LLM tracing entirely: rejected because real runs should still be
+  inspectable.
+
+## Decision: Redact telemetry and artifact metadata before persistence
+
+**Rationale**: MLflow runs, LangSmith traces, model cards, manifests, and eval
+logs can all accidentally capture secrets or oversized raw issue text. A single
+infra-level redaction step keeps telemetry and artifact metadata safe and
+consistent with the constitution.
+
+**Alternatives considered**:
+- Rely on individual scripts to remember redaction rules: rejected because that
+  scatters security logic and is easy to miss.
+- Store full raw payloads in MLflow or LangSmith for convenience: rejected
+  because the constitution forbids unredacted persistence or telemetry.
+
+## Decision: Use a self-hosted MLflow tracking server with MinIO artifact storage
+
+**Rationale**: MLflow satisfies the project requirement for a real run logger,
+works locally without external accounts, and pairs cleanly with MinIO for model
+artifacts, plots, and run evidence. For bootcamp scope, the tracking server can
+run in Docker Compose with a local persistent backend and MinIO as the artifact
+store.
+
+**Alternatives considered**:
+- Structured JSONL logs only: rejected because the spec explicitly requires a
+  real run logger.
+- Hosted experiment-tracking services: rejected because CI and local review must
+  not depend on paid or external accounts.
+- Reusing the application database as the MLflow backend: rejected to keep ML
+  tracking isolated from application persistence.
+
+## Decision: Upload the selected classifier artifact or manifest to MinIO
+
+**Rationale**: Final review and later startup validation need a stable blob
+reference for the selected model. Uploading only the selected, hash-validated
+artifact or a manifest keeps storage disciplined.
+
+**Alternatives considered**:
+- Local disk only: rejected because the project brief requires MinIO/blob-backed
   evidence.
-- Require a hosted tracking service: rejected because CI and local review should
-  not depend on paid or external credentials.
+- Upload every failed or partial run artifact: rejected because incomplete runs
+  are not deployable evidence.
 
-## Decision: Store selected classifier artifact or manifest in MinIO
+## Decision: Validate artifact hashes before the model can be served
 
-**Rationale**: Final review needs blob-backed model artifacts or at least a
-manifest. The selected classifier artifact must be hash-validated before a
-MinIO object or manifest reference is recorded in the model card.
+**Rationale**: Hash validation ensures the served model matches its model card
+and prevents partial or mutated artifacts from being treated as deployable.
 
 **Alternatives considered**:
-- Keep artifacts only on local disk: rejected because the project brief requires
-  MinIO/blob storage for model artifacts or a manifest.
-- Upload all intermediate failed runs: rejected because partial or failed
-  artifacts are not deployable evidence.
+- Trust artifact paths alone: rejected because contents can drift.
+- Hash only weights: rejected because tokenizer and metadata also affect
+  behavior.
+
+## Decision: Load the classifier artifact during model-server lifespan
+
+**Rationale**: Lifespan loading matches the constitution, avoids import-time
+side effects, and keeps request latency stable.
+
+**Alternatives considered**:
+- Load at import time: rejected because it creates hidden startup side effects.
+- Load on every request: rejected because it is slow and wasteful.
+
+## Decision: Measure endpoint latency on a warm, preloaded model-server over 30 sequential requests
+
+**Rationale**: The Phase 3 latency target needs a repeatable measurement method
+instead of a vague “normal load” claim. Warm-process sequential requests are
+simple enough for the bootcamp scope and are consistent with the endpoint’s
+single-request acceptance criterion.
+
+**Alternatives considered**:
+- Leave latency as a qualitative statement: rejected because the success
+  criterion is numeric.
+- Require heavy load-testing infrastructure in Phase 3: rejected because it is
+  out of proportion to the scope and belongs in later production-readiness work.
+
+## Decision: Treat model version as a semantic version stored in `model_card.json`
+
+**Rationale**: A semantic version string is easy to inspect, stable for clients,
+and can be returned directly by the classifier endpoint without recomputing any
+runtime identifier.
+
+**Alternatives considered**:
+- Git SHA only: useful internally, but weaker as a client-facing model version.
+- Timestamp-only versioning: easy to generate, but less readable and harder to
+  manage semantically.

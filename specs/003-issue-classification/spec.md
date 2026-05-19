@@ -14,6 +14,8 @@
 - Q: Which LLM provider should the LLM baseline use? → A: Azure OpenAI via LangChain with LangSmith tracing — consistent with Phases 3/4/5; LangChain fake adapter in automated tests.
 - Q: What format should the model version field use in classifier prediction responses? → A: Semantic version string from the model card (e.g., `"1.0.0"`).
 - Q: What is the maximum acceptable inference latency for the classifier endpoint? → A: 500ms p95 for a single classification request.
+- Q: How should real Azure OpenAI and LangSmith credentials be sourced in Phase 3? → A: Through Vault-resolved secrets using typed bootstrap settings only; automated tests use fake providers and never require real secrets.
+- Q: How should the classifier endpoint latency target be measured? → A: On a warm, preloaded single-process model-server using 30 sequential representative requests, measuring request-received to response-sent latency.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -112,6 +114,7 @@ valid artifact and verify the structured unavailable error.
 - A class is absent or rare in the test split: the report records the issue and
   still handles per-class metrics deterministically.
 - The Azure OpenAI endpoint is unavailable, rate-limited, or credentials are absent locally: the baseline reports a controlled failure; automated tests always use a LangChain fake/mock provider and never require real credentials.
+- Vault is unavailable or Phase 3 provider/tracing secrets are missing: real-provider LLM baseline runs fail clearly before provider calls; fake-provider automated tests still run without real credentials.
 - Transformer training is interrupted or produces a partial artifact: partial
   artifacts are not treated as deployable and hash validation fails.
 - A model artifact exists but hash verification fails: the model server refuses
@@ -143,9 +146,14 @@ valid artifact and verify the structured unavailable error.
 - **FR-004**: The system MUST provide a command to run an LLM baseline evaluation
   on the same test split. The LLM baseline MUST use Azure OpenAI via the LangChain
   `AzureChatOpenAI` interface. LangSmith MUST be configured as the tracing backend
-  for all LLM calls when a LangSmith API key is present in typed settings. In
+  for all LLM calls when a LangSmith API key is present through Vault-resolved
+  runtime settings. In
   automated tests, a LangChain fake/mock provider MUST be used so no real Azure
   OpenAI credentials are required.
+- **FR-004a**: Real Azure OpenAI and LangSmith credentials MUST resolve from
+  Vault using typed bootstrap settings only. The phase MUST NOT require real
+  provider or tracing credentials in `.env`, committed fixtures, or automated
+  tests.
 - **FR-005**: The system MUST provide one shared classifier evaluation module used
   to compare prediction outputs from all three approaches.
 - **FR-006**: The evaluation report MUST include accuracy, macro-F1, per-class
@@ -154,6 +162,9 @@ valid artifact and verify the structured unavailable error.
   covering the four project labels.
 - **FR-008**: Training and evaluation outputs MUST be saved as artifacts with
   stable, inspectable metadata.
+- **FR-008a**: A redaction layer in `app/infra` MUST run before MLflow run
+  metadata, LangSmith traces, model-card writes, artifact manifests, and
+  evaluation/report logs are persisted.
 - **FR-009**: The fine-tuned transformer artifact MUST include model weights,
   tokenizer files, `model_card.json`, `metrics.json`, artifact SHA-256, training
   data hash, architecture name, hyperparameters, freeze policy, and final metrics.
@@ -177,6 +188,10 @@ valid artifact and verify the structured unavailable error.
   label, confidence when available, and model version. The model version MUST be
   a semantic version string (e.g., `"1.0.0"`) read from the `model_card.json`
   of the loaded artifact and returned verbatim in every prediction response.
+- **FR-014a**: The classifier endpoint MUST reject invalid or oversized input
+  with structured validation errors. At minimum, `title` MUST be limited to 512
+  characters, `body` to 16,000 characters, `comments` to 100 items maximum, and
+  each comment item to 4,000 characters maximum.
 - **FR-015**: The only valid prediction labels are `bug`, `feature`, `docs`, and
   `question`.
 - **FR-016**: The model server MUST return a structured error when the model is
@@ -198,10 +213,11 @@ valid artifact and verify the structured unavailable error.
   routes must stay thin and must not load models, train models, or calculate
   metrics directly.
 - **Security And Redaction**: Azure OpenAI endpoint, API key, and LangSmith API
-  key are optional local secrets loaded through typed settings only. Tests MUST
-  use LangChain fake/mock providers so no real credentials are required. Reports,
-  logs, and LangSmith traces must not contain raw secret values or unnecessary
-  full issue payload dumps.
+  key are optional runtime secrets resolved from Vault through typed bootstrap
+  settings only. Tests MUST use LangChain fake/mock providers so no real
+  credentials are required. Reports, logs, MLflow metadata, model cards,
+  artifact manifests, and LangSmith traces must not contain raw secret values or
+  unnecessary full issue payload dumps.
 - **Observability And Errors**: Training/evaluation commands must produce clear
   progress and failure messages. Model-server prediction requests must use
   structured errors and include request correlation where the foundation supports
@@ -212,7 +228,8 @@ valid artifact and verify the structured unavailable error.
   `DECISIONS.md`.
 - **Critical Tests**: Critical tests must cover metric calculations, prediction
   schema, unavailable-model error schema, artifact hash validation, model loading
-  lifecycle rules, and no committed real secrets.
+  lifecycle rules, redaction before telemetry/artifact persistence, oversized
+  input validation, and no committed real secrets.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -269,7 +286,8 @@ valid artifact and verify the structured unavailable error.
 - **SC-007**: The classifier endpoint returns a valid project label and model
   version for a valid test input when a deployable model is configured. End-to-end
   inference latency (request received to response sent) MUST be ≤ 500ms at p95
-  for a single classification request under normal load.
+  for a single classification request on a warm, preloaded single-process
+  model-server, measured across 30 sequential representative requests.
 - **SC-008**: The classifier endpoint returns a structured unavailable-model error
   when no valid model artifact is configured.
 - **SC-009**: Automated tests cover metric calculation and model-server response
@@ -281,7 +299,7 @@ valid artifact and verify the structured unavailable error.
   evaluation are treated as complete.
 - The fine-tuned transformer uses `distilbert-base-uncased` (66M parameters), which is CPU-feasible for a bootcamp environment. Specific hyperparameters (learning rate, batch size, epochs, freeze policy) will be finalized during planning.
 - LLM baseline evaluation may use a fake provider in automated tests and a real
-  provider only when local credentials are available.
+  provider only when Vault-populated provider credentials are available.
 - Latency values are measured as part of evaluation and reported with enough
   context to compare approaches fairly.
 - Cost is required for the LLM baseline and may be recorded as zero or not

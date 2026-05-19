@@ -1,51 +1,57 @@
 # Implementation Plan: Issue Classification Track
 
-**Branch**: `003-issue-classification` | **Date**: 2026-05-18 | **Spec**: [spec.md](./spec.md)
+**Branch**: `003-issue-classification` | **Date**: 2026-05-19 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/003-issue-classification/spec.md`
 
 ## Summary
 
 Build the Phase 3 issue classification track for Maintainer's Copilot. The work
-compares a scikit-learn classical baseline, a fine-tuned Hugging Face transformer,
-and an LLM baseline on the same Phase 2 test split; emits comparable metrics and
-JSON artifacts; creates a 25-example golden set; saves transformer artifacts with
-model card, metrics, training data hash, artifact SHA-256, training run logs,
-training plots, and MinIO artifact or manifest references; records the
-evidence-based classifier decision in `DECISIONS.md`; and exposes a model-server
-classifier endpoint that loads the selected model during lifespan, never at
+compares a scikit-learn classical baseline, a fine-tuned DistilBERT classifier,
+and an Azure OpenAI LLM baseline on the same Phase 2 test split; emits one
+shared evaluation report; records deployable evidence through MLflow,
+training-data hashes, artifact hashes, training plots, and MinIO artifact
+references; resolves real provider and tracing secrets through Vault bootstrap
+settings; redacts telemetry and artifact metadata before persistence; updates
+`DECISIONS.md` with an evidence-based model choice; and exposes a model-server
+classifier endpoint that loads the selected artifact during lifespan, never at
 import time or per request.
 
 ## Technical Context
 
 **Language/Version**: Python 3.11 or newer  
-**Primary Dependencies**: scikit-learn for the classical baseline and metrics,
-Hugging Face Transformers for the fine-tuned small encoder, safetensors when
-practical for model weights, pytest for tests, httpx for model-server contract
-tests, pydantic or existing domain models for typed schemas, and a local
-MLflow-style or structured file run logger for transformer training  
-**Storage**: Phase 2 JSONL dataset splits; JSON metrics, predictions, model
-cards, and reports under `artifacts/` and `evals/`; classifier model artifacts
-under `artifacts/classifiers/`; training plots under the transformer artifact;
-selected classifier artifact or manifest stored in MinIO for final review  
-**Testing**: pytest unit tests for metrics, hash validation, model-card schema,
-run-log metadata, training plot references, MinIO manifest metadata, prediction
-schemas, unavailable-model errors, and model-server lifecycle behavior; contract
-tests for classifier endpoint response shape  
-**Target Platform**: Local developer environment and future CI jobs; model-server
-runtime for classifier inference  
-**Project Type**: ML training/evaluation scripts plus model-server inference
+**Primary Dependencies**: scikit-learn, Hugging Face Transformers,
+`distilbert-base-uncased`, safetensors, mlflow, LangChain, `AzureChatOpenAI`,
+LangSmith (optional tracing when configured), existing Vault and MinIO
+adapters, pydantic or existing domain models, pytest, httpx  
+**Storage**: Phase 2 JSONL dataset splits; local artifact directories under
+`artifacts/classifiers/`; evaluation outputs under `evals/`; MLflow tracking
+metadata via a self-hosted local backend; MinIO as the artifact store for
+MLflow outputs and the selected classifier artifact or manifest; redacted
+metadata only in MLflow, LangSmith, model cards, and manifests  
+**Testing**: pytest unit tests for metrics, hashes, model-card/run metadata,
+MinIO manifest metadata, fake-provider baseline handling, Vault-backed secret
+resolution, redaction behavior, oversized-input validation, and semantic-version
+response schema; contract tests for classifier endpoint behavior; integration
+tests for lifespan model loading, unavailable-model failures, and the latency
+measurement harness  
+**Target Platform**: Local Linux/container development environment, future CI,
+and the model-server runtime used by later phases  
+**Project Type**: ML training/evaluation scripts plus a model-server inference
 endpoint  
-**Performance Goals**: Comparable latency reporting for all approaches; model
-loaded once during model-server lifespan; no training or model loading in request
-paths  
-**Constraints**: Same Phase 2 test split for all approaches; no RAG, chatbot
-orchestration, widget work, or production auth; LLM provider credentials optional
-and never required for tests; no raw secrets or unnecessary full issue payloads
-in logs/reports  
+**Performance Goals**: Comparable latency reporting for all three approaches;
+classifier endpoint p95 latency of 500ms or better for one request on a warm,
+preloaded single-process model-server measured across 30 sequential
+representative requests; model loaded once during lifespan  
+**Constraints**: All approaches must use the same Phase 2 test split; no RAG,
+chatbot orchestration, widget behavior, or auth flows in this phase; no real
+Azure/OpenAI credentials required in automated tests; real provider and tracing
+credentials resolve from Vault bootstrap settings only; no raw secrets or full
+issue payload dumps in logs, traces, model cards, manifests, or run metadata;
+only hash-validated artifacts can be marked deployable or uploaded to MinIO  
 **Scale/Scope**: Four labels (`bug`, `feature`, `docs`, `question`), one
-classical baseline, one fine-tuned lightweight transformer, one LLM baseline, one
-shared evaluator, one classifier serving endpoint, and one evidence-backed
-decision record
+classical baseline, one fine-tuned transformer, one LLM baseline, one shared
+evaluator, one 25-example golden set, one selected deployable artifact, and one
+classifier endpoint
 
 ## Constitution Check
 
@@ -53,52 +59,38 @@ decision record
 
 ### Initial Gate
 
-- **Phase Scope**: PASS. This is `PLAN.md` Phase 3 only. It compares classifier
-  approaches, emits artifacts, and exposes the classifier model-server endpoint;
-  it excludes RAG, chatbot orchestration, widget work, and unrelated product
-  features.
-- **Layered Architecture**: PASS. Training and evaluation live in scripts/shared
-  modules. Runtime serving lives in `model_server/api/classifier.py` and related
-  model-server services/infra; routes stay thin.
-- **FastAPI Resource Management**: PASS. The classifier model is loaded during
-  model-server lifespan and is not loaded at import time or per request.
-- **Async Safety**: PASS. Training stays out of request paths. Model-server route
-  work is inference-only and uses preloaded resources.
-- **Secrets And Redaction**: PASS. LLM baseline credentials are optional local
-  settings or test fakes. Reports and logs must not contain provider keys or raw
-  secrets.
-- **Observability And Errors**: PASS. Commands emit clear progress/failure
-  messages. Model-server endpoint returns typed predictions or structured
-  unavailable-model errors.
-- **AI Evidence And Eval Gates**: PASS. Required metrics, model cards, hashes,
-  training run logs, training plots, MinIO artifact references, golden set,
-  evaluation report, and `DECISIONS.md` comparison are central to the plan.
-- **Critical Tests And CI**: PASS. Tests cover metric calculations, report shape,
-  artifact hash validation, model-server schemas, lifecycle rules, and no real
-  secret leakage.
-- **Simplicity**: PASS. Use one classical baseline, one lightweight transformer,
-  and one LLM baseline without multi-agent workflows or extra infrastructure.
-
-### Post-Design Recheck
-
-- **Phase Scope**: PASS. Research, data model, contracts, and quickstart cover
-  only classifier training, evaluation, artifact metadata, and classifier serving.
-- **Layered Architecture**: PASS. Contracts separate scripts from model-server
-  endpoint behavior and keep training outside request paths.
-- **FastAPI Resource Management**: PASS. The API contract requires lifespan model
-  loading and structured unavailable-model behavior.
-- **Async Safety**: PASS. No long-running training/evaluation is introduced into
-  runtime endpoints.
-- **Secrets And Redaction**: PASS. LLM credentials remain optional; fake provider
-  is required for automated tests.
-- **Observability And Errors**: PASS. Command and endpoint contracts define clear
-  outputs, typed responses, and controlled failures.
-- **AI Evidence And Eval Gates**: PASS. Artifacts and reports include comparable
-  metrics, cost where applicable, model/training hashes, run IDs, training plot
-  references, MinIO references, and decision records.
-- **Critical Tests And CI**: PASS. Quickstart and contracts call out metrics,
-  schema, hash, lifecycle, and unavailable-model checks.
-- **Simplicity**: PASS. No complexity exceptions were introduced.
+- **Phase Scope**: PASS. This plan covers Phase 3 only: classifier training,
+  evaluation, artifact evidence, and classifier serving. RAG, chatbot,
+  Streamlit, widget, auth, memory, and CI-release behavior remain out of scope.
+- **Layered Architecture**: PASS. Training and evaluation stay in `scripts/`
+  and shared modules. Runtime inference stays in `model_server/`. Routes remain
+  HTTP-only; artifact loading, hash validation, and inference belong to services
+  and infra adapters.
+- **FastAPI Resource Management**: PASS. The classifier artifact is loaded
+  during model-server lifespan and injected into request handling. No model or
+  client is created at import time or per request.
+- **Async Safety**: PASS. Training, evaluation, plotting, MLflow logging, and
+  MinIO upload all stay out of request paths. Runtime HTTP behavior remains
+  bounded and inference-only.
+- **Secrets And Redaction**: PASS. Azure OpenAI and LangSmith settings are
+  optional and resolved through Vault bootstrap settings. Tests use LangChain
+  fake/mock providers. Reports, traces, MLflow metadata, model cards, and
+  manifests must never contain raw provider keys or unnecessary full issue
+  payloads.
+- **Observability And Errors**: PASS. MLflow records run evidence for
+  transformer training. The model-server returns typed predictions and
+  structured unavailable-model errors. Request correlation remains available
+  where the foundation already provides it.
+- **AI Evidence And Eval Gates**: PASS. The plan requires one shared evaluation
+  report, a 25-example golden set, artifact hashes, training-data hashes,
+  model-card metadata, MLflow run records, plot references, MinIO references,
+  and `DECISIONS.md` updates before a classifier can be selected.
+- **Critical Tests And CI**: PASS. Tests cover metric calculations, hash
+  validation, run metadata, endpoint schema, lifespan loading, and fake-provider
+  behavior without real credentials.
+- **Simplicity**: PASS. One classical baseline, one small transformer, and one
+  LLM baseline are enough to answer the phase question. No multi-agent workflow
+  or extra infrastructure beyond MLflow and MinIO is introduced.
 
 ## Project Structure
 
@@ -113,7 +105,7 @@ specs/003-issue-classification/
 ├── contracts/
 │   ├── classifier-commands.md
 │   └── classifier.openapi.yaml
-└── tasks.md              # Created by /speckit.tasks, not by /speckit.plan
+└── tasks.md
 ```
 
 ### Source Code (repository root)
@@ -122,25 +114,32 @@ specs/003-issue-classification/
 scripts/
 ├── train_classical_classifier.py
 ├── train_transformer_classifier.py
-├── evaluate_classifiers.py
 ├── run_llm_classifier_baseline.py
-└── upload_classifier_artifact_manifest.py
+├── evaluate_classifiers.py
+├── upload_classifier_artifact_manifest.py
+└── measure_classifier_latency.py
 
 app/
-└── services/
-    └── classifier_evaluation.py
+├── services/
+│   └── classifier_evaluation.py
+└── infra/
+    ├── redaction.py
+    ├── mlflow/
+    │   └── tracking.py
+    ├── llm/
+    │   └── classifier_baseline.py
+    └── storage/
+        └── classifier_artifacts.py
 
 model_server/
 ├── api/
 │   └── classifier.py
 ├── services/
 │   └── classifier_service.py
+├── infra/
+│   └── classifier_loader.py
 └── domain/
     └── classifier.py
-
-evals/
-├── classification_golden_set.jsonl
-└── classifier_eval_report.json
 
 artifacts/
 └── classifiers/
@@ -149,27 +148,58 @@ artifacts/
     │   └── plots/
     └── llm_baseline/
 
+evals/
+├── classification_golden_set.jsonl
+└── classifier_eval_report.json
+
 tests/
 ├── unit/
 │   ├── test_classifier_metrics.py
 │   ├── test_classifier_artifact_hash.py
+│   ├── test_classifier_model_card.py
+│   ├── test_classifier_run_metadata.py
+│   ├── test_classifier_redaction.py
 │   └── test_classifier_schemas.py
 ├── contract/
 │   └── test_classifier_endpoint_contract.py
 └── integration/
-    └── test_classifier_model_lifecycle.py
-
-DECISIONS.md
+    ├── test_classifier_model_lifecycle.py
+    ├── test_classifier_request_validation.py
+    └── test_llm_classifier_fake_provider.py
 ```
 
-**Structure Decision**: Keep all training/evaluation commands under `scripts/`.
-Use a shared evaluation module for metrics and report shaping. Keep runtime
-inference in the model server under `model_server/`, with model loading owned by
-lifespan and route code limited to request/response mapping. Store classifier
-artifacts under `artifacts/classifiers/` and classifier evaluation outputs under
-`evals/`. Transformer training must write a run-log record and plots, then store
-the selected classifier artifact or a manifest in MinIO for final review.
+**Structure Decision**: Keep training and evaluation commands in `scripts/`,
+reuse shared business logic from `app/services/`, keep provider-specific and
+artifact-storage code in `app/infra/`, and keep serving behavior isolated in
+`model_server/`. MLflow tracking, Vault secret resolution, telemetry redaction,
+and MinIO artifact handling are infrastructure concerns, not route concerns. The
+model-server owns artifact loading and runtime inference only.
 
 ## Complexity Tracking
 
-No constitution violations or complexity exceptions.
+No constitution violations or complexity exceptions are planned.
+
+## Post-Design Constitution Check
+
+- **Phase Scope**: PASS. The design artifacts cover only classifier training,
+  evaluation, artifact evidence, and classifier serving.
+- **Layered Architecture**: PASS. Contracts keep scripts, shared evaluation
+  logic, infra adapters, and model-server routes in separate responsibilities.
+- **FastAPI Resource Management**: PASS. The API contract requires lifespan
+  loading for the classifier artifact and forbids import-time or per-request
+  model loading.
+- **Async Safety**: PASS. Long-running training, MLflow logging, and artifact
+  upload remain script-only concerns.
+- **Secrets And Redaction**: PASS. Azure OpenAI and LangSmith remain optional,
+  fake providers remain mandatory in tests, real secrets resolve from Vault
+  bootstrap settings only, and no plan artifact requires raw secrets in logs,
+  traces, model cards, or manifests.
+- **Observability And Errors**: PASS. MLflow run evidence, structured endpoint
+  errors, and request correlation are explicitly captured.
+- **AI Evidence And Eval Gates**: PASS. All required metrics, hashes,
+  training-plot references, MLflow run metadata, MinIO references, and
+  decision-record updates are planned.
+- **Critical Tests And CI**: PASS. Unit, contract, and integration tests cover
+  the phase-critical failure paths and schema requirements.
+- **Simplicity**: PASS. The plan stays within the minimal three-approach
+  comparison required by the phase.

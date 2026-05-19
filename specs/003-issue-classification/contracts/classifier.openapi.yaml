@@ -7,7 +7,7 @@ paths:
   /classifier/predict:
     post:
       summary: Predict issue label
-      description: Returns a typed issue classification using the preloaded classifier model.
+      description: Returns a typed issue classification using the classifier artifact loaded during model-server lifespan.
       operationId: predictIssueLabel
       requestBody:
         required: true
@@ -33,7 +33,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "503":
-          description: Classifier model unavailable.
+          description: Classifier model unavailable, missing, invalid, or hash-mismatched.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Unexpected internal failure.
           content:
             application/json:
               schema:
@@ -42,15 +48,24 @@ components:
   schemas:
     ClassifierRequest:
       type: object
+      additionalProperties: false
       properties:
         title:
           type: string
+          minLength: 1
+          maxLength: 512
         body:
           type: string
+          minLength: 1
+          maxLength: 16000
         comments:
           type: array
+          minItems: 1
+          maxItems: 100
           items:
             type: string
+            minLength: 1
+            maxLength: 4000
       anyOf:
         - required: [title]
         - required: [body]
@@ -60,6 +75,7 @@ components:
       required:
         - label
         - model_version
+      additionalProperties: false
       properties:
         label:
           type: string
@@ -70,12 +86,14 @@ components:
           maximum: 1
         model_version:
           type: string
+          pattern: "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:[-+][A-Za-z0-9.-]+)?$"
         request_id:
           type: string
     ErrorResponse:
       type: object
       required:
         - error
+      additionalProperties: false
       properties:
         error:
           $ref: "#/components/schemas/ErrorBody"
@@ -84,10 +102,14 @@ components:
       required:
         - code
         - message
+      additionalProperties: false
       properties:
         code:
           type: string
-          enum: [invalid_classifier_input, classifier_model_unavailable, internal_error]
+          enum:
+            - invalid_classifier_input
+            - classifier_model_unavailable
+            - internal_error
         message:
           type: string
         request_id:
@@ -95,3 +117,11 @@ components:
         details:
           type: object
           additionalProperties: true
+          properties:
+            reason:
+              type: string
+              enum:
+                - missing_artifact
+                - invalid_artifact
+                - hash_mismatch
+                - startup_load_failed
