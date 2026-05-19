@@ -2,59 +2,63 @@
 
 ## Prerequisites
 
-- Phase 1 model-server foundation exists with app factory, lifespan, dependency
-  injection, request IDs, structured errors, and safe logging.
-- No real provider credentials are required for automated tests.
-- Optional external summarization credentials, if used locally, resolve through
-  settings/Vault or a test fake and are never committed.
+- Phase 1 model-server foundation exists with FastAPI app creation, lifespan,
+  structured errors, request IDs, and safe logging.
+- Phase 3 Vault bootstrap and Azure OpenAI settings flow already exist.
+- Automated tests use a fake LangChain summarization adapter and do not require
+  real Azure credentials.
 
-## Run Entity Extraction Tests
+## Run Entity Pipeline Tests
 
 Run:
 
 ```bash
-python -m pytest tests/unit/test_entity_extraction_service.py
+uv run pytest tests/unit/test_entity_ruler_pipeline.py tests/unit/test_ner_service.py
 ```
 
-Expected result: the rule-based extractor detects examples for file paths,
-function names, class names, package names, version numbers, error codes, URLs,
-stack trace markers, environment names, and command snippets. Duplicate handling
-and source spans are deterministic.
+Expected result: the spaCy `EntityRuler` pipeline detects representative file
+paths, function names, class names, package names, version numbers, error
+codes, URLs, stack-trace markers, environment names, and command snippets with
+deterministic ordering and best-effort spans.
 
 ## Run Summarization Service Tests
 
 Run:
 
 ```bash
-python -m pytest tests/unit/test_summarization_service.py
+uv run pytest tests/unit/test_summarization_service.py
 ```
 
-Expected result: the summarization service returns summary, key facts,
-unresolved questions, and suggested next step when supported. Fake adapter
-failure and timeout cases return fallback output or structured tool errors.
+Expected result: the summarization service returns `summary`, `key_facts`,
+`unresolved_questions`, and optional `suggested_next_step` on success, and maps
+fake-adapter timeout or availability failures to structured tool errors with no
+stub summary content.
 
 ## Run Endpoint Contract Tests
 
 Run:
 
 ```bash
-python -m pytest tests/contract/test_issue_analysis_endpoints.py
+uv run pytest tests/contract/test_issue_analysis_endpoints.py
 ```
 
-Expected result: `/ner` and `/summarize` accept title, body, and comments; return
-typed responses on success; and return structured errors for invalid input,
-adapter unavailability, timeouts, and execution failures.
+Expected result: `/ner` and `/summarize` accept title/body/comments payloads,
+return typed responses on success, reject combined payloads over 8,000
+characters with validation errors, and return structured 503 responses for
+summarizer timeout or unavailability.
 
-## Verify Payload-Safe Logging
+## Run Lifecycle And Logging Tests
 
 Run:
 
 ```bash
-python -m pytest tests/unit/test_issue_analysis_logging.py
+uv run pytest tests/integration/test_issue_analysis_lifecycle.py tests/unit/test_issue_analysis_redaction.py
 ```
 
-Expected result: fake secret values and full title/body/comment payloads do not
-appear unredacted in logs for success or failure paths.
+Expected result: the model server initializes the spaCy pipeline and
+summarization adapter during lifespan, keeps failures isolated to tool
+responses, and never logs full title/body/comment payloads or fake secret
+values unredacted.
 
 ## Try The NER Endpoint Locally
 
@@ -71,8 +75,8 @@ curl -s -X POST http://localhost:8001/ner \
 ```
 
 Expected result: the response contains typed entities for the file path,
-function name, version number, error code, URL, command snippet, and stack trace
-marker where detectable.
+function name, version number, error code, URL, command snippet, and stack
+trace marker where detectable.
 
 ## Try The Summarization Endpoint Locally
 
@@ -92,28 +96,26 @@ curl -s -X POST http://localhost:8001/summarize \
   }'
 ```
 
-Expected result: the response includes a concise summary, key facts, unresolved
-questions, and a suggested maintainer next step when supported by the configured
-adapter or fallback.
+Expected result: the response includes a concise summary, key facts,
+unresolved questions, and a suggested maintainer next step when the Azure
+adapter is configured and successful.
 
-## Validate Adapter Failure Behavior
+## Validate Failure Behavior
 
-Run endpoint tests with the fake summarization adapter configured to fail or
-timeout.
+Run the endpoint tests with the fake summarization adapter configured to time
+out or report unavailable status.
 
-Expected result: the model server remains healthy and returns a structured
-`summarizer_timeout`, `summarizer_unavailable`, or `tool_execution_failed` error
-unless fallback output is configured for that case.
+Expected result: the model server stays healthy and `/summarize` returns a
+structured `summarizer_timeout`, `summarizer_unavailable`, or
+`tool_execution_failed` error. It does not return fallback or stub summary
+content.
 
 ## Update Decisions If Needed
 
-If implementation chooses an external summarization provider or local pretrained
-summarizer, update `DECISIONS.md` with:
+If implementation changes the Azure deployment name, LangSmith tracing
+configuration, or spaCy pattern-set coverage, update `DECISIONS.md` with:
 
-- adapter name and configuration approach
-- timeout and fallback policy
-- reason the option is acceptable for bootcamp scope
-- limitations, including when fallback summaries are used
-
-Expected result: reviewers can understand why the summarization approach is
-simple, bounded, and safe.
+- summarization provider and tracing configuration
+- fixed timeout policy (`15` seconds)
+- reason for choosing `EntityRuler` over a trained NER model
+- known limitations in entity coverage or summary quality

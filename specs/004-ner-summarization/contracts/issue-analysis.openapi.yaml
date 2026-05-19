@@ -27,7 +27,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NerResponse"
         "422":
-          description: Invalid NER input.
+          description: Invalid NER input, including empty content or combined input over 8,000 characters.
           content:
             application/json:
               schema:
@@ -61,13 +61,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SummarizationResponse"
         "422":
-          description: Invalid summarization input.
+          description: Invalid summarization input, including empty content or combined input over 8,000 characters.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "503":
-          description: Summarization adapter unavailable or timed out with no fallback.
+          description: Summarization adapter unavailable or timed out. No fallback summary content is returned.
           content:
             application/json:
               schema:
@@ -82,19 +82,22 @@ components:
   schemas:
     IssueAnalysisRequest:
       type: object
+      description: >
+        Combined length of title, body, and all comments must not exceed 8,000
+        characters. That cross-field rule is enforced server-side.
       properties:
         title:
           type: string
-          maxLength: 2000
+          maxLength: 8000
         body:
           type: string
-          maxLength: 50000
+          maxLength: 8000
         comments:
           type: array
-          maxItems: 200
+          maxItems: 100
           items:
             type: string
-            maxLength: 20000
+            maxLength: 8000
       anyOf:
         - required: [title]
         - required: [body]
