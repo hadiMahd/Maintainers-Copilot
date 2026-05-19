@@ -1,0 +1,41 @@
+classes:
+  bug:
+    - bug
+    - Bug
+    - BUG
+    - type:bug
+    - kind/bug
+    - "bug :bug:"
+  feature:
+    - feature
+    - Feature
+    - FEATURE
+    - enhancement
+    - Enhancement
+    - type:feature
+    - kind/feature
+    - "feature request"
+  docs:
+    - documentation
+    - Documentation
+    - DOCS
+    - docs
+    - Docs
+    - type:documentation
+    - kind/documentation
+  question:
+    - question
+    - Question
+    - QUESTION
+    - type:question
+    - kind/question
+    - "help wanted"
+    - "good first issue"
+
+unmapped_policy: exclude
+ambiguous_policy: first_match
+priority_order:
+  - bug
+  - feature
+  - docs
+  - question
