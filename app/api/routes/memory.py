@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 
 from app.api.dependencies.auth import get_current_user
 from app.domain.auth import AuthContext
-from app.domain.memory import ShortTermMemoryRead, ShortTermMemoryWrite
+from app.domain.memory import LongTermMemoryRead, ShortTermMemoryRead, ShortTermMemoryWrite, WriteMemoryRequest
 
 router = APIRouter()
 
@@ -19,6 +19,23 @@ def _get_short_term_memory_service(request: Request):
     return ShortTermMemoryService(
         adapter=adapter,
         ttl_seconds=settings.short_term_memory_ttl_seconds,
+    )
+
+
+def _get_long_term_memory_service(request: Request):
+    from app.infra.memory_embedding_client import MemoryEmbeddingClient
+    from app.repositories.audit_log_repository import AuditLogRepository
+    from app.repositories.memory_repository import MemoryRepository
+    from app.services.long_term_memory_service import LongTermMemoryService
+
+    import app.infra.database as db_mod
+
+    embedding_client = MemoryEmbeddingClient()
+    return LongTermMemoryService(
+        memory_repo=MemoryRepository,
+        audit_repo=AuditLogRepository,
+        embedding_client=embedding_client,
+        session_factory=db_mod.async_session_factory,
     )
 
 
@@ -50,5 +67,20 @@ async def read_short_term_memory(
         user_id=current_user.user_id,
         conversation_id=conversation_id,
         key=key,
+        request_id=request_id,
+    )
+
+
+@router.post("/long-term", status_code=201, response_model=LongTermMemoryRead)
+async def write_long_term_memory(
+    body: WriteMemoryRequest,
+    request: Request,
+    current_user: AuthContext = Depends(get_current_user),
+) -> LongTermMemoryRead:
+    svc = _get_long_term_memory_service(request)
+    request_id = getattr(request.state, "request_id", None)
+    return await svc.write_memory(
+        user_id=current_user.user_id,
+        data=body,
         request_id=request_id,
     )

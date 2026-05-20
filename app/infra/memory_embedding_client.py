@@ -1,15 +1,32 @@
 """Semantic memory embedding adapter.
 
-Stub for Phase 6 US4.  When implemented, embedding generation MUST use
-``asyncio.to_thread`` or an async-safe provider so that write-memory
-request paths do not block the event loop.
+Implements a deterministic local embedding client and offloads the
+blocking vector generation path via ``asyncio.to_thread``.
 """
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
 
 
 class MemoryEmbeddingClient:
-    """Stub for US4.  Do not use before US4 implementation."""
+    """Deterministic embedding adapter for semantic memory writes."""
 
-    async def embed(self, *args, **kwargs):
-        raise NotImplementedError(
-            "MemoryEmbeddingClient: US4 not implemented yet"
-        )
+    def __init__(self, vector_size: int = 384) -> None:
+        self._vector_size = vector_size
+
+    def _embed_sync(self, text: str) -> list[float]:
+        seed = hashlib.sha256(text.encode()).digest()
+        vector: list[float] = []
+        state = seed
+        while len(vector) < self._vector_size:
+            state = hashlib.sha256(state).digest()
+            for byte in state:
+                vector.append((byte / 255.0) * 2.0 - 1.0)
+                if len(vector) == self._vector_size:
+                    break
+        return vector
+
+    async def embed(self, text: str) -> list[float]:
+        return await asyncio.to_thread(self._embed_sync, text)

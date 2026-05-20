@@ -1,6 +1,6 @@
 """Audit service.
 
-Owns transaction boundaries for audit log listing.
+Owns audit constants, safe metadata shaping, and audit log listing.
 """
 
 from __future__ import annotations
@@ -11,8 +11,17 @@ from typing import Callable
 import structlog
 
 from app.domain.audit import AuditLogEntry
+from app.infra.redaction import redact_audit_metadata
 
 _log = structlog.get_logger
+
+MEMORY_WRITE_ACTION = "memory.write"
+ROLE_CHANGE_ACTION = "role.change"
+ADMIN_INVITATION_CREATE_ACTION = "admin_invitation.create"
+WIDGET_CONFIG_CREATE_ACTION = "widget_config.create"
+WIDGET_CONFIG_UPDATE_ACTION = "widget_config.update"
+WIDGET_CONFIG_DELETE_ACTION = "widget_config.delete"
+CONVERSATION_DELETE_ACTION = "conversation.delete"
 
 
 class AuditService:
@@ -31,6 +40,28 @@ class AuditService:
         rid = request_id or "unknown"
         tid = uuid.uuid4().hex[:12]
         return {"request_id": rid, "trace_id": tid}
+
+    @staticmethod
+    def build_memory_write_metadata(
+        memory_type: str,
+        content_hash: str,
+        redacted_content: str,
+        redaction_applied: bool,
+        source: str,
+    ) -> dict:
+        """Build safe metadata for memory.write audit rows.
+
+        Raw content is never included.  Only bounded, redacted-safe fields
+        are retained.
+        """
+        metadata = {
+            "memory_type": memory_type,
+            "content_hash": content_hash,
+            "content_length": len(redacted_content),
+            "redaction_applied": redaction_applied,
+            "source": source,
+        }
+        return redact_audit_metadata(metadata)
 
     async def list_audit_logs(
         self,

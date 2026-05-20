@@ -453,3 +453,73 @@ class TestShortTermMemory:
         assert data["value"] == "stored value"
 
         fastapi_app.dependency_overrides.clear()
+
+
+class TestLongTermMemory:
+    async def test_post_long_term_memory_returns_201(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        mock_svc = AsyncMock()
+        from app.domain.memory import LongTermMemoryRead
+
+        mock_svc.write_memory = AsyncMock(
+            return_value=LongTermMemoryRead(
+                id="mem1",
+                memory_type="semantic",
+                content="preference: color [REDACTED]",
+                audit_log_id="audit1",
+            )
+        )
+
+        import app.api.routes.memory as memory_mod
+
+        monkeypatch.setattr(memory_mod, "_get_long_term_memory_service", lambda r: mock_svc)
+
+        resp = await client.post(
+            "/memory/long-term",
+            json={"content": "preference: color secret=blue", "memory_type": "semantic"},
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["id"] == "mem1"
+        assert data["memory_type"] == "semantic"
+        assert data["audit_log_id"] == "audit1"
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_post_long_term_memory_invalid_type_returns_422(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.domain.errors import UnsupportedMemoryTypeError
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        mock_svc = AsyncMock()
+        mock_svc.write_memory = AsyncMock(
+            side_effect=UnsupportedMemoryTypeError("Only semantic memory is supported")
+        )
+
+        import app.api.routes.memory as memory_mod
+
+        monkeypatch.setattr(memory_mod, "_get_long_term_memory_service", lambda r: mock_svc)
+
+        resp = await client.post(
+            "/memory/long-term",
+            json={"content": "store this", "memory_type": "episodic"},
+        )
+        assert resp.status_code == 422
+
+        fastapi_app.dependency_overrides.clear()

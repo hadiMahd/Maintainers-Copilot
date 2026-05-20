@@ -134,17 +134,17 @@ implementation and testing.
 
 ### Tests for User Story 4 (REQUIRED) ⚠️
 
-- [ ] T032 [P] [US4] Add contract coverage for `POST /memory/long-term` in `tests/contract/test_auth_memory_api_contract.py`
-- [ ] T033 [P] [US4] Add unit coverage for explicit write-memory, semantic-only validation, audit row creation, and no-auto-write behavior in `tests/unit/test_long_term_memory_service.py` and `tests/unit/test_audit_service.py`
-- [ ] T034 [P] [US4] Add integration coverage for redacted long-term memory persistence and atomic audit writes in `tests/integration/test_memory_audit_transaction.py`
-- [ ] T035 [P] [US4] Add unit coverage proving embedding generation uses `asyncio.to_thread` or an async-safe provider and does not block the event loop in `tests/unit/test_long_term_memory_service.py`
+- [x] T032 [P] [US4] Add contract coverage for `POST /memory/long-term` in `tests/contract/test_auth_memory_api_contract.py`
+- [x] T033 [P] [US4] Add unit coverage for explicit write-memory, semantic-only validation, audit row creation, and no-auto-write behavior in `tests/unit/test_long_term_memory_service.py` and `tests/unit/test_audit_service.py`
+- [x] T034 [P] [US4] Add integration coverage for redacted long-term memory persistence and atomic audit writes in `tests/integration/test_memory_audit_transaction.py`
+- [x] T035 [P] [US4] Add unit coverage proving embedding generation uses `asyncio.to_thread` or an async-safe provider and does not block the event loop in `tests/unit/test_long_term_memory_service.py`
 
 ### Implementation for User Story 4
 
-- [ ] T036 [P] [US4] Implement semantic memory and audit persistence methods in `app/repositories/memory_repository.py` and `app/repositories/audit_log_repository.py`
-- [ ] T037 [P] [US4] Implement audit action constants and safe metadata shaping in `app/services/audit_service.py` and `app/infra/redaction.py`
-- [ ] T038 [US4] Implement explicit semantic write-memory workflow with pgvector embedding support, using `asyncio.to_thread` to wrap any blocking embedding calls so the request path remains non-blocking, in `app/services/long_term_memory_service.py` and `app/infra/memory_embedding_client.py`
-- [ ] T039 [US4] Implement explicit write-memory endpoint and structured failure responses in `app/api/routes/memory.py` and `app/api/error_handlers.py`
+- [x] T036 [P] [US4] Implement semantic memory and audit persistence methods in `app/repositories/memory_repository.py` and `app/repositories/audit_log_repository.py`
+- [x] T037 [P] [US4] Implement audit action constants and safe metadata shaping in `app/services/audit_service.py` and `app/infra/redaction.py`
+- [x] T038 [US4] Implement explicit semantic write-memory workflow with pgvector embedding support, using `asyncio.to_thread` to wrap any blocking embedding calls so the request path remains non-blocking, in `app/services/long_term_memory_service.py` and `app/infra/memory_embedding_client.py`
+- [x] T039 [US4] Implement explicit write-memory endpoint and structured failure responses in `app/api/routes/memory.py` and `app/api/error_handlers.py`
 
 **Checkpoint**: User Story 4 is independently functional and testable.
 

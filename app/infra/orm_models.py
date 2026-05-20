@@ -1,6 +1,7 @@
 """SQLAlchemy ORM models for Phase 6 tables."""
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, Integer, JSON, String, Text, func
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, JSON, String, Text, func
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 
 
@@ -80,7 +81,7 @@ class LongTermMemory(Base):
     memory_type = Column(String(16), nullable=False, server_default="semantic")
     redacted_content = Column(Text(), nullable=False)
     content_hash = Column(String(64), nullable=False)
-    embedding = Column(Integer, nullable=True)  # pgvector — loaded lazily
+    embedding = Column(Vector(384), nullable=True)
     source = Column(String(64), nullable=True)
     created_by_user_id = Column(String(36), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
