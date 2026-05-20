@@ -1,5 +1,6 @@
 """Authorization service.
 
+Thin domain-aware comparisons for role and permission checks.
 Structured logging: propagate ``request_id`` from middleware and generate
 per-operation ``trace_id``.  Never log raw tokens or user secrets.
 """
@@ -7,7 +8,6 @@ per-operation ``trace_id``.  Never log raw tokens or user secrets.
 import uuid
 
 import structlog
-
 
 _log = structlog.get_logger
 

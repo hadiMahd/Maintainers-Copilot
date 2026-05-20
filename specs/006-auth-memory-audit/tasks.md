@@ -90,15 +90,15 @@ implementation and testing.
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
-- [ ] T020 [P] [US2] Add contract coverage for `/admin/invitations`, `/admin/invitations/accept`, and `/admin/audit-logs` in `tests/contract/test_auth_memory_api_contract.py`
-- [ ] T021 [P] [US2] Add unit coverage for `require_admin`, invitation expiry handling, and reserved audit action names in `tests/unit/test_authorization_service.py`, `tests/unit/test_admin_invitation_service.py`, and `tests/unit/test_audit_action_names.py`
-- [ ] T022 [P] [US2] Add integration coverage for admin invitation creation, acceptance, and audited role change in `tests/integration/test_admin_invitation_flow.py`
+- [x] T020 [P] [US2] Add contract coverage for `/admin/invitations`, `/admin/invitations/accept`, and `/admin/audit-logs` in `tests/contract/test_auth_memory_api_contract.py`
+- [x] T021 [P] [US2] Add unit coverage for `require_admin`, invitation expiry handling, and reserved audit action names in `tests/unit/test_authorization_service.py`, `tests/unit/test_admin_invitation_service.py`, and `tests/unit/test_audit_action_names.py`
+- [x] T022 [P] [US2] Add integration coverage for admin invitation creation, acceptance, and audited role change in `tests/integration/test_admin_invitation_flow.py`
 
 ### Implementation for User Story 2
 
-- [ ] T023 [P] [US2] Implement authorization context and admin guard dependencies in `app/services/authorization_service.py` and `app/api/dependencies/authorization.py`
-- [ ] T024 [P] [US2] Implement admin invitation persistence and role-change hooks in `app/repositories/admin_invitation_repository.py` and `app/services/admin_invitation_service.py`
-- [ ] T025 [US2] Implement admin invitation endpoints and admin audit-log route behavior in `app/api/routes/admin.py` and `app/services/audit_service.py`
+- [x] T023 [P] [US2] Implement authorization context and admin guard dependencies in `app/services/authorization_service.py` and `app/api/dependencies/authorization.py`
+- [x] T024 [P] [US2] Implement admin invitation persistence and role-change hooks in `app/repositories/admin_invitation_repository.py` and `app/services/admin_invitation_service.py`
+- [x] T025 [US2] Implement admin invitation endpoints and admin audit-log route behavior in `app/api/routes/admin.py` and `app/services/audit_service.py`
 
 **Checkpoint**: User Story 2 is independently functional and testable.
 

@@ -79,6 +79,7 @@ class TestAuthRegister:
     async def test_register_creates_user_returns_201(self, client, monkeypatch):
         user_read = UserRead(id="user1", email="new@test.com", role="user", is_active=True)
         mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
         mock_svc.register = AsyncMock(return_value=user_read)
 
         import app.api.routes.auth as auth_mod
@@ -94,6 +95,7 @@ class TestAuthRegister:
         from app.domain.errors import EmailAlreadyRegisteredError
 
         mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
         mock_svc.register = AsyncMock(side_effect=EmailAlreadyRegisteredError("taken"))
 
         import app.api.routes.auth as auth_mod
@@ -114,6 +116,7 @@ class TestAuthLogin:
             token_type="bearer", expires_in=1800,
         )
         mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
         mock_svc.login = AsyncMock(return_value=token_pair)
 
         import app.api.routes.auth as auth_mod
@@ -129,6 +132,7 @@ class TestAuthLogin:
         from app.domain.errors import AuthenticationError
 
         mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
         mock_svc.login = AsyncMock(side_effect=AuthenticationError("bad"))
 
         import app.api.routes.auth as auth_mod
@@ -145,6 +149,7 @@ class TestAuthRefresh:
             token_type="bearer", expires_in=1800,
         )
         mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
         mock_svc.refresh_token = AsyncMock(return_value=token_pair)
 
         import app.api.routes.auth as auth_mod
@@ -157,6 +162,7 @@ class TestAuthRefresh:
         from app.domain.errors import TokenError
 
         mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
         mock_svc.refresh_token = AsyncMock(side_effect=TokenError("bad"))
 
         import app.api.routes.auth as auth_mod
@@ -186,5 +192,184 @@ class TestUsersMe:
         assert resp.status_code == 200
         data = resp.json()
         assert data["email"] == "u@t.com"
+
+        fastapi_app.dependency_overrides.clear()
+
+
+class TestAdminInvitations:
+    async def test_create_invitation_as_admin_returns_201(self, client, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
+
+        admin_ctx = AuthContext(user_id="admin1", email="admin@t.com", role="admin")
+
+        async def mock_auth(request=None, credentials=None):
+            return admin_ctx
+
+        async def mock_admin(request=None, current_user=AuthContext(user_id="admin1", email="admin@t.com", role="admin")):
+            return admin_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+        fastapi_app.dependency_overrides[require_admin] = mock_admin
+
+        mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
+        from app.domain.auth import AdminInvitationRead
+        mock_svc.create_invitation = AsyncMock(return_value=AdminInvitationRead(
+            id="inv1", invitee_email="new@t.com", status="pending",
+            expires_at="2026-06-01T00:00:00Z",
+        ))
+
+        import app.api.routes.admin as admin_mod
+        monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
+
+        resp = await client.post("/admin/invitations", json={"email": "new@t.com"})
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["invitee_email"] == "new@t.com"
+        assert data["status"] == "pending"
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_create_invitation_as_regular_user_returns_403(self, client, monkeypatch):
+        from app.domain.errors import AuthorizationError
+
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
+
+        async def mock_auth(request=None, credentials=None):
+            return AuthContext(user_id="u1", email="u@t.com", role="user")
+
+        async def mock_admin(request=None, current_user=None):
+            raise AuthorizationError("Admin role required")
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+        fastapi_app.dependency_overrides[require_admin] = mock_admin
+
+        resp = await client.post("/admin/invitations", json={"email": "someone@t.com"})
+        assert resp.status_code == 403
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_accept_invitation_grants_admin(self, client, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
+
+        async def mock_auth(request=None, credentials=None):
+            return AuthContext(user_id="u2", email="u2@t.com", role="user")
+
+        async def mock_admin(request=None, current_user=None):
+            return AuthContext(user_id="u2", email="u2@t.com", role="user")
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+        fastapi_app.dependency_overrides[require_admin] = mock_admin
+
+        mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
+        from app.domain.auth import UserRead
+        mock_svc.accept_invitation = AsyncMock(return_value=UserRead(
+            id="u2", email="u2@t.com", role="admin", is_active=True,
+        ))
+
+        import app.api.routes.admin as admin_mod
+        monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
+
+        resp = await client.post("/admin/invitations/accept", json={"token": "valid-token"})
+        assert resp.status_code == 200
+        assert resp.json()["role"] == "admin"
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_accept_invitation_invalid_returns_400(self, client, monkeypatch):
+        from unittest.mock import AsyncMock
+        from app.domain.errors import InvitationError
+
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
+
+        async def mock_auth(request=None, credentials=None):
+            return AuthContext(user_id="u3", email="u3@t.com", role="user")
+
+        async def mock_admin(request=None, current_user=None):
+            return AuthContext(user_id="u3", email="u3@t.com", role="user")
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+        fastapi_app.dependency_overrides[require_admin] = mock_admin
+
+        mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
+        mock_svc.accept_invitation = AsyncMock(side_effect=InvitationError("Expired invitation"))
+        import app.api.routes.admin as admin_mod
+        monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
+
+        resp = await client.post("/admin/invitations/accept", json={"token": "bad-token"})
+        assert resp.status_code == 400
+
+        fastapi_app.dependency_overrides.clear()
+
+
+class TestAdminAuditLogs:
+    async def test_list_audit_logs_as_admin_returns_200(self, client, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
+
+        admin_ctx = AuthContext(user_id="admin1", email="admin@t.com", role="admin")
+
+        async def mock_auth(request=None, credentials=None):
+            return admin_ctx
+
+        async def mock_admin(request=None, current_user=None):
+            return admin_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+        fastapi_app.dependency_overrides[require_admin] = mock_admin
+
+        mock_svc = AsyncMock()
+        mock_audit_svc = AsyncMock()
+        from app.domain.audit import AuditLogEntry
+        mock_audit_svc.list_audit_logs = AsyncMock(return_value=[
+            AuditLogEntry(id="a1", actor_user_id="admin1", action="role.change", target_type="user", target_id="u1", timestamp="2026-01-01T00:00:00Z", metadata={}),
+        ])
+
+        import app.api.routes.admin as admin_mod
+        monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
+
+        resp = await client.get("/admin/audit-logs")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "items" in data
+        assert len(data["items"]) == 1
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_list_audit_logs_as_regular_user_returns_403(self, client, monkeypatch):
+        from app.domain.errors import AuthorizationError
+
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
+
+        async def mock_auth(request=None, credentials=None):
+            return AuthContext(user_id="u1", email="u@t.com", role="user")
+
+        async def mock_admin(request=None, current_user=None):
+            raise AuthorizationError("Admin required")
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+        fastapi_app.dependency_overrides[require_admin] = mock_admin
+
+        resp = await client.get("/admin/audit-logs")
+        assert resp.status_code == 403
 
         fastapi_app.dependency_overrides.clear()

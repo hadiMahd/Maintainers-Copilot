@@ -13,10 +13,9 @@ async def read_current_user(
     request: Request,
     current_user: AuthContext = Depends(get_current_user),
 ) -> UserRead:
-    from app.infra.database import async_session_factory
+    import app.infra.database as db_mod
     from app.repositories.user_repository import UserRepository
-
-    async with async_session_factory() as session:
+    async with db_mod.async_session_factory() as session:
         repo = UserRepository(session)
         user = await repo.get_by_id(current_user.user_id)
         if not user:

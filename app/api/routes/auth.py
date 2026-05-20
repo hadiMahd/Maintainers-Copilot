@@ -44,8 +44,8 @@ def _get_auth_service(request: Request):
 
 
 def _get_session_factory(request: Request):
-    from app.infra.database import async_session_factory
-    return async_session_factory
+    import app.infra.database as db_mod
+    return db_mod.async_session_factory
 
 
 @router.post("/register", status_code=201, response_model=UserRead)
