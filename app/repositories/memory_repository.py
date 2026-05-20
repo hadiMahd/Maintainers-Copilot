@@ -6,6 +6,8 @@ Repository layer — owns SQL only.  Does NOT call ``.commit()`` or
 
 from __future__ import annotations
 
+import math
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,3 +52,36 @@ class MemoryRepository:
             select(LongTermMemory).where(LongTermMemory.id == memory_id)
         )
         return result.scalar_one_or_none()
+
+    async def search_same_user_semantic(
+        self,
+        owner_user_id: str,
+        query_embedding: list[float],
+        limit: int = 5,
+    ) -> list[LongTermMemory]:
+        result = await self._session.execute(
+            select(LongTermMemory).where(
+                LongTermMemory.owner_user_id == owner_user_id,
+                LongTermMemory.memory_type == "semantic",
+            )
+        )
+        rows = list(result.scalars().all())
+        rows.sort(
+            key=lambda row: self._cosine_distance(row.embedding, query_embedding)
+        )
+        return rows[:limit]
+
+    @staticmethod
+    def _cosine_distance(left, right: list[float]) -> float:
+        if not left or not right:
+            return 1.0
+        left_list = list(left)
+        if len(left_list) != len(right):
+            return 1.0
+        dot = sum(a * b for a, b in zip(left_list, right))
+        left_norm = math.sqrt(sum(a * a for a in left_list))
+        right_norm = math.sqrt(sum(b * b for b in right))
+        if left_norm == 0 or right_norm == 0:
+            return 1.0
+        cosine_similarity = dot / (left_norm * right_norm)
+        return 1.0 - cosine_similarity

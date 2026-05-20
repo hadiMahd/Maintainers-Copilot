@@ -4,7 +4,14 @@ from fastapi import APIRouter, Depends, Request
 
 from app.api.dependencies.auth import get_current_user
 from app.domain.auth import AuthContext
-from app.domain.memory import LongTermMemoryRead, ShortTermMemoryRead, ShortTermMemoryWrite, WriteMemoryRequest
+from app.domain.memory import (
+    LongTermMemoryRead,
+    LongTermMemoryRecallRequest,
+    LongTermMemoryRecallResponse,
+    ShortTermMemoryRead,
+    ShortTermMemoryWrite,
+    WriteMemoryRequest,
+)
 
 router = APIRouter()
 
@@ -80,6 +87,21 @@ async def write_long_term_memory(
     svc = _get_long_term_memory_service(request)
     request_id = getattr(request.state, "request_id", None)
     return await svc.write_memory(
+        user_id=current_user.user_id,
+        data=body,
+        request_id=request_id,
+    )
+
+
+@router.post("/long-term/recall", response_model=LongTermMemoryRecallResponse)
+async def recall_long_term_memory(
+    body: LongTermMemoryRecallRequest,
+    request: Request,
+    current_user: AuthContext = Depends(get_current_user),
+) -> LongTermMemoryRecallResponse:
+    svc = _get_long_term_memory_service(request)
+    request_id = getattr(request.state, "request_id", None)
+    return await svc.recall_memory(
         user_id=current_user.user_id,
         data=body,
         request_id=request_id,

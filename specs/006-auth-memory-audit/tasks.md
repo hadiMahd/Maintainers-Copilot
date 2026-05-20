@@ -158,15 +158,15 @@ implementation and testing.
 
 ### Tests for User Story 5 (REQUIRED) ⚠️
 
-- [ ] T040 [P] [US5] Add contract coverage for `POST /memory/long-term/recall` in `tests/contract/test_auth_memory_api_contract.py`
-- [ ] T041 [P] [US5] Add unit coverage for same-user recall scoping and cross-user leakage prevention in `tests/unit/test_long_term_memory_recall.py`
-- [ ] T042 [P] [US5] Add integration coverage for cross-conversation recall and no recall from normal requests in `tests/integration/test_cross_conversation_recall.py`
+- [x] T040 [P] [US5] Add contract coverage for `POST /memory/long-term/recall` in `tests/contract/test_auth_memory_api_contract.py`
+- [x] T041 [P] [US5] Add unit coverage for same-user recall scoping and cross-user leakage prevention in `tests/unit/test_long_term_memory_recall.py`
+- [x] T042 [P] [US5] Add integration coverage for cross-conversation recall and no recall from normal requests in `tests/integration/test_cross_conversation_recall.py`
 
 ### Implementation for User Story 5
 
-- [ ] T043 [P] [US5] Implement recall query models and same-user semantic search methods in `app/domain/memory.py` and `app/repositories/memory_repository.py`
-- [ ] T044 [US5] Implement cross-conversation recall workflow in `app/services/long_term_memory_service.py`
-- [ ] T045 [US5] Implement recall route and safe response shaping in `app/api/routes/memory.py`
+- [x] T043 [P] [US5] Implement recall query models and same-user semantic search methods in `app/domain/memory.py` and `app/repositories/memory_repository.py`
+- [x] T044 [US5] Implement cross-conversation recall workflow in `app/services/long_term_memory_service.py`
+- [x] T045 [US5] Implement recall route and safe response shaping in `app/api/routes/memory.py`
 
 **Checkpoint**: User Story 5 is independently functional and testable.
 

@@ -523,3 +523,103 @@ class TestLongTermMemory:
         assert resp.status_code == 422
 
         fastapi_app.dependency_overrides.clear()
+
+
+class TestLongTermMemoryRecall:
+    async def test_post_long_term_memory_recall_requires_authentication(self, client):
+        resp = await client.post(
+            "/memory/long-term/recall",
+            json={"query": "favorite editor", "conversation_id": "later-c2", "limit": 5},
+        )
+        assert resp.status_code == 401
+
+    async def test_post_long_term_memory_recall_returns_matches(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        mock_svc = AsyncMock()
+        from app.domain.memory import LongTermMemoryRead, LongTermMemoryRecallResponse
+
+        mock_svc.recall_memory = AsyncMock(
+            return_value=LongTermMemoryRecallResponse(
+                items=[
+                    LongTermMemoryRead(
+                        id="mem1",
+                        memory_type="semantic",
+                        content="favorite editor=[REDACTED]",
+                        audit_log_id="audit1",
+                    )
+                ]
+            )
+        )
+
+        import app.api.routes.memory as memory_mod
+
+        monkeypatch.setattr(memory_mod, "_get_long_term_memory_service", lambda r: mock_svc)
+
+        resp = await client.post(
+            "/memory/long-term/recall",
+            json={"query": "favorite editor", "conversation_id": "later-c2", "limit": 5},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["items"]) == 1
+        assert data["items"][0]["id"] == "mem1"
+        assert data["items"][0]["content"] == "favorite editor=[REDACTED]"
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_post_long_term_memory_recall_empty_result_is_safe(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        mock_svc = AsyncMock()
+        from app.domain.memory import LongTermMemoryRecallResponse
+
+        mock_svc.recall_memory = AsyncMock(return_value=LongTermMemoryRecallResponse(items=[]))
+
+        import app.api.routes.memory as memory_mod
+
+        monkeypatch.setattr(memory_mod, "_get_long_term_memory_service", lambda r: mock_svc)
+
+        resp = await client.post(
+            "/memory/long-term/recall",
+            json={"query": "nothing here", "conversation_id": "later-c2", "limit": 5},
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"items": []}
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_post_long_term_memory_recall_invalid_input_returns_422(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        resp = await client.post(
+            "/memory/long-term/recall",
+            json={"query": "", "conversation_id": "later-c2", "limit": 5},
+        )
+        assert resp.status_code == 422
+
+        fastapi_app.dependency_overrides.clear()

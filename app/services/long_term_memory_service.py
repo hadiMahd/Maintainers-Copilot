@@ -9,7 +9,13 @@ from typing import Callable
 import structlog
 
 from app.domain.errors import AuditError, MemoryError, RedactionError, UnsupportedMemoryTypeError
-from app.domain.memory import LongTermMemoryRead, MemoryType, WriteMemoryRequest
+from app.domain.memory import (
+    LongTermMemoryRead,
+    LongTermMemoryRecallRequest,
+    LongTermMemoryRecallResponse,
+    MemoryType,
+    WriteMemoryRequest,
+)
 from app.infra.redaction import redact_long_term_memory_content
 from app.services.audit_service import AuditService, MEMORY_WRITE_ACTION
 
@@ -97,6 +103,11 @@ class LongTermMemoryService:
                     log.warning("long_term_memory_audit_failed", user_id=user_id)
                     raise AuditError("Audit write failed") from exc
 
+                memory_row.extra_data = {
+                    **(memory_row.extra_data or {}),
+                    "audit_log_id": audit_row.id,
+                }
+
                 await session.commit()
                 log.info(
                     "long_term_memory_written",
@@ -118,3 +129,51 @@ class LongTermMemoryService:
                 await session.rollback()
                 log.warning("long_term_memory_write_failed", user_id=user_id)
                 raise
+
+    async def recall_memory(
+        self,
+        user_id: str,
+        data: LongTermMemoryRecallRequest,
+        request_id: str | None = None,
+    ) -> LongTermMemoryRecallResponse:
+        t = self._trace(request_id)
+        log = _log().bind(**t)
+
+        query_text = redact_long_term_memory_content(data.query)
+        try:
+            query_embedding = await self._embedding_client.embed(query_text)
+        except Exception as exc:
+            log.warning("long_term_memory_recall_embedding_failed", user_id=user_id)
+            raise MemoryError("Recall embedding generation failed") from exc
+
+        async with self._session_factory() as session:
+            memory_repo = self._memory_repo_cls(session)
+            try:
+                rows = await memory_repo.search_same_user_semantic(
+                    owner_user_id=user_id,
+                    query_embedding=query_embedding,
+                    limit=data.limit,
+                )
+                items = [
+                    LongTermMemoryRead(
+                        id=row.id,
+                        memory_type=row.memory_type,
+                        content=row.redacted_content,
+                        audit_log_id=(row.extra_data or {}).get("audit_log_id", ""),
+                    )
+                    for row in rows
+                ]
+                log.info(
+                    "long_term_memory_recalled",
+                    user_id=user_id,
+                    conversation_id=data.conversation_id,
+                    result_count=len(items),
+                )
+                return LongTermMemoryRecallResponse(items=items)
+            except Exception as exc:
+                log.warning(
+                    "long_term_memory_recall_failed",
+                    user_id=user_id,
+                    conversation_id=data.conversation_id,
+                )
+                raise MemoryError("Recall failed") from exc
