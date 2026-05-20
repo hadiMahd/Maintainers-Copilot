@@ -89,6 +89,14 @@ Expected result: only the explicitly written redacted memory is recallable for
 the same user; another user cannot recall it, and normal requests that did not
 call write-memory produce no recallable long-term memory.
 
+## Validate Empty Recall Result
+
+Call `POST /memory/long-term/recall` for a same-user query that has no stored
+explicit semantic memory.
+
+Expected result: the route returns a safe empty payload (`{"items": []}`)
+rather than an error.
+
 ## Validate Reserved Audit Actions
 
 Inspect audit service constants or schema support for:
@@ -139,6 +147,7 @@ uv run pytest tests/unit/test_authorization_service.py
 uv run pytest tests/unit/test_admin_invitation_service.py
 uv run pytest tests/unit/test_short_term_memory_service.py
 uv run pytest tests/unit/test_long_term_memory_service.py
+uv run pytest tests/unit/test_long_term_memory_recall.py
 uv run pytest tests/unit/test_audit_service.py
 uv run pytest tests/unit/test_audit_action_names.py
 uv run pytest tests/unit/test_memory_redaction.py
@@ -151,6 +160,7 @@ uv run pytest tests/integration/test_admin_invitation_flow.py
 uv run pytest tests/integration/test_redis_memory_ttl.py
 uv run pytest tests/integration/test_cross_conversation_recall.py
 uv run pytest tests/integration/test_memory_audit_transaction.py
+uv run pytest -q
 ```
 
 Expected result: auth, authorization, memory, audit, redaction, transaction,
@@ -167,6 +177,7 @@ Update `docs/decisions.md` with:
 - audit policy for memory writes, role/admin changes, widget config changes, and
   conversation deletion
 - cross-conversation recall behavior for explicit long-term memory
+- deterministic async-safe embedding approach used for semantic memory in Phase 6
 - FastAPI Users integration decision and any fallback if it does not fit service
   transaction boundaries
 

@@ -282,6 +282,72 @@ Runners-up and rationale:
 | `rag_eval_hit_at_5_threshold` | 0.0 | Threshold gate (baseline-permissive) |
 | `rag_eval_mrr_at_10_threshold` | 0.0 | Threshold gate (baseline-permissive) |
 
-## Phase 2+ Decisions
+## Phase 6 Auth, Memory, and Audit Decisions
 
-To be added as phases progress.
+### Auth Implementation Strategy
+
+**Decision**: Use project-owned authentication services and repositories instead of adopting FastAPI Users as the primary runtime abstraction.
+
+- **Rationale**: Phase 6 requires service-owned transaction boundaries, Vault-resolved RS256 signing keys at startup, refresh-session rotation/revocation, first-admin bootstrap, role-change audit rows, and explicit memory/audit workflows. A project-owned implementation keeps those boundaries direct and testable.
+- **What remains library-shaped**: Standard FastAPI dependency injection, pydantic validation, SQLAlchemy async sessions, and PyJWT/argon2 adapters.
+- **Alternatives Rejected**: FastAPI Users end-to-end (would blur transaction ownership and persistence seams), fully stateless refresh flow (does not support rotation/revocation requirements).
+
+### JWT and Bootstrap Policy
+
+**Decision**: Use RS256 access tokens with the private/public key pair resolved from Vault during lifespan startup.
+
+- **Private key**: Used only for signing, never persisted outside Vault or logs.
+- **Public key**: Used for token verification.
+- **Failure mode**: If the signing key is unavailable, token issuance fails safely with `signing_key_unavailable` and the first-admin bootstrap script fails loudly.
+- **Bootstrap path**: `scripts/seed_admin.py` creates the initial admin only when no admin exists. After that, all additional admin access is granted through invitation acceptance.
+
+### Short-Term Memory Decision
+
+**Decision**: Use Redis-backed user-scoped short-term memory with a default TTL of 1,800 seconds (30 minutes).
+
+- **Rationale**: Matches a single conversation session boundary while keeping reads/writes fast and naturally expiring.
+- **Scope key**: `short_term_memory:{user_id}:{conversation_id}:{key}`
+- **Isolation**: Same conversation/key pairs from different users never collide.
+- **Expiry policy**: Expired values return a safe empty result (`value=None`, `expires_at=None`) rather than an error.
+
+### Long-Term Memory Decision
+
+**Decision**: Support only explicit semantic long-term memory writes in Phase 6.
+
+- **Write boundary**: Only `POST /memory/long-term` creates durable memory.
+- **No auto-write**: Normal authenticated requests and recall requests never create memory.
+- **Stored payload**: Redacted semantic memory text, content hash, embedding vector, source label, and safe metadata.
+- **Memory type restriction**: `semantic` only. `episodic` and `procedural` are rejected with structured validation errors.
+
+### Embedding Strategy for Phase 6
+
+**Decision**: Use a deterministic local embedding adapter for Phase 6 semantic memory writes and recall, with the blocking vector generation step wrapped in `asyncio.to_thread`.
+
+- **Rationale**: Satisfies the semantic recall requirement without introducing a new external model dependency for this phase.
+- **Async safety**: `MemoryEmbeddingClient.embed()` offloads the sync vector derivation path to `asyncio.to_thread`.
+- **Scope note**: This embedding path is for Phase 6 explicit memory only, not a general RAG retrieval strategy.
+
+### Redaction Before Persistence Decision
+
+**Decision**: Redaction runs before short-term writes, long-term writes, embeddings, audit metadata, logs, and traces.
+
+- **Short-term memory**: `redact_short_term_memory_value()` preserves safe labels like `password=` while redacting the secret value.
+- **Long-term memory**: `redact_long_term_memory_content()` applies the same secret-safe shaping before embedding and persistence.
+- **Audit metadata**: `build_memory_write_metadata()` records only bounded fields (`memory_type`, `content_hash`, `content_length`, `redaction_applied`, `source`) and never stores raw content.
+
+### Audit Action Policy
+
+**Decision**: Reserve stable action names up front and use them consistently for implemented Phase 6 workflows.
+
+- **Implemented in Phase 6**: `memory.write`, `role.change`, `admin_invitation.create`
+- **Reserved for later phases**: `widget_config.create`, `widget_config.update`, `widget_config.delete`, `conversation.delete`
+- **Atomicity**: Successful long-term memory writes and invitation acceptance create exactly one corresponding audit row in the same transaction.
+
+### Recall Policy
+
+**Decision**: Cross-conversation recall is same-user only and returns only explicitly written semantic memory.
+
+- **Same-user scope**: Repository recall queries filter strictly by `owner_user_id`.
+- **No leakage**: Another user cannot recall someone else's memory even if the query text matches.
+- **Empty result behavior**: No-match recall returns `{items: []}` safely.
+- **Response shape**: Recalled items return redacted content plus `audit_log_id` linkage, never raw secret material.

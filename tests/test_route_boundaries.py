@@ -64,3 +64,27 @@ def test_no_minio_in_api():
 def test_no_httpx_direct_in_api():
     """Assert no httpx imports in app/api/."""
     _assert_no_module_in_api("httpx")
+
+
+def test_phase6_route_modules_no_low_level_imports():
+    """Assert Phase 6 route modules avoid direct low-level library imports."""
+    route_files = [
+        API_DIR / "routes" / "auth.py",
+        API_DIR / "routes" / "admin.py",
+        API_DIR / "routes" / "memory.py",
+        API_DIR / "routes" / "users.py",
+    ]
+    banned_prefixes = ("sqlalchemy", "redis", "hvac", "minio", "httpx")
+    offenders: dict[Path, list[str]] = {}
+    for file in route_files:
+        if not file.exists():
+            continue
+        imports = ast_imports(file.read_text())
+        bad = [
+            imp
+            for imp in imports
+            if any(imp == prefix or imp.startswith(f"{prefix}.") for prefix in banned_prefixes)
+        ]
+        if bad:
+            offenders[file.relative_to(PROJECT_ROOT)] = bad
+    assert not offenders, f"Found forbidden low-level imports in Phase 6 routes: {offenders}"

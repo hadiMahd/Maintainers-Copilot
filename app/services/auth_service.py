@@ -104,6 +104,7 @@ class AuthService:
                 return pair
             except AuthenticationError:
                 await session.rollback()
+                log.warning("auth_failed", email=data.email)
                 raise
             except Exception:
                 await session.rollback()
@@ -148,6 +149,7 @@ class AuthService:
                 return pair
             except (TokenError, AuthenticationError):
                 await session.rollback()
+                log.warning("token_refresh_failed")
                 raise
             except Exception:
                 await session.rollback()
@@ -163,8 +165,10 @@ class AuthService:
             repo = self._user_repo_cls(session)
             user = await repo.get_by_id(user_id)
             if not user:
+                log.warning("current_user_lookup_failed", user_id=user_id)
                 raise AuthenticationError("User not found")
             if not user.is_active:
+                log.warning("current_user_disabled", user_id=user_id)
                 raise AuthenticationError("Account is disabled")
             return AuthContext(
                 user_id=user.id,

@@ -42,6 +42,20 @@ def test_docs_no_secrets():
             assert match.startswith("fake-"), f"Found real-looking UUID in {file}: {match}"
 
 
+def test_phase6_spec_artifacts_no_secrets():
+    """Assert Phase 6 spec artifacts contain no real secret patterns."""
+    feature_dir = PROJECT_ROOT / "specs" / "006-auth-memory-audit"
+    if not feature_dir.exists():
+        pytest.skip("Phase 6 spec directory does not exist")
+    md_files = list(feature_dir.rglob("*.md"))
+    assert md_files, "No markdown files found in Phase 6 spec directory"
+    for file in md_files:
+        content = file.read_text()
+        for pattern in SECRET_PATTERNS:
+            matches = pattern.findall(content)
+            assert not matches, f"Found potential secret in {file}: {matches}"
+
+
 def test_no_env_file_committed():
     """Assert .env is ignored by git if it exists at project root."""
     env_file = PROJECT_ROOT / ".env"

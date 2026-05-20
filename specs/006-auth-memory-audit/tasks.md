@@ -176,11 +176,11 @@ implementation and testing.
 
 **Purpose**: Finish the phase with documentation, leak checks, observability coverage, and quickstart validation.
 
-- [ ] T046 [P] Update Phase 6 memory/auth decision records in `docs/decisions.md` and keep command guidance aligned in `specs/006-auth-memory-audit/quickstart.md`
-- [ ] T047 [P] Update architecture, security, and runbook docs for auth, Vault-backed signing keys, Redis memory, audit operations, and first-admin bootstrap in `docs/architecture.md`, `docs/security.md`, and `docs/runbook.md`
-- [ ] T048 [P] Add Phase 6 cross-cutting leak and route-boundary coverage in `tests/test_no_secrets.py` and `tests/test_route_boundaries.py`
-- [ ] T049 [P] Verify structured observability coverage: confirm `request_id`/`trace_id` appear on structured logs for auth failures, role changes, memory writes, recall, and audit failures; confirm no raw secrets, passwords, or unredacted memory content appear in log or trace metadata in `tests/unit/test_observability_coverage.py`
-- [ ] T050 Run Phase 6 quickstart validation and record any command or path corrections in `specs/006-auth-memory-audit/quickstart.md`
+- [x] T046 [P] Update Phase 6 memory/auth decision records in `docs/decisions.md` and keep command guidance aligned in `specs/006-auth-memory-audit/quickstart.md`
+- [x] T047 [P] Update architecture, security, and runbook docs for auth, Vault-backed signing keys, Redis memory, audit operations, and first-admin bootstrap in `docs/architecture.md`, `docs/security.md`, and `docs/runbook.md`
+- [x] T048 [P] Add Phase 6 cross-cutting leak and route-boundary coverage in `tests/test_no_secrets.py` and `tests/test_route_boundaries.py`
+- [x] T049 [P] Verify structured observability coverage: confirm `request_id`/`trace_id` appear on structured logs for auth failures, role changes, memory writes, recall, and audit failures; confirm no raw secrets, passwords, or unredacted memory content appear in log or trace metadata in `tests/unit/test_observability_coverage.py`
+- [x] T050 Run Phase 6 quickstart validation and record any command or path corrections in `specs/006-auth-memory-audit/quickstart.md`
 
 ---
 

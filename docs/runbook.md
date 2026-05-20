@@ -34,6 +34,30 @@ curl -s localhost:8000/health/live | jq .
 curl -s localhost:8000/health/ready | jq .
 ```
 
+## Bootstrap First Admin
+
+```bash
+uv run python scripts/seed_admin.py --email admin@example.com --password '<password>'
+```
+
+Expected: the first admin is created when none exists; repeated runs report an existing admin.
+
+## Phase 6 Auth and Memory Validation
+
+Critical slice:
+
+```bash
+uv run pytest tests/unit/test_auth_service.py tests/unit/test_authorization_service.py tests/unit/test_admin_invitation_service.py tests/unit/test_short_term_memory_service.py tests/unit/test_long_term_memory_service.py tests/unit/test_long_term_memory_recall.py tests/unit/test_audit_service.py tests/unit/test_audit_action_names.py tests/unit/test_memory_redaction.py tests/unit/test_repository_boundaries.py tests/contract/test_auth_memory_api_contract.py tests/integration/test_auth_lifecycle_vault_key.py tests/integration/test_refresh_token_flow.py tests/integration/test_admin_invitation_flow.py tests/integration/test_redis_memory_ttl.py tests/integration/test_memory_audit_transaction.py tests/integration/test_cross_conversation_recall.py -q
+```
+
+Full suite:
+
+```bash
+uv run pytest -q
+```
+
+Expected: current baseline after Phase 6 is 542 passed, 3 skipped.
+
 ## Common Failures
 
 - **Vault unreachable**: check `VAULT_ADDR`, run `docker compose ps vault`
