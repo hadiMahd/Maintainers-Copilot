@@ -20,6 +20,19 @@ MODULES = [
     "app.infra.storage.classifier_artifacts",
     "app.infra.mlflow.tracking",
     "app.services.classifier_evaluation",
+    "app.api.routes.chat",
+    "app.infra.prompt_registry",
+    "app.infra.chatbot_graph",
+    "app.infra.llm_adapter",
+    "app.infra.model_server_tools",
+    "app.infra.rag_tool_client",
+    "app.infra.memory_tool_client",
+    "app.infra.tracing",
+    "app.services.chatbot_service",
+    "app.services.chatbot_graph_service",
+    "app.services.tool_execution_service",
+    "app.services.conversation_state_service",
+    "app.services.chat_tracing_service",
 ]
 
 

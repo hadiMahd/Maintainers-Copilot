@@ -200,16 +200,16 @@
 - `completed_at`: completion timestamp.
 - `status`: `success`, `partial`, or `failed`.
 - `safe_metadata`: bounded redacted metadata.
-- `tracing_backend`: configured OpenTelemetry-compatible backend label, such as
-  local Jaeger or Tempo.
+- `tracing_backend`: configured tracing backend label, `langsmith` when real
+  tracing is enabled or `fake` in tests.
 
 **Validation Rules**:
 - One trace root is created for each tested user message.
 - Trace root links to LLM, tool, and RAG spans.
 - Raw user/tool/LLM/RAG payloads are not stored in trace metadata.
 - Trace ID is included in structured logs for the same request when available.
-- Successful and failed-tool conversations are reviewable in the configured
-  local tracing UI.
+- Successful and failed-tool conversations are reviewable in LangSmith when
+  tracing credentials are configured.
 
 ## Memory Write Intent
 

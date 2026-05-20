@@ -7,10 +7,16 @@ class DomainError(Exception):
     error_code: str = "DOMAIN_ERROR"
     status_code: int = 500
 
-    def __init__(self, message: str, details: dict | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        details: dict | None = None,
+        trace_id: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details or {}
+        self.trace_id = trace_id
 
 
 class ConfigError(DomainError):
@@ -116,3 +122,66 @@ class RedactionError(DomainError):
 
     error_code = "redaction_failed"
     status_code = 500
+
+
+class ChatValidationError(DomainError):
+    """Chat request validation failure."""
+
+    error_code = "invalid_chat_input"
+    status_code = 422
+
+
+class RequestTooLargeError(DomainError):
+    """Chat request exceeds configured size limit."""
+
+    error_code = "request_too_large"
+    status_code = 413
+
+
+class ContextLimitExceededError(DomainError):
+    """Chat context exceeds configured size limit."""
+
+    error_code = "context_limit_exceeded"
+    status_code = 422
+
+
+class MaxToolCallsExceededError(DomainError):
+    """Chat tool-call budget exceeded."""
+
+    error_code = "max_tool_calls_exceeded"
+    status_code = 422
+
+
+class RecursionLimitExceededError(DomainError):
+    """Chat graph recursion budget exceeded."""
+
+    error_code = "recursion_limit_exceeded"
+    status_code = 422
+
+
+class ChatbotTimeoutError(DomainError):
+    """Full chat execution timeout."""
+
+    error_code = "chatbot_timeout"
+    status_code = 504
+
+
+class LLMUnavailableError(DomainError):
+    """Tool-calling LLM unavailable or misconfigured."""
+
+    error_code = "llm_unavailable"
+    status_code = 503
+
+
+class ToolExecutionFailedError(DomainError):
+    """Tool execution failed before safe recovery."""
+
+    error_code = "tool_execution_failed"
+    status_code = 503
+
+
+class TracingFailedError(DomainError):
+    """Tracing infrastructure unavailable or failed."""
+
+    error_code = "tracing_failed"
+    status_code = 503

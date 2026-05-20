@@ -99,10 +99,31 @@ components:
           $ref: "#/components/schemas/ErrorBody"
     ErrorResponse:
       type: object
-      required: [error]
+      required: [error_code, message, request_id]
       properties:
-        error:
-          $ref: "#/components/schemas/ErrorBody"
+        error_code:
+          type: string
+          enum:
+            - authentication_required
+            - invalid_chat_input
+            - request_too_large
+            - context_limit_exceeded
+            - max_tool_calls_exceeded
+            - recursion_limit_exceeded
+            - chatbot_timeout
+            - llm_unavailable
+            - tool_execution_failed
+            - tracing_failed
+            - internal_error
+        message:
+          type: string
+        request_id:
+          type: string
+        trace_id:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
     ErrorBody:
       type: object
       required: [code, message]

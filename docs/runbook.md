@@ -58,6 +58,22 @@ uv run pytest -q
 
 Expected: current baseline after Phase 6 is 542 passed, 3 skipped.
 
+## Phase 7 Chat Validation
+
+Focused chat suite:
+
+```bash
+uv run pytest tests/contract/test_chat_endpoint_contract.py tests/unit/test_chatbot_graph.py tests/unit/test_chat_limits.py tests/unit/test_tool_execution_service.py tests/unit/test_write_memory_intent.py tests/unit/test_untrusted_rag_context.py tests/unit/test_retrieved_chunk_snapshots.py tests/unit/test_chat_tracing.py tests/unit/test_chat_redaction.py tests/integration/test_chat_successful_tool_call.py tests/integration/test_chat_redis_state.py tests/integration/test_chat_failed_tool_recovery.py tests/integration/test_chat_trace_log_correlation.py -q
+```
+
+Cross-cutting Phase 7 guardrails:
+
+```bash
+uv run pytest tests/test_config.py tests/test_import_side_effects.py tests/test_route_boundaries.py tests/test_no_secrets.py tests/test_errors.py -q
+```
+
+Expected: the focused chat slice and cross-cutting guardrails both pass before full regression. Full regression baseline after Phase 7: 597 passed, 3 skipped.
+
 ## Common Failures
 
 - **Vault unreachable**: check `VAULT_ADDR`, run `docker compose ps vault`

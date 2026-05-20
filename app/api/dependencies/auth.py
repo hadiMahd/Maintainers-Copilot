@@ -10,7 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import AppSettings
 from app.domain.auth import AuthContext
-from app.domain.errors import AuthenticationError, TokenError
+from app.domain.errors import TokenError
 from app.infra.token_signer import TokenSigner
 
 _bearer = HTTPBearer(auto_error=False)
@@ -22,7 +22,7 @@ async def get_current_user(
 ) -> AuthContext:
     """Extract and validate the current authenticated user from Bearer token."""
     if credentials is None:
-        raise AuthenticationError("Authentication required")
+        raise TokenError("Authentication required")
 
     settings: AppSettings = request.app.state.settings
     signer = TokenSigner(settings)

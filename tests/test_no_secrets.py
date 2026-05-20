@@ -56,6 +56,17 @@ def test_phase6_spec_artifacts_no_secrets():
             assert not matches, f"Found potential secret in {file}: {matches}"
 
 
+def test_phase7_prompts_and_spec_artifacts_no_secrets():
+    """Assert Phase 7 prompt files and spec artifacts contain no real secrets."""
+    prompt_files = list((PROJECT_ROOT / "prompts").glob("chatbot_*.md"))
+    spec_files = list((PROJECT_ROOT / "specs" / "007-tool-chatbot-backend").rglob("*.md"))
+    for file in prompt_files + spec_files:
+        content = file.read_text()
+        for pattern in SECRET_PATTERNS:
+            matches = pattern.findall(content)
+            assert not matches, f"Found potential secret in {file}: {matches}"
+
+
 def test_no_env_file_committed():
     """Assert .env is ignored by git if it exists at project root."""
     env_file = PROJECT_ROOT / ".env"

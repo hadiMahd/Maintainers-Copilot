@@ -30,6 +30,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
         structlog.contextvars.bind_contextvars(request_id=request_id)
         request.state.request_id = request_id
+        request.state.trace_id = None
 
         try:
             response = await call_next(request)
@@ -43,10 +44,14 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
                     error_code="SERVER_ERROR",
                     message="An unexpected error occurred",
                     request_id=request_id,
-                ).model_dump(),
+                    trace_id=getattr(request.state, "trace_id", None),
+                ).model_dump(exclude_none=True),
                 headers={header_name: request_id},
             )
 
         response.headers[header_name] = request_id
+        trace_id = getattr(request.state, "trace_id", None)
+        if trace_id:
+            response.headers["X-Trace-ID"] = trace_id
         structlog.contextvars.clear_contextvars()
         return response

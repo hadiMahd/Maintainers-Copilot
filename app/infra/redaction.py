@@ -155,6 +155,71 @@ def redact_audit_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
     return redact_dict(metadata)
 
 
+def redact_chat_message(message: str) -> str:
+    """Redact chat message content for logs, traces, and bounded state."""
+    return redact_string(message)[:_MAX_TEXT_FIELD_LENGTH]
+
+
+def redact_chat_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Redact a sequence of chat messages for telemetry."""
+    safe_messages: list[dict[str, Any]] = []
+    for message in messages:
+        safe_messages.append(
+            {
+                "role": message.get("role"),
+                "name": message.get("name"),
+                "content": redact_chat_message(str(message.get("content", ""))),
+            }
+        )
+    return safe_messages
+
+
+def redact_chat_prompt_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Keep prompt telemetry bounded and secret-safe."""
+    safe: dict[str, Any] = {}
+    for key, value in payload.items():
+        if key.endswith("prompt") and isinstance(value, str):
+            safe[f"{key}_len"] = len(value)
+            continue
+        if isinstance(value, str):
+            safe[key] = redact_chat_message(value)
+        elif isinstance(value, list):
+            safe[key] = [redact_chat_message(str(item)) for item in value]
+        elif isinstance(value, dict):
+            safe[key] = redact_dict(value)
+        else:
+            safe[key] = value
+    return safe
+
+
+def redact_tool_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Redact tool input/output payloads before logs or traces."""
+    return redact_dict(payload)
+
+
+def redact_llm_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Redact LLM prompt/response metadata before logs or traces."""
+    return redact_chat_prompt_payload(payload)
+
+
+def redact_sse_event(payload: dict[str, Any]) -> dict[str, Any]:
+    """Redact SSE event payloads before logs or traces."""
+    safe = redact_dict(payload)
+    content = safe.get("content")
+    if isinstance(content, str):
+        safe["content_len"] = len(content)
+        del safe["content"]
+    error = safe.get("error")
+    if isinstance(error, dict):
+        safe["error"] = redact_dict(error)
+    return safe
+
+
+def redact_trace_metadata(payload: dict[str, Any]) -> dict[str, Any]:
+    """Redact span/root metadata for chat tracing."""
+    return redact_dict(payload)
+
+
 # -- Phase 5 RAG redaction -----------------------------------------------------
 
 _RAG_REDACTED_FIELDS = {"content", "content_preview", "maintainer_answer", "question_context"}
