@@ -79,20 +79,6 @@ services:
     ports:
       - "8200:8200"
 
-  vault_seed:
-    image: hashicorp/vault:1.15
-    depends_on:
-      vault:
-        condition: service_healthy
-    volumes:
-      - ./scripts/seed_vault_from_env.sh:/seed_vault_from_env.sh:ro
-      - ./.env:/run/secrets/maintainer-copilot.env:ro
-    environment:
-      VAULT_ADDR: http://vault:8200
-      VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
-    command: ["sh", "/seed_vault_from_env.sh", "/run/secrets/maintainer-copilot.env"]
-    restart: "no"
-
   migrations:
     build:
       context: ./
@@ -101,7 +87,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: ${APP_DATABASE_URL:-postgresql+asyncpg://maintainer:maintainer@postgres:5432/maintainer}
-    command: ["uv", "run", "alembic", "upgrade", "head"]
+    command: ["alembic", "upgrade", "head"]
     restart: "no"
 
   backend:
@@ -116,8 +102,6 @@ services:
         condition: service_healthy
       vault:
         condition: service_healthy
-      vault_seed:
-        condition: service_completed_successfully
       migrations:
         condition: service_completed_successfully
     environment:

@@ -11,9 +11,10 @@
 
 ## Vault Dev Bootstrap Policy
 
-- Docker Compose starts Vault in dev mode and seeds the expected paths on boot.
-- The seeding entrypoint is `scripts/seed_vault_from_env.sh`, which reads local
-  `.env` values and writes them to Vault.
+- Docker Compose starts Vault in dev mode only.
+- Local/dev bootstrap then runs `uv run python scripts/seed_vault_from_env.py .env`
+  from the host to seed the expected paths.
+- The seeding input is the local `.env`; the runtime source of truth remains Vault.
 - Only `VAULT_ADDR` and `VAULT_TOKEN` are used as bootstrap settings.
 - Azure OpenAI secrets stored at `secret/data/maintainer-copilot/azure-openai`.
 - LangSmith API key stored at `secret/data/maintainer-copilot/langsmith`.

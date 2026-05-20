@@ -4,7 +4,9 @@
 
 ```bash
 cp .env.example .env
-docker compose up --wait
+docker compose up -d vault postgres redis minio
+uv run python scripts/seed_vault_from_env.py .env
+docker compose up -d migrations backend
 ```
 
 ## Stop Stack
@@ -37,7 +39,7 @@ curl -s localhost:8000/health/ready | jq .
 - **Vault unreachable**: check `VAULT_ADDR`, run `docker compose ps vault`
 - **Postgres unhealthy**: check `docker compose logs postgres`
 - **pgvector not installed**: run `docker compose restart migrations`
-- **Backend crash on startup**: Vault auth failure — check `VAULT_TOKEN` and `docker compose logs vault_seed`
+- **Backend crash on startup**: secrets may not be seeded yet — re-run `uv run python scripts/seed_vault_from_env.py .env`, then `docker compose restart backend`
 
 ## Start Model Server
 

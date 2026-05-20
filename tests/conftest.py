@@ -16,9 +16,6 @@ from unittest.mock import MagicMock
 from app.core.config import AppSettings
 from app.domain.models import ReadinessCheck
 
-# Import health routes to trigger router registration on the global app
-import app.api.routes.health  # noqa: F401
-
 
 @pytest.fixture
 def settings(monkeypatch):

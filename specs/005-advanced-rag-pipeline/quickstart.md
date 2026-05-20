@@ -4,6 +4,13 @@
 
 - Phase 1 foundation exists with PostgreSQL 16 and pgvector available through
   local Docker Compose or equivalent local setup.
+- For the full local stack, boot Vault/infrastructure first, then seed Vault from
+  the host:
+  ```bash
+  docker compose up -d vault postgres redis minio
+  uv run python scripts/seed_vault_from_env.py .env
+  docker compose up -d migrations backend
+  ```
 - Real provider credentials are not required for automated tests; fake providers
   or local adapters must be available for generation/judging tests.
 - Required CI generation metrics use a frozen local/mockable judge; optional
