@@ -81,16 +81,16 @@
 
 ### Tests for User Story 2 (REQUIRED for critical behavior) ⚠️
 
-- [ ] T020 [P] [US2] Add command-contract tests for `scripts/evaluate_rag.py` report shape, threshold failures, safe stderr behavior, and `judge_id` recording in `tests/contract/test_rag_commands.py`
-- [ ] T021 [P] [US2] Add unit tests for token-overlap judging, hit@5 and MRR@10 calculation, latency aggregation, report schema validation, and two-candidate embedding comparison outputs in `tests/unit/test_rag_eval_metrics.py`
-- [ ] T022 [P] [US2] Add integration tests for baseline-vs-advanced evaluation using fixture corpora and fake providers, including five hand-labeled disagreement examples and both embedding candidates in `tests/integration/test_rag_grounded_answers.py`
+- [x] T020 [P] [US2] Add command-contract tests for `scripts/evaluate_rag.py` report shape, threshold failures, safe stderr behavior, and `judge_id` recording in `tests/contract/test_rag_commands.py`
+- [x] T021 [P] [US2] Add unit tests for token-overlap judging, hit@5 and MRR@10 calculation, latency aggregation, report schema validation, and two-candidate embedding comparison outputs in `tests/unit/test_rag_eval_metrics.py`
+- [x] T022 [P] [US2] Add integration tests for baseline-vs-advanced evaluation using fixture corpora and fake providers, including five hand-labeled disagreement examples and both embedding candidates in `tests/integration/test_rag_grounded_answers.py`
 
 ### Implementation for User Story 2
 
-- [ ] T023 [P] [US2] Create the 25-example golden set, five hand-labeled disagreement examples, and Phase 5 eval thresholds in `evals/rag_golden_set.jsonl` and `evals/eval_thresholds.yaml`
-- [ ] T024 [P] [US2] Implement the frozen token-overlap judge, optional non-CI judge plumbing, and judge trace hooks in `app/infra/rag_judge_client.py`
-- [ ] T025 [US2] Implement baseline/advanced metric aggregation, latency measurement, disagreement-note capture, two-candidate embedding comparison reporting, and report shaping in `app/services/rag_evaluation_service.py`
-- [ ] T026 [US2] Implement `scripts/evaluate_rag.py` to run both modes, persist `evals/rag_eval_report.json`, record `judge_id`, validate both embedding candidates in comparison outputs, and fail when advanced hit@5 or MRR@10 does not exceed baseline outside exploratory mode
+- [x] T023 [P] [US2] Create the 25-example golden set, five hand-labeled disagreement examples, and Phase 5 eval thresholds in `evals/rag_golden_set.jsonl` and `evals/eval_thresholds.yaml`
+- [x] T024 [P] [US2] Implement the frozen token-overlap judge, optional non-CI judge plumbing, and judge trace hooks in `app/infra/rag_judge_client.py`
+- [x] T025 [US2] Implement baseline/advanced metric aggregation, latency measurement, disagreement-note capture, two-candidate embedding comparison reporting, and report shaping in `app/services/rag_evaluation_service.py`
+- [x] T026 [US2] Implement `scripts/evaluate_rag.py` to run both modes, persist `evals/rag_eval_report.json`, record `judge_id`, validate both embedding candidates in comparison outputs, and fail when advanced hit@5 or MRR@10 does not exceed baseline outside exploratory mode
 
 **Checkpoint**: At this point, the evaluation flow should produce a schema-valid comparison report with deterministic CI judge metadata.
 

@@ -9,9 +9,12 @@ as a proxy for faithfulness / answer relevancy.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_JUDGE_ID = "token-overlap-f1-v1"
 
@@ -56,22 +59,77 @@ class TokenOverlapJudge:
         question: str,
         retrieved_content: str,
     ) -> float:
-        """
-        Simple token-overlap relevancy score between candidate answer and the
-        combined question + retrieved content.  This is a deterministic proxy;
-        not a semantic similarity metric.
-        """
         combined = f"{question} {retrieved_content}"
         return compute_unigram_f1(candidate_answer, combined)
+
+    def judge_batch(
+        self,
+        *,
+        questions: list[str],
+        candidate_answers: list[str],
+        reference_answers: list[str],
+        retrieved_contents: list[str] | None = None,
+        request_id: str | None = None,
+        trace_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        rid = request_id or uuid.uuid4().hex
+        tid = trace_id or uuid.uuid4().hex
+        scores: list[dict[str, Any]] = []
+        for i in range(len(questions)):
+            faith = self.score_faithfulness(candidate_answers[i], reference_answers[i])
+            rel = self.score_answer_relevancy(
+                candidate_answers[i],
+                questions[i],
+                retrieved_contents[i] if retrieved_contents else "",
+            )
+            scores.append({
+                "index": i,
+                "faithfulness": faith,
+                "answer_relevancy": rel,
+            })
+        logger.info(
+            "Judge batch complete",
+            extra={
+                "request_id": rid,
+                "trace_id": tid,
+                "judge_id": self._judge_id,
+                "examples_judged": len(scores),
+            },
+        )
+        return scores
+
+
+class NonCIJudgeStub:
+    """Config seam for optional RAGAS-style non-CI judging.
+
+    Raises ``NotImplementedError`` — real RAGAS metrics are out of scope
+    for US2 and are wired separately when the optional dependency is present.
+    """
+
+    def __init__(self, model: str = "ragas") -> None:
+        self._model = model
+
+    @property
+    def provider_backend(self) -> str:
+        return "ragas-stub"
+
+    def judge(self, *, question: str, answer: str, context: str) -> dict:
+        raise NotImplementedError("RAGAS-style judging is not implemented in this pass")
 
 
 def resolve_judge() -> TokenOverlapJudge:
     return TokenOverlapJudge()
 
 
+def resolve_non_ci_judge() -> NonCIJudgeStub:
+    return NonCIJudgeStub()
+
+
 __all__ = [
     "TokenOverlapJudge",
+    "NonCIJudgeStub",
     "compute_unigram_f1",
     "resolve_judge",
+    "resolve_non_ci_judge",
     "_DEFAULT_JUDGE_ID",
 ]
