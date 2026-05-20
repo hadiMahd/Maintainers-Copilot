@@ -127,18 +127,18 @@
 
 ### Tests for User Story 4 (REQUIRED for critical behavior) ⚠️
 
-- [ ] T034 [P] [US4] Add unit tests for sparse/dense score normalization and hybrid weighting behavior in `tests/unit/test_rag_hybrid_scoring.py`
-- [ ] T035 [P] [US4] Add unit tests for metadata filtering and query transformation toggling in `tests/unit/test_rag_metadata_filtering.py` and `tests/unit/test_rag_query_transformation.py`
-- [ ] T036 [P] [US4] Add unit tests for reranking impact, deterministic tie handling, snapshot redaction, conversation/message/trace metadata association, and 50-conversation retention in `tests/unit/test_rag_reranking.py`, `tests/unit/test_rag_snapshot_service.py`, and `tests/unit/test_rag_redaction.py`
-- [ ] T037 [P] [US4] Add integration tests for pgvector-backed retrieval, empty filtered result sets, and reranking-driven rank changes in `tests/integration/test_rag_pgvector_retrieval.py`
+- [x] T034 [P] [US4] Add unit tests for sparse/dense score normalization and hybrid weighting behavior in `tests/unit/test_rag_hybrid_scoring.py`
+- [x] T035 [P] [US4] Add unit tests for metadata filtering and query transformation toggling in `tests/unit/test_rag_metadata_filtering.py` and `tests/unit/test_rag_query_transformation.py`
+- [x] T036 [P] [US4] Add unit tests for reranking impact, deterministic tie handling, snapshot redaction, conversation/message/trace metadata association, and 50-conversation retention in `tests/unit/test_rag_reranking.py`, `tests/unit/test_rag_snapshot_service.py`, and `tests/unit/test_rag_redaction.py`
+- [x] T037 [P] [US4] Add integration tests for pgvector-backed retrieval, empty filtered result sets, and reranking-driven rank changes in `tests/integration/test_rag_pgvector_retrieval.py`
 
 ### Implementation for User Story 4
 
-- [ ] T038 [P] [US4] Implement PostgreSQL full-text sparse retrieval, dense retrieval, and weighted hybrid ranking in `app/repositories/rag_chunk_repository.py` and `app/services/rag_retrieval_service.py`
-- [ ] T039 [P] [US4] Implement query transformation toggling and safe empty-result explanations in `app/services/rag_retrieval_service.py` and `app/infra/rag_generation_client.py`
-- [ ] T040 [P] [US4] Implement top-k cross-encoder reranking and deterministic final ordering in `app/infra/reranker_client.py` and `app/services/rag_retrieval_service.py`
-- [ ] T041 [US4] Implement redacted retrieved-chunk snapshot storage with conversation/message/trace metadata and 50-conversation retention in `app/services/rag_snapshot_service.py` and `app/repositories/rag_snapshot_repository.py`
-- [ ] T042 [US4] Wire retrieval-mode metadata, reranking impact, query transformation mode, trace-safe previews, and eval trace metadata into `app/services/rag_evaluation_service.py` and `scripts/evaluate_rag.py`
+- [x] T038 [P] [US4] Implement PostgreSQL full-text sparse retrieval, dense retrieval, and weighted hybrid ranking in `app/repositories/rag_chunk_repository.py` and `app/services/rag_retrieval_service.py`
+- [x] T039 [P] [US4] Implement query transformation toggling and safe empty-result explanations in `app/services/rag_retrieval_service.py` and `app/infra/rag_generation_client.py`
+- [x] T040 [P] [US4] Implement top-k cross-encoder reranking and deterministic final ordering in `app/infra/reranker_client.py` and `app/services/rag_retrieval_service.py`
+- [x] T041 [US4] Implement redacted retrieved-chunk snapshot storage with conversation/message/trace metadata and 50-conversation retention in `app/services/rag_snapshot_service.py` and `app/repositories/rag_snapshot_repository.py`
+- [x] T042 [US4] Wire retrieval-mode metadata, reranking impact, query transformation mode, trace-safe previews, and eval trace metadata into `app/services/rag_evaluation_service.py` and `scripts/evaluate_rag.py`
 
 **Checkpoint**: All retrieval controls and ranking stages should now be independently testable and measurable.
 
@@ -148,9 +148,9 @@
 
 **Purpose**: Finish reviewer docs, operational notes, and validation that span multiple user stories.
 
-- [ ] T043 [P] Update Phase 5 decision and evaluation documentation in `DECISIONS.md` and `docs/evals.md`
-- [ ] T044 [P] Update RAG architecture, security, and operator guidance in `docs/architecture.md`, `docs/security.md`, and `docs/runbook.md`
-- [ ] T045 Validate Phase 5 quickstart commands, artifact paths, and report expectations in `specs/005-advanced-rag-pipeline/quickstart.md`
+- [x] T043 [P] Update Phase 5 decision and evaluation documentation in `DECISIONS.md` and `docs/evals.md`
+- [x] T044 [P] Update RAG architecture, security, and operator guidance in `docs/architecture.md`, `docs/security.md`, and `docs/runbook.md`
+- [x] T045 Validate Phase 5 quickstart commands, artifact paths, and report expectations in `specs/005-advanced-rag-pipeline/quickstart.md`
 
 ---
 

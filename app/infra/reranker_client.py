@@ -58,19 +58,40 @@ class FakeRerankerClient(BaseRerankerClient):
         return candidates[:top_k]
 
 
-class CrossEncoderRerankerStub(BaseRerankerClient):
-    """Cross-encoder reranker config seam.
+class CrossEncoderReranker(BaseRerankerClient):
+    """Cross-encoder reranker using ``sentence_transformers.CrossEncoder``.
 
-    Actual model calls are wired in US4. This stub holds the model name
-    and raises NotImplementedError if called directly.
+    .. note::
+
+        ``CrossEncoder.predict()`` is synchronous CPU work.
+        When this reranker is wired into an async request path,
+        wrap the call with ``asyncio.to_thread(reranker.rerank, ...)``
+        to avoid blocking the event loop.
+
+        Example::
+
+            ranked = await asyncio.to_thread(reranker.rerank, query, candidates, top_k)
     """
 
     def __init__(self, model_name: str = _DEFAULT_RERANKER_MODEL) -> None:
         self._model_name = model_name
+        self._encoder: object | None = None
 
     @property
     def model_name(self) -> str:
         return self._model_name
+
+    def _ensure_encoder(self) -> None:
+        if self._encoder is not None:
+            return
+        try:
+            from sentence_transformers import CrossEncoder
+        except ImportError as exc:
+            raise RuntimeError(
+                "CrossEncoder reranker requires the rag optional dependencies "
+                "(install with: uv sync --extra rag)"
+            ) from exc
+        self._encoder = CrossEncoder(self._model_name)
 
     def rerank(
         self,
@@ -78,7 +99,17 @@ class CrossEncoderRerankerStub(BaseRerankerClient):
         candidates: list[RetrievalResult],
         top_k: int,
     ) -> list[RetrievalResult]:
-        raise NotImplementedError("CrossEncoder reranker calls are not implemented in this pass")
+        if not candidates:
+            return []
+        self._ensure_encoder()
+        pairs = [(query, c.chunk.content[:500]) for c in candidates]
+        scores = self._encoder.predict(pairs).tolist()
+        for r, s in zip(candidates, scores):
+            r.rerank_score = float(s)
+        ranked = sorted(candidates, key=lambda r: r.rerank_score or 0.0, reverse=True)
+        for idx, r in enumerate(ranked[:top_k], start=1):
+            r.rank = idx
+        return ranked[:top_k]
 
 
 def resolve_reranker(settings) -> BaseRerankerClient:
@@ -88,7 +119,7 @@ def resolve_reranker(settings) -> BaseRerankerClient:
 __all__ = [
     "BaseRerankerClient",
     "FakeRerankerClient",
-    "CrossEncoderRerankerStub",
+    "CrossEncoderReranker",
     "resolve_reranker",
     "_DEFAULT_RERANKER_MODEL",
 ]

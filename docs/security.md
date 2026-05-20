@@ -25,7 +25,14 @@
 - `redaction_applied: true` must be set on all persisted model cards and run metadata.
 - Tests prove that fake secrets do not appear unredacted in logs, traces, or audit records.
 
-### Phase 4 Redaction Rules
+### Phase 5 RAG Redaction Rules
+
+- `redact_chunk_preview()` strips full `content` from chunk records; keeps only `chunk_id`, `parent_id`, score metadata.
+- `redact_rag_prompt()` replaces `content`, `maintainer_answer`, `question_context` with length-only metadata. Safe keys (chunk_id, top_k, retrieval_mode, etc.) are preserved with `redact_string()` applied to string values.
+- `redact_snapshot_row()` strips raw content and redacts queries; keeps only `snapshot_id`, `conversation_id`, `message_id`, `trace_id`, `chunk_ids`, `scores`.
+- `redact_eval_report()` strips `content` fields from all nested chunk results and redacts secret patterns in string values.
+- No raw source text, prompts, chunk content, provider responses, or secrets appear in logs, traces, snapshots, or eval reports.
+- Request IDs and trace IDs are preserved for correlation without exposing payloads.
 
 - `redact_issue_analysis_metadata()` keeps only safe keys: `request_id`, `tool_name`, `combined_characters`, `entity_count`, `entity_types`, `status`, `code`, `trace_id`, `provider_backend`, `tracing_backend`, `timeout_seconds`, `limitations`, `error_code`. All other keys are stripped.
 - `redact_log_payload()` replaces `title`, `body`, and `comments` fields with length-only metadata (`title_len`, `body_len`, `comments_len`, `comments_count`). Non-content fields are redacted for secret patterns before logging.

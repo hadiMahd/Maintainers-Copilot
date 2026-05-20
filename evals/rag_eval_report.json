@@ -1,7 +1,7 @@
 {
-  "report_id": "a431d7878f9642da9fd862359d5a77f9",
+  "report_id": "0818cb518a7143b2bf457fc7dd01a26c",
   "baseline": {
-    "run_id": "9ad6940028e442d09b1603a1e4dbde41",
+    "run_id": "1b9573c6dbbe4d74ae58c685ba5ffffa",
     "mode": "baseline",
     "metrics": {
       "hit_at_5": 0.32,
@@ -20,10 +20,10 @@
     "examples_completed": 25,
     "judge_id": "token-overlap-f1-v1",
     "disagreement_notes": [],
-    "created_at": "2026-05-20 11:11:11.527401+00:00"
+    "created_at": "2026-05-20 13:16:11.234041+00:00"
   },
   "advanced": {
-    "run_id": "176e734bdc874d77b36e4cf1cf3dbb78",
+    "run_id": "a91de1bf718748818ab4d4fc2c96cf24",
     "mode": "advanced",
     "metrics": {
       "hit_at_5": 0.32,
@@ -48,7 +48,7 @@
       "[example 16] Cross-references database setup and FastAPI patterns; advanced retrieval should surface both",
       "[example 21] Dependency update workflow is simple but the expected chunk overlaps with numpy install; ordering matters"
     ],
-    "created_at": "2026-05-20 11:11:11.528201+00:00"
+    "created_at": "2026-05-20 13:16:11.234920+00:00"
   },
   "advanced_beats_baseline": false,
   "embedding_comparison": {
@@ -66,5 +66,5 @@
   "limitations": [
     "Advanced pipeline did not exceed baseline on required retrieval metrics"
   ],
-  "created_at": "2026-05-20 11:11:11.528267+00:00"
+  "created_at": "2026-05-20 13:16:11.235003+00:00"
 }

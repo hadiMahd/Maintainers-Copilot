@@ -69,14 +69,71 @@ approaches. Skipped approaches are never silently omitted.
 
 TBD when RAG and chatbot components are introduced.
 
-## Golden Datasets
+## Phase 5: Advanced RAG Pipeline
+
+### Golden Set
+
+- **Path**: `evals/rag_golden_set.jsonl`
+- **Size**: 25 examples (20 regular + 5 with hand-labeled disagreement notes)
+- **Fields**: `question`, `answer`, `expected_chunks`, `source_type`, optional `disagreement_note`
+
+### Evaluation Modes
+
+Two modes compared on the same golden set:
+
+| Mode | Chunking | Retrieval | Structure |
+|------|----------|-----------|-----------|
+| Baseline | Fixed-size naive | Pure dense (all-MiniLM-L6-v2) | `rag_chunks` table only |
+| Advanced | Parent-document retriever | Weighted hybrid (sparse 0.3 + dense 0.7) + optional reranker + optional query transformation | Full RAG pipeline |
+
+### Required Metrics
+
+- **hit@5**: Fraction of examples where at least one expected chunk appears in the top 5 retrieved results
+- **MRR@10**: Mean reciprocal rank of the first expected chunk in the top 10 results
+- **Faithfulness**: Token-overlap F1 between generated answer and reference answer (frozen judge)
+- **Answer relevancy**: Token-overlap F1 between generated answer and combined question + retrieved content
+- **Retrieval latency**: p50/p95 in milliseconds
+- **Generation latency**: p50/p95 in milliseconds
+- **Embedding comparison**: Both `all-MiniLM-L6-v2` (384 dim) and `text-embedding-3-small` (1536 dim) recorded
+
+### Judge Configuration
+
+- **CI judge**: `TokenOverlapJudge` with `judge_id` = `token-overlap-f1-v1` (frozen, deterministic, zero-dependency)
+- **Method**: Unigram F1 token-overlap between candidate and reference answers
+- **Optional RAGAS**: `NonCIJudgeStub` — config seam, raises `NotImplementedError` when no real RAGAS provider is available
+- **Disagreement notes**: 5 hand-labeled examples with explicit disagreement annotations recorded in the eval report
+
+### Threshold Gate
+
+Stored in `evals/eval_thresholds.yaml`:
+
+```yaml
+retrieval:
+  hit_at_5: 0.0
+  mrr_at_10: 0.0
+gate:
+  advanced_must_beat_baseline: true
+```
+
+- Command fails (non-zero exit) when advanced hit@5 or MRR@10 does not exceed baseline
+- `--exploratory` flag bypasses the gate for investigation
+- Baseline-permissive thresholds (0.0) allow initial fixture-based testing; will be tightened with real corpus data
+
+### Report Output
+
+- **Path**: `evals/rag_eval_report.json`
+- **Redacted**: Raw chunks, prompts, and full content stripped before persistence
+- **Contents**: Report ID, baseline run, advanced run, `advanced_beats_baseline` flag, embedding comparison, limitations, disagreement notes, creation timestamp
+
+### Golden Datasets
 
 - Phase 3: `evals/classification_golden_set.jsonl` (25 examples, 4 labels)
+- Phase 5: `evals/rag_golden_set.jsonl` (25 examples, document + issue source types)
 
-## Threshold Decisions (TBD)
+### Threshold Decisions
 
-Regression thresholds will be set after the classifier comparison is complete.
+Regression thresholds set in `evals/eval_thresholds.yaml`. Currently baseline-permissive (0.0); to be tightened after real corpus ingestion in production environment.
 
-## Regression Criteria (TBD)
+### Regression Criteria
 
-CI regression criteria will be defined after threshold thresholds are established.
+CI regression fails when advanced hit@5 or MRR@10 falls below baseline on the UPDATED golden set with real corpus data. Current fixture-backed values are exploratory only.

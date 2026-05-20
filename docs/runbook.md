@@ -53,6 +53,36 @@ uv run uvicorn model_server.main:app --port 8001
 curl -s localhost:8001/health | jq .
 ```
 
+## Ingest RAG Corpus
+
+```bash
+uv run python scripts/ingest_docs.py
+uv run python scripts/ingest_resolved_issues.py --input /path/to/issues.jsonl
+```
+
+Expected: `data/processed/rag_doc_sources.jsonl`, `rag_issue_answer_sources.jsonl`, and `rag_chunks.jsonl` created.
+
+## Build RAG Index
+
+```bash
+uv run python scripts/build_rag_index.py
+```
+
+For testing without real embeddings:
+```bash
+uv run python scripts/build_rag_index.py --fake
+```
+
+Expected: `artifacts/rag/embedding_comparison.json` created with both embedding candidates recorded.
+
+## Evaluate RAG Pipeline
+
+```bash
+uv run python scripts/evaluate_rag.py --exploratory
+```
+
+Expected: `evals/rag_eval_report.json` created with baseline-vs-advanced comparison, judge_id, embedding comparison, and disagreement notes.
+
 ## Measure Classifier Latency
 
 ```bash

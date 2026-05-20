@@ -25,7 +25,7 @@ from app.infra.rag_judge_client import (
 from app.infra.reranker_client import (
     BaseRerankerClient,
     FakeRerankerClient,
-    CrossEncoderRerankerStub,
+    CrossEncoderReranker,
     resolve_reranker,
 )
 
@@ -158,10 +158,9 @@ class TestRerankerResolution:
         assert len(ranked) == 3
         assert ranked[0].chunk.chunk_id == results[0].chunk.chunk_id
 
-    def test_cross_encoder_stub_raises(self):
-        stub = CrossEncoderRerankerStub()
-        with pytest.raises(NotImplementedError):
-            stub.rerank("test", [], 5)
+    def test_cross_encoder_has_default_model(self):
+        reranker = CrossEncoderReranker()
+        assert reranker.model_name == "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
     def test_resolve_reranker_returns_fake(self):
         from app.core.config import AppSettings

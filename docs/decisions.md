@@ -177,6 +177,111 @@ Runners-up and rationale:
 - Fallback summary content when Azure unavailable: rejected per spec requirement — explicit errors prevent callers from treating synthetic text as real model output.
 - spaCy `en_core_web_sm` model: rejected — blank English pipeline with regex patterns is sufficient and avoids 11MB model download.
 
+## Phase 5 Advanced RAG Pipeline Decisions
+
+### Chunking Strategy: Parent-Document Retriever
+
+**Decision**: Use parent-document retriever chunking — small child chunks for embedding and retrieval, with `parent_id` linkage back to the full source document for generation context.
+
+- **Rationale**: Documentation headings, code blocks, lists, and issue-answer boundaries carry structure that fixed-size naive chunking discards. The parent-document retriever preserves provenance while keeping embedded child units small enough for accurate similarity search.
+- **Child chunk size**: ~300 tokens by default, split on paragraph boundaries with adjacent merging.
+- **Stable IDs**: `chunk_id` derived from `hash(parent_id : chunk_index)`, ensuring repeatable identifiers across reruns.
+- **Baseline comparison**: Naive fixed-size chunking + pure dense retrieval serves as the evaluation baseline.
+- **Alternatives Rejected**: Fixed-size chunks only (used as baseline but rejected for advanced pipeline), LLM-generated chunking (adds cost and non-determinism).
+
+### Retrieval Strategy: Sparse + Dense + Weighted Hybrid
+
+**Decision**: Support all three retrieval modes (sparse, dense, hybrid) with the advanced pipeline defaulting to weighted hybrid.
+
+- **Sparse**: PostgreSQL full-text search (`tsvector`/`tsquery`) over chunk text and title. Provides exact term matching for file paths, error codes, and maintainer terminology.
+- **Dense**: pgvector cosine similarity (`<=>`) over chunk embeddings. Captures semantic similarity across paraphrased queries.
+- **Hybrid**: Normalized score merging with configurable weights (default: 0.3 sparse + 0.7 dense). Each score family is min-max normalized independently before weighted combination.
+- **Score normalization**: Sparse and dense raw scores are independently min-max normalized. Dense cosine values are not pre-transformed (cosine range -1..1 → 0..1 remapping optional).
+- **Weights configurable** via `RAGSettings.hybrid_sparse_weight` / `hybrid_dense_weight`.
+- **Alternatives Rejected**: Pure dense retrieval (used in baseline but rejected as default advanced), learned rank fusion (needs more training data).
+
+### Reranking: Small Cross-Encoder
+
+**Decision**: Apply a small cross-encoder reranker over top-k hybrid candidates for final relevance ordering.
+
+- **Default model**: `cross-encoder/ms-marco-MiniLM-L-6-v2` (~80MB, sentence-transformers).
+- **Configurable** via `RAGSettings.reranker_model_name`.
+- **Async safety**: Cross-encoder calls are synchronous CPU work. When wired into async request paths, wrap with `asyncio.to_thread(reranker.rerank, ...)`.
+- **Fake seam**: `FakeRerankerClient` returns candidates unchanged (identity pass) for tests.
+- **Alternatives Rejected**: Large reranker models (add latency), LLM-based reranking (adds cost/non-determinism).
+
+### Query Transformation: Optional and Toggleable
+
+**Decision**: Optional query transformation expands maintainer questions with technical synonyms before retrieval. Toggleable per query/eval mode.
+
+- **Method**: Keyword-based term expansion dictionary (not LLM-based). Adds domain-specific terms (e.g., "install" → "installation setup pip venv").
+- **Toggle**: `RetrievalQuery.query_transformation_enabled` boolean.
+- **Eval**: Evaluation records both modes so reviewers can measure transformation impact.
+- **Alternatives Rejected**: LLM-based query rewriting (adds latency/cost), no transformation at all (loses domain context).
+
+### Embedding Model Comparison
+
+**Decision**: Compare at least two embedding candidates — local `all-MiniLM-L6-v2` (384-dim, CPU-feasible) and Azure `text-embedding-3-small` (1536-dim, optional).
+
+- **Comparison output**: `artifacts/rag/embedding_comparison.json` records dimensions, chunks embedded, and status for both candidates.
+- **Azure path**: Optional — defaults to `unavailable` status when credentials are absent.
+- **Local model**: Loaded via `sentence_transformers.SentenceTransformer` with `asyncio.to_thread` annotation for async safety.
+- **Alternatives Rejected**: Single embedding model (spec requires comparison), large models (too heavy for CI).
+
+### Evaluation: Baseline vs Advanced
+
+**Decision**: Evaluate the naive baseline and advanced pipeline on the same 25-example golden set using a frozen token-overlap judge for CI metrics.
+
+- **Golden set**: `evals/rag_golden_set.jsonl` — 25 question-answer pairs with expected chunk IDs.
+- **Disagreement notes**: 5 hand-labeled examples with disagreement annotations recorded in the report.
+- **Metrics**: hit@5, MRR@10, faithfulness, answer relevancy, retrieval latency (p50/p95), generation latency (p50/p95).
+- **Judge**: `TokenOverlapJudge` — frozen unigram-F1 scorer, zero-dependency, deterministic, records stable `judge_id` = `token-overlap-f1-v1`.
+- **Optional RAGAS**: `NonCIJudgeStub` — config seam for RAGAS-style metrics, raises `NotImplementedError` in this pass.
+- **Threshold gate**: Advanced must beat baseline on hit@5 and MRR@10. Gate bypassed with `--exploratory` flag.
+- **Report**: `evals/rag_eval_report.json` — redacted before persistence.
+- **Alternatives Rejected**: LLM judge (adds cost/non-determinism), no gate (constitution requires evals), single-mode evaluation (spec requires baseline comparison).
+
+### Duplicate Embedding Prevention
+
+**Decision**: Skip duplicate embeddings by `content_hash` + embedding model. Unchanged content across reruns produces the same hash and is not re-embedded.
+
+- **Check**: `RAGEmbeddingRepository.exists_by_hash_and_model()` queries before embedding.
+- **Filter**: `RAGIndexService.filter_duplicate_embeddings()` removes duplicates in batch.
+- **Alternatives Rejected**: Deduplicate by chunk ID only (IDs can change across reruns), text prefix dedup (not collision-resistant).
+
+### Classifier Data Leakage Prevention
+
+**Decision**: Issue sources from classifier training data are excluded from the RAG corpus using explicit `classifier_source_ids` exclusion set.
+
+- **Mechanism**: `RAGIngestionService` accepts a `classifier_source_ids` parameter and skips matching issues.
+- **Command**: `scripts/ingest_resolved_issues.py --classifier-source-ids <path>` loads exclusion list.
+- **Alternatives Rejected**: No leakage check (violates eval integrity), automatic overlap detection (less traceable).
+
+### Snapshot Storage: Redacted + 50-Conversation Retention
+
+**Decision**: Store redacted retrieved-chunk snapshots for chat-phase conversation replay, bounded to the last 50 conversations.
+
+- **Redaction**: `redact_snapshot_row()` strips raw content, keeps only chunk IDs, scores, and safe metadata.
+- **Retention**: `prune_oldest()` in `RAGSnapshotRepository` deletes snapshots beyond the 50-conversation window using `MAX(created_at)` subquery.
+- **Metadata**: Each snapshot carries `conversation_id`, `message_id`, and `trace_id` for correlation.
+- **Alternatives Rejected**: Full-chunk storage (violates redaction), unlimited retention (unbounded growth), no snapshots (chat debugging needs evidence).
+
+### Run Configuration Summary
+
+| Config Key | Default | Purpose |
+|------------|---------|---------|
+| `rag_embedding_model` | `all-MiniLM-L6-v2` | Local embedding model |
+| `rag_embedding_dim` | 384 | Embedding vector dimension |
+| `rag_embedding_candidates` | `[all-MiniLM-L6-v2, text-embedding-3-small]` | Models to compare |
+| `rag_hybrid_sparse_weight` | 0.3 | Sparse score weight in hybrid merge |
+| `rag_hybrid_dense_weight` | 0.7 | Dense score weight in hybrid merge |
+| `rag_reranker_model_name` | `cross-encoder/ms-marco-MiniLM-L-6-v2` | Cross-encoder model |
+| `rag_reranker_top_k` | 10 | Candidates passed to reranker |
+| `rag_snapshot_retention_conversations` | 50 | Max conversations retained |
+| `rag_generation_timeout_seconds` | 30 | Generation timeout |
+| `rag_eval_hit_at_5_threshold` | 0.0 | Threshold gate (baseline-permissive) |
+| `rag_eval_mrr_at_10_threshold` | 0.0 | Threshold gate (baseline-permissive) |
+
 ## Phase 2+ Decisions
 
 To be added as phases progress.

@@ -270,6 +270,11 @@ class RAGEvaluationService:
             created_at=datetime.now(timezone.utc),
         )
 
+    def enrich_advanced_run(self, run: EvalRun, *, query_transformation: bool = False, reranking: bool = False) -> EvalRun:
+        run.query_transformation_enabled = query_transformation
+        run.reranking_enabled = reranking
+        return run
+
     def apply_threshold_gate(
         self,
         report: EvalReport,
@@ -346,4 +351,4 @@ def _make_fixture_chunks_for_example(example: dict) -> list[RAGChunk]:
     ]
 
 
-__all__ = ["RAGEvaluationService"]
+__all__ = ["RAGEvaluationService", "_percentile"]

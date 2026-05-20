@@ -52,7 +52,45 @@ The model server is a separate FastAPI application in `model_server/` that loads
 
 ## Extension Points
 
-- New routes: add files under `app/api/routes/` and register them at the bottom of each route module by importing `app` from `app.core.application`.
+- New routes: add files under `app/api/routes/` and register them at the bottom of each route module by importing `app` from `app/core.application`.
 - New services: add files under `app/services/`.
 - New repositories: add files under `app/repositories/`.
 - New infra adapters: add files under `app/infra/`.
+
+## RAG Pipeline Architecture
+
+### Layer Ownership
+
+| Layer | Files | Owns | Key Classes |
+|-------|-------|------|-------------|
+| services | `app/services/rag_*.py` | Ingestion, chunking, indexing, retrieval, generation, evaluation, snapshot workflows | `RAGIngestionService`, `RAGRetrievalService`, `RAGGenerationService`, `RAGEvaluationService`, `RAGSnapshotService`, `RAGIndexService` |
+| repositories | `app/repositories/rag_*.py` | PostgreSQL/pgvector persistence: chunk search, embedding upsert, snapshot storage | `RAGChunkRepository`, `RAGEmbeddingRepository`, `RAGSnapshotRepository` |
+| infra | `app/infra/*_client.py` | Provider seams: embedding, reranker, generation, judge | `LocalEmbeddingClient`, `FakeEmbeddingClient`, `CrossEncoderReranker`, `FakeRerankerClient`, `FakeGenerationClient`, `TokenOverlapJudge` |
+| domain | `app/domain/rag.py` | Pydantic models and domain exceptions only | `RAGChunk`, `RetrievalQuery`, `RetrievalResult`, `GroundedAnswer`, `EvalReport`, `SnapshotRecord` |
+| core | `app/core/config.py` | `RAGSettings` — embedding candidates, hybrid weights, reranker model, eval thresholds | `AppSettings` |
+
+### Data Flow
+
+```
+scripts/ingest_docs.py ──→ RAGIngestionService ──→ RAGSource + RAGChunk (JSONL)
+scripts/ingest_resolved_issues.py ──→ RAGIngestionService ──→ ResolvedIssueAnswer + RAGChunk (JSONL)
+scripts/build_rag_index.py ──→ RAGIndexService ──→ EmbeddingClient ──→ RAGEmbedding + embedding_comparison.json
+scripts/evaluate_rag.py ──→ RAGEvaluationService ──→ (GenerationClient + TokenOverlapJudge) ──→ rag_eval_report.json
+```
+
+### Async Safety
+
+- All database access uses `AsyncSession` via `sqlalchemy.ext.asyncio`
+- CPU-bound `SentenceTransformer` and `CrossEncoder` calls are NOT called in async request paths
+- When wired into async code (Phase 7+), wrap with `asyncio.to_thread()`
+- Long-running ingestion, embedding, and evaluation stay in scripts/jobs
+
+### Provider Seams
+
+All external model calls use fake adapters by default:
+- Embedding: `FakeEmbeddingClient` (hash-based deterministic)
+- Reranker: `FakeRerankerClient` (identity pass)
+- Generation: `FakeGenerationClient` (hash-based deterministic)
+- Judge: `TokenOverlapJudge` (token-overlap F1, zero-dependency)
+
+Azure/Vault-backed adapters exist as config seams, enabled when credentials are present in settings.
