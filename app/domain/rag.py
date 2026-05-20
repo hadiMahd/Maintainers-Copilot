@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 RAGSourceType = Literal["docs", "issue"]
 RetrievalMode = Literal["sparse", "dense", "hybrid"]
-EmbeddingModelName = Literal["all-MiniLM-L6-v2", "text-embedding-3-small"]
+EmbeddingModelName = Literal["all-MiniLM-L6-v2", "text-embedding-3-small", "fake-embedding"]
 
 
 # -- Domain exceptions ---------------------------------------------------------

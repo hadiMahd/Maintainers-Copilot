@@ -31,6 +31,16 @@ class RAGEmbeddingRepository:
             return None
         return _row_to_embedding(row)
 
+    async def exists_by_hash_and_model(self, content_hash: str, embedding_model: str) -> bool:
+        result = await self._session.execute(
+            text(
+                "SELECT 1 FROM rag_embeddings "
+                "WHERE content_hash = :content_hash AND embedding_model = :embedding_model LIMIT 1"
+            ),
+            {"content_hash": content_hash, "embedding_model": embedding_model},
+        )
+        return result.first() is not None
+
     async def upsert(self, embedding: RAGEmbedding) -> RAGEmbedding:
         existing = await self.get_by_chunk_id(embedding.chunk_id, embedding.embedding_model)
         if existing is not None:

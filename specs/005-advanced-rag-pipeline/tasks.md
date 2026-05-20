@@ -104,16 +104,16 @@
 
 ### Tests for User Story 3 (REQUIRED for critical behavior) ⚠️
 
-- [ ] T027 [P] [US3] Add unit tests for parent-document chunking, stable child IDs, source metadata completeness, and classifier-data leakage rejection in `tests/unit/test_rag_chunking.py`
-- [ ] T028 [P] [US3] Add integration tests for repeatable doc/issue ingestion and duplicate embedding skipping in `tests/integration/test_rag_index_scripts.py`
+- [x] T027 [P] [US3] Add unit tests for parent-document chunking, stable child IDs, source metadata completeness, and classifier-data leakage rejection in `tests/unit/test_rag_chunking.py`
+- [x] T028 [P] [US3] Add integration tests for repeatable doc/issue ingestion and duplicate embedding skipping in `tests/integration/test_rag_index_scripts.py`
 
 ### Implementation for User Story 3
 
-- [ ] T029 [P] [US3] Implement normalized doc and issue source parsing plus parent-document child chunk building in `app/services/rag_ingestion_service.py` and `app/domain/rag.py`
-- [ ] T030 [P] [US3] Implement the documentation and held-out issue ingestion commands in `scripts/ingest_docs.py` and `scripts/ingest_resolved_issues.py`
-- [ ] T031 [P] [US3] Implement chunk persistence, sparse-search text preparation, and duplicate embedding checks by `content_hash` plus embedding model in `app/repositories/rag_chunk_repository.py`, `app/repositories/rag_embedding_repository.py`, and `app/services/rag_index_service.py`
-- [ ] T032 [US3] Implement local `all-MiniLM-L6-v2` and optional Azure `text-embedding-3-small` embedding clients plus index-building orchestration in `app/infra/embedding_client.py` and `scripts/build_rag_index.py`
-- [ ] T033 [US3] Persist repeatable corpus artifacts and embedding comparison outputs in `data/processed/rag_doc_sources.jsonl`, `data/processed/rag_issue_answer_sources.jsonl`, `data/processed/rag_chunks.jsonl`, `artifacts/rag/embedding_comparison.json`, and `app/services/rag_index_service.py`
+- [x] T029 [P] [US3] Implement normalized doc and issue source parsing plus parent-document child chunk building in `app/services/rag_ingestion_service.py` and `app/domain/rag.py`
+- [x] T030 [P] [US3] Implement the documentation and held-out issue ingestion commands in `scripts/ingest_docs.py` and `scripts/ingest_resolved_issues.py`
+- [x] T031 [P] [US3] Implement chunk persistence, sparse-search text preparation, and duplicate embedding checks by `content_hash` plus embedding model in `app/repositories/rag_chunk_repository.py`, `app/repositories/rag_embedding_repository.py`, and `app/services/rag_index_service.py`
+- [x] T032 [US3] Implement local `all-MiniLM-L6-v2` and optional Azure `text-embedding-3-small` embedding clients plus index-building orchestration in `app/infra/embedding_client.py` and `scripts/build_rag_index.py`
+- [x] T033 [US3] Persist repeatable corpus artifacts and embedding comparison outputs in `data/processed/rag_doc_sources.jsonl`, `data/processed/rag_issue_answer_sources.jsonl`, `data/processed/rag_chunks.jsonl`, `artifacts/rag/embedding_comparison.json`, and `app/services/rag_index_service.py`
 
 **Checkpoint**: At this point, the corpus and embedding pipeline should rerun safely with stable identifiers and no duplicate embeddings.
 

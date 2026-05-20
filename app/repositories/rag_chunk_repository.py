@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 
 from sqlalchemy import text
@@ -54,6 +55,57 @@ class RAGChunkRepository:
         if row is None:
             return None
         return _row_to_chunk(row)
+
+    async def insert_chunk(self, chunk: RAGChunk) -> None:
+        await self._session.execute(
+            text(
+                "INSERT INTO rag_chunks (chunk_id, parent_id, source_type, source_path, "
+                "issue_number, source_url, title, labels, created_at, updated_at, "
+                "chunk_index, content, content_hash, token_count, metadata) "
+                "VALUES (:chunk_id, :parent_id, :source_type, :source_path, "
+                ":issue_number, :source_url, :title, :labels, :created_at, :updated_at, "
+                ":chunk_index, :content, :content_hash, :token_count, :metadata) "
+                "ON CONFLICT (chunk_id) DO UPDATE SET "
+                "content = EXCLUDED.content, content_hash = EXCLUDED.content_hash, "
+                "token_count = EXCLUDED.token_count, metadata = EXCLUDED.metadata"
+            ),
+            {
+                "chunk_id": chunk.chunk_id,
+                "parent_id": chunk.parent_id,
+                "source_type": chunk.source_type,
+                "source_path": chunk.source_path,
+                "issue_number": chunk.issue_number,
+                "source_url": chunk.source_url,
+                "title": chunk.title,
+                "labels": chunk.labels,
+                "created_at": chunk.created_at,
+                "updated_at": chunk.updated_at,
+                "chunk_index": chunk.chunk_index,
+                "content": chunk.content,
+                "content_hash": chunk.content_hash,
+                "token_count": chunk.token_count,
+                "metadata": json.dumps(chunk.metadata) if chunk.metadata else None,
+            },
+        )
+
+    async def insert_sparse_search(self, chunk_id: str, search_text: str, title_terms: str = "") -> None:
+        await self._session.execute(
+            text(
+                "INSERT INTO rag_sparse_search (chunk_id, search_text, title_terms, metadata_terms, search_vector) "
+                "VALUES (:chunk_id, :search_text, :title_terms, :metadata_terms, "
+                "to_tsvector('english', :search_text)) "
+                "ON CONFLICT (chunk_id) DO UPDATE SET "
+                "search_text = EXCLUDED.search_text, "
+                "title_terms = EXCLUDED.title_terms, "
+                "search_vector = to_tsvector('english', EXCLUDED.search_text)"
+            ),
+            {
+                "chunk_id": chunk_id,
+                "search_text": search_text,
+                "title_terms": title_terms,
+                "metadata_terms": "",
+            },
+        )
 
     async def search_dense(
         self,
