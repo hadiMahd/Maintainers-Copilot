@@ -112,15 +112,15 @@ implementation and testing.
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T026 [P] [US3] Add contract coverage for `GET /memory/short-term` and `PUT /memory/short-term` in `tests/contract/test_auth_memory_api_contract.py`
-- [ ] T027 [P] [US3] Add unit coverage for TTL handling, user isolation, and pre-persistence redaction in `tests/unit/test_short_term_memory_service.py` and `tests/unit/test_memory_redaction.py`
-- [ ] T028 [P] [US3] Add integration coverage for Redis-backed short-term memory expiry in `tests/integration/test_redis_memory_ttl.py`
+- [x] T026 [P] [US3] Add contract coverage for `GET /memory/short-term` and `PUT /memory/short-term` in `tests/contract/test_auth_memory_api_contract.py`
+- [x] T027 [P] [US3] Add unit coverage for TTL handling, user isolation, and pre-persistence redaction in `tests/unit/test_short_term_memory_service.py` and `tests/unit/test_memory_redaction.py`
+- [x] T028 [P] [US3] Add integration coverage for Redis-backed short-term memory expiry in `tests/integration/test_redis_memory_ttl.py`
 
 ### Implementation for User Story 3
 
-- [ ] T029 [P] [US3] Implement short-term memory request/response models and Redis adapter behavior in `app/domain/memory.py` and `app/infra/redis_memory.py`
-- [ ] T030 [US3] Implement short-term memory redaction and TTL workflows in `app/services/short_term_memory_service.py`
-- [ ] T031 [US3] Implement short-term memory routes in `app/api/routes/memory.py`
+- [x] T029 [P] [US3] Implement short-term memory request/response models and Redis adapter behavior in `app/domain/memory.py` and `app/infra/redis_memory.py`
+- [x] T030 [US3] Implement short-term memory redaction and TTL workflows in `app/services/short_term_memory_service.py`
+- [x] T031 [US3] Implement short-term memory routes in `app/api/routes/memory.py`
 
 **Checkpoint**: User Story 3 is independently functional and testable.
 

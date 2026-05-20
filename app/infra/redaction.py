@@ -129,6 +129,11 @@ def redact_log_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return safe
 
 
+def redact_short_term_memory_value(value: str) -> str:
+    """Redact secret-like values before short-term memory persistence."""
+    return redact_string(value)
+
+
 # -- Phase 5 RAG redaction -----------------------------------------------------
 
 _RAG_REDACTED_FIELDS = {"content", "content_preview", "maintainer_answer", "question_context"}

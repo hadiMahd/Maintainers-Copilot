@@ -373,3 +373,83 @@ class TestAdminAuditLogs:
         assert resp.status_code == 403
 
         fastapi_app.dependency_overrides.clear()
+
+
+class TestShortTermMemory:
+    async def test_put_short_term_memory_returns_200(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        mock_svc = AsyncMock()
+        from app.domain.memory import ShortTermMemoryRead
+
+        mock_svc.write_memory = AsyncMock(
+            return_value=ShortTermMemoryRead(
+                conversation_id="c1",
+                key="summary",
+                value="safe value [REDACTED]",
+                expires_at="2026-06-01T00:00:00+00:00",
+            )
+        )
+
+        import app.api.routes.memory as memory_mod
+
+        monkeypatch.setattr(memory_mod, "_get_short_term_memory_service", lambda r: mock_svc)
+
+        resp = await client.put(
+            "/memory/short-term",
+            json={"conversation_id": "c1", "key": "summary", "value": "password=secret123"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["conversation_id"] == "c1"
+        assert data["key"] == "summary"
+        assert data["value"] == "safe value [REDACTED]"
+
+        fastapi_app.dependency_overrides.clear()
+
+    async def test_get_short_term_memory_returns_200(self, client, monkeypatch):
+        fastapi_app = client._transport.app
+        from app.api.dependencies.auth import get_current_user
+
+        auth_ctx = AuthContext(user_id="u1", email="u1@t.com", role="user")
+
+        async def mock_auth(request=None, credentials=None):
+            return auth_ctx
+
+        fastapi_app.dependency_overrides[get_current_user] = mock_auth
+
+        mock_svc = AsyncMock()
+        from app.domain.memory import ShortTermMemoryRead
+
+        mock_svc.read_memory = AsyncMock(
+            return_value=ShortTermMemoryRead(
+                conversation_id="c1",
+                key="summary",
+                value="stored value",
+                expires_at="2026-06-01T00:00:00+00:00",
+            )
+        )
+
+        import app.api.routes.memory as memory_mod
+
+        monkeypatch.setattr(memory_mod, "_get_short_term_memory_service", lambda r: mock_svc)
+
+        resp = await client.get(
+            "/memory/short-term",
+            params={"conversation_id": "c1", "key": "summary"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["conversation_id"] == "c1"
+        assert data["key"] == "summary"
+        assert data["value"] == "stored value"
+
+        fastapi_app.dependency_overrides.clear()

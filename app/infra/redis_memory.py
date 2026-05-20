@@ -1,15 +1,50 @@
-"""Redis short-term memory adapter.
+"""Redis short-term memory adapter."""
 
-Stub for Phase 6 US3.  Raises ``NotImplementedError`` until the
-short-term memory user story is implemented.
-"""
+from __future__ import annotations
+
+import json
+from datetime import datetime, timedelta, timezone
 
 
 class RedisMemoryAdapter:
-    """Stub for US3.  Do not use before US3 implementation."""
+    """Persist short-term memory in Redis with TTL-bound keys."""
 
-    async def set(self, *args, **kwargs):
-        raise NotImplementedError("RedisMemoryAdapter: US3 not implemented yet")
+    def __init__(self, client) -> None:
+        self._client = client
 
-    async def get(self, *args, **kwargs):
-        raise NotImplementedError("RedisMemoryAdapter: US3 not implemented yet")
+    @staticmethod
+    def _key(user_id: str, conversation_id: str, key: str) -> str:
+        return f"short_term_memory:{user_id}:{conversation_id}:{key}"
+
+    async def set(
+        self,
+        user_id: str,
+        conversation_id: str,
+        key: str,
+        value: str,
+        ttl_seconds: int,
+    ) -> datetime:
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
+        payload = json.dumps(
+            {
+                "conversation_id": conversation_id,
+                "key": key,
+                "value": value,
+                "expires_at": expires_at.isoformat(),
+            }
+        )
+        await self._client.set(self._key(user_id, conversation_id, key), payload, ex=ttl_seconds)
+        return expires_at
+
+    async def get(
+        self,
+        user_id: str,
+        conversation_id: str,
+        key: str,
+    ) -> tuple[str, datetime] | None:
+        payload = await self._client.get(self._key(user_id, conversation_id, key))
+        if payload is None:
+            return None
+        data = json.loads(payload)
+        expires_at = datetime.fromisoformat(data["expires_at"])
+        return data["value"], expires_at
