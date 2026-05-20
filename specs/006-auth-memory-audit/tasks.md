@@ -33,9 +33,9 @@ implementation and testing.
 
 **Purpose**: Prepare the repo for Phase 6 auth, memory, and audit work.
 
-- [ ] T001 Add Phase 6 authentication, hashing, token, and optional FastAPI Users dependencies in `pyproject.toml`
-- [ ] T002 Create Phase 6 route and service module skeletons in `app/api/routes/auth.py`, `app/api/routes/admin.py`, `app/api/routes/memory.py`, `app/api/dependencies/auth.py`, `app/api/dependencies/authorization.py`, `app/services/auth_service.py`, `app/services/authorization_service.py`, `app/services/admin_invitation_service.py`, `app/services/short_term_memory_service.py`, `app/services/long_term_memory_service.py`, and `app/services/audit_service.py`
-- [ ] T003 [P] Create Phase 6 repository, infra, and test module skeletons in `app/repositories/user_repository.py`, `app/repositories/token_session_repository.py`, `app/repositories/admin_invitation_repository.py`, `app/repositories/memory_repository.py`, `app/repositories/audit_log_repository.py`, `app/infra/auth_provider.py`, `app/infra/password_hasher.py`, `app/infra/token_signer.py`, `app/infra/vault_secrets.py`, `app/infra/redis_memory.py`, `app/infra/memory_embedding_client.py`, `tests/contract/test_auth_memory_api_contract.py`, `tests/unit/test_auth_service.py`, `tests/unit/test_authorization_service.py`, `tests/unit/test_admin_invitation_service.py`, `tests/unit/test_short_term_memory_service.py`, `tests/unit/test_long_term_memory_service.py`, `tests/unit/test_audit_service.py`, `tests/unit/test_audit_action_names.py`, `tests/unit/test_memory_redaction.py`, `tests/unit/test_repository_boundaries.py`, `tests/unit/test_observability_coverage.py`, `tests/unit/test_long_term_memory_recall.py`, `tests/integration/test_auth_lifecycle_vault_key.py`, `tests/integration/test_refresh_token_flow.py`, `tests/integration/test_admin_invitation_flow.py`, `tests/integration/test_redis_memory_ttl.py`, `tests/integration/test_memory_audit_transaction.py`, and `tests/integration/test_cross_conversation_recall.py`
+- [x] T001 Add Phase 6 authentication, hashing, token, and optional FastAPI Users dependencies in `pyproject.toml`
+- [x] T002 Create Phase 6 route and service module skeletons in `app/api/routes/auth.py`, `app/api/routes/admin.py`, `app/api/routes/memory.py`, `app/api/dependencies/auth.py`, `app/api/dependencies/authorization.py`, `app/services/auth_service.py`, `app/services/authorization_service.py`, `app/services/admin_invitation_service.py`, `app/services/short_term_memory_service.py`, `app/services/long_term_memory_service.py`, and `app/services/audit_service.py`
+- [x] T003 [P] Create Phase 6 repository, infra, and test module skeletons in `app/repositories/user_repository.py`, `app/repositories/token_session_repository.py`, `app/repositories/admin_invitation_repository.py`, `app/repositories/memory_repository.py`, `app/repositories/audit_log_repository.py`, `app/infra/auth_provider.py`, `app/infra/password_hasher.py`, `app/infra/token_signer.py`, `app/infra/vault_secrets.py`, `app/infra/redis_memory.py`, `app/infra/memory_embedding_client.py`, `tests/contract/test_auth_memory_api_contract.py`, `tests/unit/test_auth_service.py`, `tests/unit/test_authorization_service.py`, `tests/unit/test_admin_invitation_service.py`, `tests/unit/test_short_term_memory_service.py`, `tests/unit/test_long_term_memory_service.py`, `tests/unit/test_audit_service.py`, `tests/unit/test_audit_action_names.py`, `tests/unit/test_memory_redaction.py`, `tests/unit/test_repository_boundaries.py`, `tests/unit/test_observability_coverage.py`, `tests/unit/test_long_term_memory_recall.py`, `tests/integration/test_auth_lifecycle_vault_key.py`, `tests/integration/test_refresh_token_flow.py`, `tests/integration/test_admin_invitation_flow.py`, `tests/integration/test_redis_memory_ttl.py`, `tests/integration/test_memory_audit_transaction.py`, and `tests/integration/test_cross_conversation_recall.py`
 
 ---
 
@@ -45,16 +45,16 @@ implementation and testing.
 
 **⚠️ CRITICAL**: No user story work should begin before this phase is complete.
 
-- [ ] T004 Create Phase 6 database migration for users, refresh sessions, admin invitations, long-term memory, and audit logs in `migrations/versions/0003_phase6_auth_memory_audit.py`
-- [ ] T005 [P] Add Phase 6 typed settings for JWT key bootstrap, refresh expiry, invitation expiry, short-term memory TTL, and long-term memory configuration in `app/core/config.py`
-- [ ] T006 [P] Implement lifespan bootstrap for Vault-resolved signing keys and shared auth/memory resources in `app/core/lifespan.py` and `app/core/application.py`
-- [ ] T007 [P] Define shared auth, memory, and audit schemas/enums in `app/domain/auth.py`, `app/domain/memory.py`, and `app/domain/audit.py`
-- [ ] T008 [P] Extend structured auth/memory/audit error mapping in `app/domain/errors.py` and `app/api/error_handlers.py`
-- [ ] T009 [P] Propagate `request_id` from middleware context and generate per-operation `trace_id` in all Phase 6 services; add structured logging with redacted safe metadata for auth failures, role changes, memory writes, recall, and audit failures in `app/services/auth_service.py`, `app/services/authorization_service.py`, `app/services/short_term_memory_service.py`, `app/services/long_term_memory_service.py`, and `app/services/audit_service.py`
-- [ ] T010 [P] Implement first-admin bootstrap: a controlled local seed path that creates the initial admin when no admin user exists, fails loudly when Vault signing key is unavailable, and is isolated from normal registration in `app/services/auth_service.py` and `scripts/seed_admin.py`
-- [ ] T011 [P] Add repository no-commit verification tests proving repositories never call `.commit()` and services own all transaction boundaries in `tests/unit/test_repository_boundaries.py`
-- [ ] T012 [P] Implement shared infra adapters for password hashing, token signing, Vault key loading, Redis short-term memory access, and semantic memory embedding in `app/infra/password_hasher.py`, `app/infra/token_signer.py`, `app/infra/vault_secrets.py`, `app/infra/redis_memory.py`, and `app/infra/memory_embedding_client.py`
-- [ ] T013 Implement shared repository scaffolding for users, token sessions, admin invitations, memory, and audit persistence in `app/repositories/user_repository.py`, `app/repositories/token_session_repository.py`, `app/repositories/admin_invitation_repository.py`, `app/repositories/memory_repository.py`, and `app/repositories/audit_log_repository.py`
+- [x] T004 Create Phase 6 database migration for users, refresh sessions, admin invitations, long-term memory, and audit logs in `migrations/versions/0003_phase6_auth_memory_audit.py`
+- [x] T005 [P] Add Phase 6 typed settings for JWT key bootstrap, refresh expiry, invitation expiry, short-term memory TTL, and long-term memory configuration in `app/core/config.py`
+- [x] T006 [P] Implement lifespan bootstrap for Vault-resolved signing keys and shared auth/memory resources in `app/core/lifespan.py` and `app/core/application.py`
+- [x] T007 [P] Define shared auth, memory, and audit schemas/enums in `app/domain/auth.py`, `app/domain/memory.py`, and `app/domain/audit.py`
+- [x] T008 [P] Extend structured auth/memory/audit error mapping in `app/domain/errors.py` and `app/api/error_handlers.py`
+- [x] T009 [P] Propagate `request_id` from middleware context and generate per-operation `trace_id` in all Phase 6 services; add structured logging with redacted safe metadata for auth failures, role changes, memory writes, recall, and audit failures in `app/services/auth_service.py`, `app/services/authorization_service.py`, `app/services/short_term_memory_service.py`, `app/services/long_term_memory_service.py`, and `app/services/audit_service.py`
+- [x] T010 [P] Implement first-admin bootstrap: a controlled local seed path that creates the initial admin when no admin user exists, fails loudly when Vault signing key is unavailable, and is isolated from normal registration in `app/services/auth_service.py` and `scripts/seed_admin.py`
+- [x] T011 [P] Add repository no-commit verification tests proving repositories never call `.commit()` and services own all transaction boundaries in `tests/unit/test_repository_boundaries.py`
+- [x] T012 [P] Implement shared infra adapters for password hashing, token signing, Vault key loading, Redis short-term memory access, and semantic memory embedding in `app/infra/password_hasher.py`, `app/infra/token_signer.py`, `app/infra/vault_secrets.py`, `app/infra/redis_memory.py`, and `app/infra/memory_embedding_client.py`
+- [x] T013 Implement shared repository scaffolding for users, token sessions, admin invitations, memory, and audit persistence in `app/repositories/user_repository.py`, `app/repositories/token_session_repository.py`, `app/repositories/admin_invitation_repository.py`, `app/repositories/memory_repository.py`, and `app/repositories/audit_log_repository.py`
 
 **Checkpoint**: Foundation ready. User story implementation can begin.
 
@@ -68,15 +68,15 @@ implementation and testing.
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T014 [P] [US1] Add contract coverage for `/auth/register`, `/auth/login`, `/auth/refresh`, and `/users/me` in `tests/contract/test_auth_memory_api_contract.py`
-- [ ] T015 [P] [US1] Add integration coverage for registration, login, signing-key startup failure, and refresh rotation in `tests/integration/test_auth_lifecycle_vault_key.py` and `tests/integration/test_refresh_token_flow.py`
-- [ ] T016 [P] [US1] Add unit coverage for credential validation, token session rotation, and signing-key guards in `tests/unit/test_auth_service.py`
+- [x] T014 [P] [US1] Add contract coverage for `/auth/register`, `/auth/login`, `/auth/refresh`, and `/users/me` in `tests/contract/test_auth_memory_api_contract.py`
+- [x] T015 [P] [US1] Add integration coverage for registration, login, signing-key startup failure, and refresh rotation in `tests/integration/test_auth_lifecycle_vault_key.py` and `tests/integration/test_refresh_token_flow.py`
+- [x] T016 [P] [US1] Add unit coverage for credential validation, token session rotation, and signing-key guards in `tests/unit/test_auth_service.py`
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Implement user and token-session persistence methods in `app/repositories/user_repository.py` and `app/repositories/token_session_repository.py`
-- [ ] T018 [US1] Implement registration, login, refresh, and current-user workflows in `app/services/auth_service.py` and `app/infra/auth_provider.py`
-- [ ] T019 [US1] Implement auth endpoints and current-user dependency wiring in `app/api/routes/auth.py` and `app/api/dependencies/auth.py`
+- [x] T017 [P] [US1] Implement user and token-session persistence methods in `app/repositories/user_repository.py` and `app/repositories/token_session_repository.py`
+- [x] T018 [US1] Implement registration, login, refresh, and current-user workflows in `app/services/auth_service.py` and `app/infra/auth_provider.py`
+- [x] T019 [US1] Implement auth endpoints and current-user dependency wiring in `app/api/routes/auth.py` and `app/api/dependencies/auth.py`
 
 **Checkpoint**: User Story 1 is independently functional and testable.
 

@@ -7,10 +7,11 @@ import structlog
 
 from app.core.config import AppSettings
 from app.core.logging import configure_logging
+from app.domain.errors import ConfigError
 from app.infra.database import create_engine, create_session_factory
 from app.infra.minio_client import create_minio_client
 from app.infra.redis_client import create_redis_client
-from app.infra.vault_client import fetch_secrets, init_vault_client
+from app.infra.vault_client import fetch_secrets, init_vault_client, resolve_jwt_key
 
 
 @asynccontextmanager
@@ -34,6 +35,15 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     settings.minio_endpoint = secrets.get("minio_endpoint")
     settings.minio_access_key = secrets.get("minio_access_key")
     settings.minio_secret_key = secrets.get("minio_secret_key")
+
+    # Resolve JWT signing keys from Vault
+    try:
+        jwt_keys = resolve_jwt_key(vault_client, settings)
+        settings.jwt_private_key = jwt_keys["private_key"]
+        settings.jwt_public_key = jwt_keys["public_key"]
+    except ConfigError:
+        if settings.environment != "test":
+            raise
 
     # Create infrastructure clients
     db_engine = create_engine(settings.database_url)
