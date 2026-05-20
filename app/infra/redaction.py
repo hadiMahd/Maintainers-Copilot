@@ -14,6 +14,13 @@ _SECRET_PATTERNS = [
     re.compile(r"(?:api[_\-]?key|token|secret|password|credential)\s*[:=]\s*\S+", re.IGNORECASE),
 ]
 
+_MEMORY_KEY_VALUE_PATTERN = re.compile(
+    r"((?:api[_\-]?key|token|secret|password|credential)\s*[:=]\s*)(\S+)",
+    re.IGNORECASE,
+)
+
+_RAW_TOKEN_PATTERN = re.compile(r"sk-[A-Za-z0-9]{20,}", re.IGNORECASE)
+
 _MAX_TEXT_FIELD_LENGTH = 500
 
 _REDACTED = "[REDACTED]"
@@ -127,6 +134,25 @@ def redact_log_payload(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             safe[key] = value
     return safe
+
+
+def redact_short_term_memory_value(value: str) -> str:
+    """Redact secret-like values before short-term memory persistence."""
+    result = _MEMORY_KEY_VALUE_PATTERN.sub(r"\1[REDACTED]", value)
+    result = _RAW_TOKEN_PATTERN.sub(_REDACTED, result)
+    return result
+
+
+def redact_long_term_memory_content(value: str) -> str:
+    """Redact secret-like values before embedding and long-term persistence."""
+    result = _MEMORY_KEY_VALUE_PATTERN.sub(r"\1[REDACTED]", value)
+    result = _RAW_TOKEN_PATTERN.sub(_REDACTED, result)
+    return result
+
+
+def redact_audit_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Redact and bound audit metadata before audit persistence."""
+    return redact_dict(metadata)
 
 
 # -- Phase 5 RAG redaction -----------------------------------------------------

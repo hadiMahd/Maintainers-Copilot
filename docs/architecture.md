@@ -94,3 +94,71 @@ All external model calls use fake adapters by default:
 - Judge: `TokenOverlapJudge` (token-overlap F1, zero-dependency)
 
 Azure/Vault-backed adapters exist as config seams, enabled when credentials are present in settings.
+
+## Phase 6 Auth, Memory, and Audit Architecture
+
+### Key Services
+
+| Service | Responsibility |
+|---|---|
+| `AuthService` | Registration, login, refresh rotation, current-user lookup, transaction boundaries |
+| `AdminInvitationService` | Invitation creation, acceptance, role-change hooks, invitation audit linkage |
+| `ShortTermMemoryService` | Redis-backed short-term memory with TTL and pre-persistence redaction |
+| `LongTermMemoryService` | Explicit semantic write-memory, same-user recall, embedding boundary, audit linkage |
+| `AuditService` | Safe audit metadata shaping and audit-log listing |
+
+### Key Repositories
+
+| Repository | Responsibility |
+|---|---|
+| `UserRepository` | User persistence and role updates |
+| `TokenSessionRepository` | Refresh-session create/rotate/revoke operations |
+| `AdminInvitationRepository` | Invitation create, lookup, and acceptance state changes |
+| `MemoryRepository` | Durable semantic memory create and same-user semantic search |
+| `AuditLogRepository` | Audit row creation and ordered listing |
+
+### Key Infra Adapters
+
+| Adapter | Responsibility |
+|---|---|
+| `PasswordHasher` | Argon2id hashing and verification |
+| `TokenSigner` | RS256 JWT signing and verification |
+| `RedisMemoryAdapter` | User-scoped Redis TTL storage for short-term memory |
+| `MemoryEmbeddingClient` | Async-safe deterministic embedding generation via `asyncio.to_thread` |
+| `vault_client` helpers | Vault bootstrap and JWT signing-key resolution |
+| `redaction` helpers | Secret-safe shaping before memory, audit, logs, and traces |
+
+### Phase 6 Data Flow
+
+```
+POST /auth/register
+  -> AuthService.register()
+  -> UserRepository.create()
+  -> session.commit()
+
+POST /memory/short-term
+  -> ShortTermMemoryService.write_memory()
+  -> redact_short_term_memory_value()
+  -> RedisMemoryAdapter.set()
+
+POST /memory/long-term
+  -> LongTermMemoryService.write_memory()
+  -> redact_long_term_memory_content()
+  -> MemoryEmbeddingClient.embed()  # asyncio.to_thread boundary
+  -> MemoryRepository.create()
+  -> AuditLogRepository.create(action="memory.write")
+  -> session.commit()
+
+POST /memory/long-term/recall
+  -> LongTermMemoryService.recall_memory()
+  -> MemoryEmbeddingClient.embed()
+  -> MemoryRepository.search_same_user_semantic()
+  -> safe redacted response items
+```
+
+### Boundary Notes
+
+- Routes remain thin request/response mapping and dependency wiring only.
+- Repositories never commit or roll back.
+- Audit linkage for memory writes is stored as safe `audit_log_id` metadata on the memory row.
+- Recall does not create memory and does not write audit rows in Phase 6.

@@ -34,7 +34,8 @@ JWT signing-key startup behavior, refresh token expiry/revocation/rotation,
 current-user dependency, `require_admin`, admin invitation, Redis TTL memory,
 explicit long-term memory writes, no auto-writes, audit rows, service transaction
 boundaries, repository no-commit behavior, reserved audit action names,
-cross-conversation recall, and redaction before persistence/logs  
+cross-conversation recall, redaction before persistence/logs, structured logging
+with `request_id`/`trace_id` propagation, and async-safe embedding handling  
 **Target Platform**: Local developer environment with Docker Compose PostgreSQL,
 Redis, and Vault dev mode; future CI jobs with fakes for Vault/Redis where needed  
 **Project Type**: Backend web-service feature with persistence, cache, secret,
@@ -42,7 +43,9 @@ and authorization boundaries
 **Performance Goals**: Auth and memory request paths use async database and
 Redis clients; JWT signing key and shared clients are loaded during lifespan;
 short-term memory reads/writes are bounded by configured TTL; long-term embedding
-generation is not automatic and runs only during explicit write-memory flows  
+generation is not automatic and runs only during explicit write-memory flows;
+embedding generation must use an async provider or `asyncio.to_thread` so that
+write-memory request paths do not block the event loop  
 **Constraints**: Phase 6 only; no full chatbot orchestration, automatic memory
 extraction, RAG question answering, UI work, or widget behavior; no real secrets
 in repository files, tests, logs, or docs; services own transaction boundaries;
@@ -52,7 +55,7 @@ persistence and audit metadata
 admin invitation, authorization dependencies, Redis short-term memory, explicit
 long-term memory with one selected memory type, audit logs for memory writes and
 role/admin changes, reserved audit actions for widget config changes and
-conversation deletion, `DECISIONS.md` updates for memory TTL, memory type,
+conversation deletion, `docs/decisions.md` updates for memory TTL, memory type,
 audit policy, and cross-conversation recall, and focused tests for critical
 security/memory behavior
 
@@ -83,10 +86,13 @@ security/memory behavior
   and before audit metadata.
 - **Observability And Errors**: PASS. Auth failures, role changes, memory writes,
   and audit failures return structured errors and log safe metadata with
-  request_id/trace_id when available.
+  `request_id`/`trace_id` when available. All Phase 6 services propagate
+  `request_id` from middleware context and generate per-operation `trace_id` for
+  joined log/trace reconstruction. Redacted metadata coverage is verified before
+  phase completion.
 - **AI Evidence And Eval Gates**: PASS. No classifier/RAG eval is introduced.
   Memory TTL and selected long-term memory type must be documented in
-  `DECISIONS.md` with rationale.
+  `docs/decisions.md` with rationale.
 - **Critical Tests And CI**: PASS. Tests cover auth, refresh behavior, Vault key
   resolution, admin guard, invitation, Redis TTL, write-memory, no auto-writes,
   cross-conversation recall, reserved audit action names, audit rows, repository
@@ -104,15 +110,19 @@ security/memory behavior
 - **FastAPI Resource Management**: PASS. Contracts require lifespan-resolved
   signing key and injected clients/sessions.
 - **Async Safety**: PASS. Redis and database paths are async; no long-running
-  chatbot/RAG work is added.
+  chatbot/RAG work is added. Long-term memory embedding work is offloaded via
+  `asyncio.to_thread` to keep write-memory request paths non-blocking.
 - **Secrets And Redaction**: PASS. Contracts and quickstart require redaction and
   no secret leakage in memory, audit, logs, or traces.
 - **Observability And Errors**: PASS. API contract defines structured errors for
   auth, authorization, memory, cross-conversation recall, and audit failures.
-- **AI Evidence And Eval Gates**: PASS. `DECISIONS.md` updates for memory TTL and
-  memory type are required.
+  All services propagate `request_id` from middleware context and per-operation
+  `trace_id` for joined log/trace reconstruction.
+- **AI Evidence And Eval Gates**: PASS. `docs/decisions.md` updates for memory
+  TTL and memory type are required.
 - **Critical Tests And CI**: PASS. Quickstart lists critical tests for security,
-  memory, audit, redaction, and transaction boundaries.
+  memory, audit, redaction, transaction boundaries, first-admin bootstrap,
+  async-safe embedding, structured observability, and repository no-commit.
 - **Simplicity**: PASS. No complexity exceptions were introduced.
 
 ## Project Structure
@@ -168,6 +178,10 @@ app/
     ├── memory_embedding_client.py
     └── redaction.py
 
+scripts/
+├── seed_admin.py
+└── ...
+
 migrations/
 tests/
 ├── unit/
@@ -177,16 +191,20 @@ tests/
 │   ├── test_short_term_memory_service.py
 │   ├── test_long_term_memory_service.py
 │   ├── test_audit_service.py
-│   └── test_memory_redaction.py
+│   ├── test_memory_redaction.py
+│   ├── test_repository_boundaries.py
+│   └── test_observability_coverage.py
 ├── contract/
 │   └── test_auth_memory_api_contract.py
 └── integration/
     ├── test_auth_lifecycle_vault_key.py
     ├── test_refresh_token_flow.py
     ├── test_redis_memory_ttl.py
-    └── test_memory_audit_transaction.py
+    ├── test_memory_audit_transaction.py
+    ├── test_admin_invitation_flow.py
+    └── test_cross_conversation_recall.py
 
-DECISIONS.md
+docs/decisions.md
 ```
 
 **Structure Decision**: Keep all Phase 6 behavior in the main backend `app/`.
@@ -194,9 +212,12 @@ Use FastAPI Users only as an auth adapter where it does not violate service-owne
 transactions or repository boundaries. Keep authorization, admin invitation,
 refresh sessions, memory, audit, and redaction as project-owned services. Redis
 short-term memory belongs behind infra/service abstractions, PostgreSQL/pgvector
-long-term memory belongs behind repositories/services, and `DECISIONS.md`
+long-term memory belongs behind repositories/services, and `docs/decisions.md`
 records the TTL, selected long-term memory type, cross-conversation recall
-behavior, and reserved audit action policy.
+behavior, and reserved audit action policy. A controlled first-admin bootstrap
+script (`scripts/seed_admin.py`) is required for the initial admin, after which
+further admins are granted through the invitation flow. Repository boundaries
+enforce that only services own `.commit()` calls and transaction coordination.
 
 ## Complexity Tracking
 

@@ -20,6 +20,19 @@ Start the app without a resolvable signing key.
 
 Expected result: token issuance fails safely and no weak fallback key is used.
 
+## Bootstrap First Admin
+
+Run the first-admin seed script:
+
+```bash
+uv run python scripts/seed_admin.py --email admin@example.com --password <password>
+```
+
+Expected result: one admin account is created when no admin exists; running
+again reports that an admin already exists; the script fails loudly when the
+Vault signing key is unavailable. After this step, further admin access is
+granted through the `/admin/invitations` flow.
+
 ## Register And Log In
 
 Call registration with a new email/password, then log in with the same
@@ -76,6 +89,14 @@ Expected result: only the explicitly written redacted memory is recallable for
 the same user; another user cannot recall it, and normal requests that did not
 call write-memory produce no recallable long-term memory.
 
+## Validate Empty Recall Result
+
+Call `POST /memory/long-term/recall` for a same-user query that has no stored
+explicit semantic memory.
+
+Expected result: the route returns a safe empty payload (`{"items": []}`)
+rather than an error.
+
 ## Validate Reserved Audit Actions
 
 Inspect audit service constants or schema support for:
@@ -97,33 +118,57 @@ Run normal authenticated requests that do not call write-memory.
 
 Expected result: no long-term memory rows are created.
 
+## Validate Async Embedding Safety
+
+Call the explicit write-memory capability and verify the request path completes
+without blocking the event loop. Inspect `memory_embedding_client.py` to confirm
+any blocking embedding call is wrapped with `asyncio.to_thread` or uses an
+async-safe provider.
+
+Expected result: the write-memory request completes under the service timeout;
+the test suite includes a unit test proving `asyncio.to_thread` wrapping.
+
+## Validate Structured Observability
+
+Trigger auth login failure, a role change, a memory write, and a memory recall.
+Inspect JSON-formatted structured log output.
+
+Expected result: every event carries `request_id` and `trace_id` in the log
+context; no raw passwords, tokens, signing key material, invitation tokens, or
+unredacted memory content appear in log payloads or trace metadata.
+
 ## Run Critical Tests
 
 Run:
 
 ```bash
-python -m pytest tests/unit/test_auth_service.py
-python -m pytest tests/unit/test_authorization_service.py
-python -m pytest tests/unit/test_admin_invitation_service.py
-python -m pytest tests/unit/test_short_term_memory_service.py
-python -m pytest tests/unit/test_long_term_memory_service.py
-python -m pytest tests/unit/test_audit_service.py
-python -m pytest tests/unit/test_audit_action_names.py
-python -m pytest tests/unit/test_memory_redaction.py
-python -m pytest tests/contract/test_auth_memory_api_contract.py
-python -m pytest tests/integration/test_auth_lifecycle_vault_key.py
-python -m pytest tests/integration/test_refresh_token_flow.py
-python -m pytest tests/integration/test_redis_memory_ttl.py
-python -m pytest tests/integration/test_cross_conversation_recall.py
-python -m pytest tests/integration/test_memory_audit_transaction.py
+uv run pytest tests/unit/test_auth_service.py
+uv run pytest tests/unit/test_authorization_service.py
+uv run pytest tests/unit/test_admin_invitation_service.py
+uv run pytest tests/unit/test_short_term_memory_service.py
+uv run pytest tests/unit/test_long_term_memory_service.py
+uv run pytest tests/unit/test_long_term_memory_recall.py
+uv run pytest tests/unit/test_audit_service.py
+uv run pytest tests/unit/test_audit_action_names.py
+uv run pytest tests/unit/test_memory_redaction.py
+uv run pytest tests/unit/test_repository_boundaries.py
+uv run pytest tests/unit/test_observability_coverage.py
+uv run pytest tests/contract/test_auth_memory_api_contract.py
+uv run pytest tests/integration/test_auth_lifecycle_vault_key.py
+uv run pytest tests/integration/test_refresh_token_flow.py
+uv run pytest tests/integration/test_admin_invitation_flow.py
+uv run pytest tests/integration/test_redis_memory_ttl.py
+uv run pytest tests/integration/test_cross_conversation_recall.py
+uv run pytest tests/integration/test_memory_audit_transaction.py
+uv run pytest -q
 ```
 
-Expected result: auth, authorization, memory, audit, redaction, and transaction
-boundary tests pass.
+Expected result: auth, authorization, memory, audit, redaction, transaction,
+observability, embedding safety, and repository boundary tests pass.
 
 ## Update Decisions
 
-Update `DECISIONS.md` with:
+Update `docs/decisions.md` with:
 
 - selected short-term memory TTL and rationale
 - selected long-term memory type, expected to be semantic unless implementation
@@ -132,6 +177,7 @@ Update `DECISIONS.md` with:
 - audit policy for memory writes, role/admin changes, widget config changes, and
   conversation deletion
 - cross-conversation recall behavior for explicit long-term memory
+- deterministic async-safe embedding approach used for semantic memory in Phase 6
 - FastAPI Users integration decision and any fallback if it does not fit service
   transaction boundaries
 

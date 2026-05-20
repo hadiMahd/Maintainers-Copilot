@@ -109,7 +109,7 @@ dependencies.
 
 **Validation Rules**:
 - Stored value must be redacted before persistence.
-- TTL must be configured, positive, and documented in `DECISIONS.md`.
+- TTL must be configured, positive, and documented in `docs/decisions.md`.
 - Reads after expiry return no value.
 - Users cannot read another user's short-term memory.
 
@@ -121,7 +121,7 @@ dependencies.
 - `id`: memory identifier.
 - `owner_user_id`: memory owner.
 - `memory_type`: selected type, `semantic` for Phase 6 unless changed in
-  `DECISIONS.md`.
+  `docs/decisions.md`.
 - `redacted_content`: redacted memory content.
 - `content_hash`: hash of redacted content.
 - `embedding`: pgvector embedding.
@@ -152,6 +152,22 @@ dependencies.
 - Requested memory type must match the selected supported type for this phase.
 - Requests must be authenticated.
 - Redaction failures prevent persistence.
+
+## Long-Term Memory Recall Query
+
+**Purpose**: Explicit request to search a user's previously written long-term
+memory across conversations.
+
+**Fields**:
+- `query`: recall prompt or search text.
+- `conversation_id`: optional current conversation identifier for auditability.
+- `limit`: optional bounded maximum number of recall hits.
+
+**Validation Rules**:
+- Requests must be authenticated.
+- Recall is scoped to the requesting user's explicitly written long-term memory.
+- Query text must be non-empty.
+- Returned entries must not expose another user's memory.
 
 ## Redaction Result
 
@@ -214,7 +230,7 @@ across conversations for the same user only.
 
 ## Memory Decision Record
 
-**Purpose**: `DECISIONS.md` section documenting memory choices.
+**Purpose**: `docs/decisions.md` section documenting memory choices.
 
 **Fields**:
 - `short_term_ttl_seconds`: selected Redis TTL and rationale.

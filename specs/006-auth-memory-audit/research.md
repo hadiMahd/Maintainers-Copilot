@@ -33,8 +33,11 @@ admin guards auditable and testable.
 ## Decision: Resolve JWT signing key from Vault during lifespan startup
 
 **Rationale**: The constitution requires secrets to resolve from Vault or test
-fakes at startup. Loading the signing key during lifespan makes startup state
-explicit and prevents token issuance with placeholder or missing secrets.
+fakes at startup. This repo already uses token-based Vault bootstrap with
+`VAULT_ADDR` and `VAULT_TOKEN`, so signing-key resolution must follow that
+contract instead of introducing a parallel auth path. Loading the signing key
+during lifespan makes startup state explicit and prevents token issuance with
+placeholder or missing secrets.
 
 **Alternatives considered**:
 - Read signing key directly from environment variables: rejected because real
@@ -64,14 +67,15 @@ request paths non-blocking.
 - Store short-term memory in PostgreSQL: rejected because the requirement states
   short-term memory belongs in Redis.
 - No TTL: rejected because the TTL must be explicit, configurable, and
-  documented in `DECISIONS.md`.
+  documented in `docs/decisions.md`.
 
 ## Decision: Use semantic long-term memory for Phase 6
 
 **Rationale**: Maintainer's Copilot later needs durable facts/preferences that
 can be retrieved by meaning. Semantic memory best matches explicit long-term
 write-memory use without pretending to store full episode histories or
-procedural instructions. The decision must be recorded in `DECISIONS.md`.
+procedural instructions. The decision must be recorded in
+`docs/decisions.md`.
 
 **Alternatives considered**:
 - Episodic memory: rejected for Phase 6 because full conversation episodes are

@@ -35,6 +35,17 @@
 - No raw source text, prompts, chunk content, provider responses, or secrets appear in logs, traces, snapshots, or eval reports.
 - Request IDs and trace IDs are preserved for correlation without exposing payloads.
 
+### Phase 6 Auth and Memory Redaction Rules
+
+- JWT signing keys are resolved from Vault during lifespan startup and are never logged or persisted in repo files.
+- `redact_short_term_memory_value()` runs before any Redis short-term memory write.
+- `redact_long_term_memory_content()` runs before long-term embedding generation, long-term persistence, audit metadata, logs, and traces.
+- `redact_audit_metadata()` bounds and redacts audit metadata before audit-row creation.
+- Long-term memory rows store redacted content only; no raw secret-like values are persisted.
+- Recall responses return previously stored redacted content only and never create new memory.
+- `memory.write` audit rows store safe metadata fields (`memory_type`, `content_hash`, `content_length`, `redaction_applied`, `source`) and do not include raw content.
+- Structured logs for auth failures, role changes, memory writes, and recall events must include `request_id` and `trace_id` while excluding raw passwords, tokens, signing keys, invitation tokens, or unredacted memory content.
+
 - `redact_issue_analysis_metadata()` keeps only safe keys: `request_id`, `tool_name`, `combined_characters`, `entity_count`, `entity_types`, `status`, `code`, `trace_id`, `provider_backend`, `tracing_backend`, `timeout_seconds`, `limitations`, `error_code`. All other keys are stripped.
 - `redact_log_payload()` replaces `title`, `body`, and `comments` fields with length-only metadata (`title_len`, `body_len`, `comments_len`, `comments_count`). Non-content fields are redacted for secret patterns before logging.
 - No raw title, body, comment text, prompts, credentials, provider responses, or stack traces reach logs or traces.

@@ -227,6 +227,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /memory/long-term/recall:
+    post:
+      summary: Recall explicitly written long-term memory for the current user
+      operationId: recallLongTermMemory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LongTermMemoryRecallRequest"
+      responses:
+        "200":
+          description: Matching long-term memory entries for the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LongTermMemoryRecallResponse"
+        "401":
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Invalid recall input.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/audit-logs:
     get:
       summary: List audit logs
@@ -394,6 +425,27 @@ components:
           type: string
         audit_log_id:
           type: string
+    LongTermMemoryRecallRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+        conversation_id:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 20
+    LongTermMemoryRecallResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LongTermMemoryRead"
     AuditLogEntry:
       type: object
       required: [id, actor_user_id, action, target_type, target_id, timestamp, metadata]

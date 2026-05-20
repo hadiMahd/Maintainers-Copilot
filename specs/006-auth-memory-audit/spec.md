@@ -152,7 +152,9 @@ that user and only because it was explicitly written.
   refresh fails safely.
 - JWT signing key is missing or unavailable at startup: token issuance is
   disabled and startup behavior is safe.
-- Vault is reachable but AppRole authentication fails (wrong role ID or secret ID): startup fails loudly with a clear authentication error; no secrets are read and the application does not start.
+- Vault is reachable but token-based bootstrap authentication fails (missing or
+  invalid `VAULT_TOKEN`): startup fails loudly with a clear authentication
+  error; no secrets are read and the application does not start.
 - Admin invitation is expired, already accepted, malformed, or revoked: role
   activation is rejected and the failure is auditable where appropriate.
 - A regular user attempts an admin-only operation: access is rejected and no role
@@ -171,6 +173,12 @@ that user and only because it was explicitly written.
   widget audit action names instead of inventing incompatible events.
 - A conversation is deleted: the deletion must create an audit row with safe
   metadata and no raw conversation content.
+- An auth failure, role change, memory write, or recall event occurs: structured
+  log output must carry `request_id` and `trace_id` and must not include raw
+  passwords, tokens, signing keys, or unredacted memory content.
+- Embedding generation runs during a write-memory request: the event loop must
+  not be blocked; the embedding must be offloaded via `asyncio.to_thread` or an
+  async-safe provider, and a test must verify the offload boundary.
 
 ## Requirements *(mandatory)*
 
@@ -183,9 +191,10 @@ that user and only because it was explicitly written.
 - **FR-002**: The system MUST support login that issues an access token and a
   refresh token.
 - **FR-003**: The system MUST load the RS256 private key from Vault at startup
-  using AppRole authentication before issuing tokens. The corresponding RS256
-  public key MUST be used for token validation. Both keys are loaded from Vault;
-  the private key MUST NOT be stored outside Vault.
+  using the repository's token-based Vault bootstrap contract before issuing
+  tokens. The corresponding RS256 public key MUST be used for token validation.
+  Both keys are loaded from Vault; the private key MUST NOT be stored outside
+  Vault.
 - **FR-004**: The system MUST reject token issuance when the RS256 private key
   is unavailable or invalid at startup.
 - **FR-005**: The system MUST support user and admin roles.
@@ -195,6 +204,10 @@ that user and only because it was explicitly written.
 - **FR-008**: The system MUST support an admin invitation flow for granting admin
   access. Admin invitations MUST expire after 48 hours from creation. Expired,
   already-accepted, revoked, or malformed invitations MUST be rejected.
+- **FR-008a**: A controlled first-admin bootstrap path MUST exist (e.g.,
+  `scripts/seed_admin.py`) that creates the initial admin when no admin exists
+  and fails loudly when Vault signing key is unavailable. This path MUST be
+  isolated from normal registration and MUST NOT be exposed as an API route.
 - **FR-009**: Role changes and admin invitation actions MUST be recorded in audit
   logs.
 - **FR-009a**: The audit service MUST define stable action names for
@@ -208,15 +221,17 @@ that user and only because it was explicitly written.
   default of 30 minutes. The TTL MUST be loaded from typed settings and MUST
   NOT be hardcoded in business logic.
 - **FR-012**: The 30-minute default short-term memory TTL and its rationale
-  (one conversation session boundary) MUST be documented in `DECISIONS.md`.
+  (one conversation session boundary) MUST be documented in
+  `docs/decisions.md`.
 - **FR-013**: The system MUST support long-term memory in PostgreSQL with
   pgvector. Long-term memory is stored as semantic memory: user-approved facts
   and preferences embedded as vectors and retrieved by pgvector similarity search.
 - **FR-014**: The long-term memory type is semantic. Episodic and procedural
   memory types are not implemented in Phase 6.
-- **FR-015**: The semantic memory type selection and rationale MUST be documented
-  in `DECISIONS.md`, including the retrieval approach (pgvector similarity),
-  embedding model used, and the explicit-consent boundary.
+- **FR-015**: The semantic memory type selection and rationale MUST be
+  documented in `docs/decisions.md`, including the retrieval approach
+  (pgvector similarity), embedding model used, and the explicit-consent
+  boundary.
 - **FR-016**: The system MUST provide an explicit write-memory service or tool
   for long-term memory writes.
 - **FR-017**: The system MUST NOT automatically write to long-term memory from
@@ -224,12 +239,20 @@ that user and only because it was explicitly written.
 - **FR-018**: Redaction MUST run before any short-term or long-term memory
   persistence.
 - **FR-019**: Long-term memory writes MUST create an audit log row.
+- **FR-019a**: Embedding generation for long-term memory writes MUST use
+  `asyncio.to_thread` or an async-safe provider so the write-memory request
+  path does not block the event loop. Tests MUST prove the offload boundary.
 - **FR-020**: Audit logs MUST include `id`, `actor_user_id`, `action`,
   `target_type`, `target_id`, `timestamp`, and `metadata`.
 - **FR-021**: Audit metadata MUST be safe, bounded, and free of unredacted
   memory content or secrets.
 - **FR-022**: Structured errors MUST be returned for registration, login,
   authorization, memory, redaction, and audit failures.
+- **FR-022a**: All Phase 6 services MUST propagate `request_id` from
+  middleware context and generate per-operation `trace_id` for auth login,
+  token refresh, memory write, memory recall, and audit events. Structured
+  log output for these events MUST include both identifiers without exposing
+  raw passwords, tokens, signing keys, or unredacted memory content.
 - **FR-023**: This phase MUST NOT implement full chatbot orchestration, automatic
   memory extraction, RAG question answering, UI work, or widget behavior.
 - **FR-024**: Cross-conversation recall MUST retrieve only explicitly written
@@ -238,6 +261,8 @@ that user and only because it was explicitly written.
   refresh behavior, admin guard, admin invitation, short-term memory read/write,
   long-term write-memory, cross-conversation recall, reserved audit action names,
   audit logging, and redaction before persistence.
+- **FR-025a**: Tests MUST prove repositories never call `.commit()` and that
+  transaction boundaries (commit/rollback) are owned exclusively by services.
 
 ### Constitution Alignment *(mandatory)*
 
@@ -255,17 +280,21 @@ that user and only because it was explicitly written.
   logs, traces, or memory writes can expose user content.
 - **Observability And Errors**: Auth failures, authorization failures, memory
   writes, role changes, and audit failures must produce structured logs/errors
-  with request identifiers where available and without stack traces or raw
-  sensitive payloads.
-- **Evidence And Evals**: Memory decisions require `DECISIONS.md` updates for
-  short-term TTL, selected long-term memory type, cross-conversation recall
+  with `request_id` and `trace_id` where available, without stack traces or raw
+  sensitive payloads. All Phase 6 services MUST propagate `request_id` from
+  middleware context and generate per-operation `trace_id` for joinable
+  log/trace reconstruction. Redacted trace and log metadata coverage MUST be
+  verified before phase completion.
+- **Evidence And Evals**: Memory decisions require `docs/decisions.md` updates
+  for short-term TTL, selected long-term memory type, cross-conversation recall
   behavior, and audit action policy. No classifier, RAG, or model evaluation is
   part of this phase.
 - **Critical Tests**: Critical tests must cover auth, refresh behavior, Vault key
-  resolution, admin guard, admin invitation, Redis short-term memory TTL,
-  explicit long-term memory writes, cross-conversation recall, no auto-writes,
-  reserved audit action names, audit rows, and redaction before
-  persistence/logging.
+  resolution, admin guard, admin invitation, first-admin bootstrap, Redis
+  short-term memory TTL, explicit long-term memory writes, async-safe embedding
+  handling, cross-conversation recall, no auto-writes, reserved audit action
+  names, structured logging with `request_id`/`trace_id` propagation, repository
+  no-commit verification, and redaction before persistence/logging.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -273,7 +302,10 @@ that user and only because it was explicitly written.
 - **Role**: Authorization category, either regular user or admin.
 - **Token Session**: Access and refresh token state associated with a user,
   including expiry, rotation, and revocation status.
-- **JWT Signing Key**: RS256 private key resolved from Vault via AppRole at startup; required for token issuance. The RS256 public key is used for validation and is also loaded from Vault. The private key never leaves Vault.
+- **JWT Signing Key**: RS256 private key resolved from Vault at startup via the
+  repository's `VAULT_ADDR` and `VAULT_TOKEN` bootstrap contract; required for
+  token issuance. The RS256 public key is used for validation and is also
+  loaded from Vault. The private key never leaves Vault.
 - **Admin Invitation**: Admin-created invitation used to grant admin role,
   including inviter, invitee email, status, 48-hour expiry timestamp, and acceptance metadata.
 - **Authorization Context**: Authenticated user identity, role, request
@@ -312,17 +344,31 @@ that user and only because it was explicitly written.
   audit log row with the required fields.
 - **SC-009**: Fake secret values included in memory input do not appear
   unredacted in persisted memory, audit metadata, logs, or traces.
-- **SC-010**: `DECISIONS.md` documents the short-term memory TTL and selected
-  long-term memory type before the phase is considered complete.
+- **SC-010**: `docs/decisions.md` documents the short-term memory TTL and
+  selected long-term memory type before the phase is considered complete.
 - **SC-011**: Reserved audit action names are present and tested for memory,
   role, admin invitation, widget config, and conversation deletion workflows.
 - **SC-012**: A cross-conversation recall test proves only explicitly written
   same-user long-term memory is recallable.
+- **SC-013**: First-admin bootstrap creates one admin when no admin exists, is
+  idempotent on repeated runs, and fails loudly when Vault signing key is
+  unavailable.
+- **SC-014**: Every structured log event produced by auth, memory, and audit
+  services carries `request_id` and per-operation `trace_id`, and no raw
+  secrets or unredacted memory content appear in log or trace metadata in 100%
+  of coverage tests.
+- **SC-015**: Embedding generation during write-memory never blocks the event
+  loop; the `asyncio.to_thread` or async-provider boundary is proven by a
+  dedicated test.
+- **SC-016**: Repository no-commit tests confirm that no `app/repositories/`
+  module calls `.commit()` and all transaction boundaries are owned by
+  `app/services/`.
 
 ## Assumptions
 
-- The first admin is created through a controlled local bootstrap or seed path;
-  after that, admin access is granted through the admin invitation flow.
+- The first admin is created through a controlled local bootstrap or seed path
+  (`scripts/seed_admin.py`); after that, admin access is granted through the
+  admin invitation flow. This path is not exposed as an API route.
 - Email verification and password reset are outside this phase unless required
   later; registration and login are sufficient for Phase 6 acceptance.
 - Refresh tokens are stored or tracked server-side enough to support expiry,

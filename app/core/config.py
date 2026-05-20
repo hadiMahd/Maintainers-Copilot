@@ -72,6 +72,25 @@ class AppSettings(BaseSettings):
     rag_azure_generation_api_key: str | None = None
     rag_azure_generation_model: str | None = None
 
+    # Phase 6 — Auth settings
+    jwt_access_token_expire_minutes: int = 30
+    jwt_refresh_token_expire_days: int = 7
+    jwt_algorithm: str = "RS256"
+    jwt_vault_key_path: str = "maintainer-copilot/jwt"
+
+    # Phase 6 — Admin invitation
+    admin_invitation_expire_hours: int = 48
+
+    # Phase 6 — Short-term memory
+    short_term_memory_ttl_seconds: int = 1800
+
+    # Phase 6 — Long-term memory
+    long_term_memory_type: str = "semantic"
+
+    # Phase 6 — Vault-resolved (populated by lifespan)
+    jwt_private_key: str | None = None
+    jwt_public_key: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
