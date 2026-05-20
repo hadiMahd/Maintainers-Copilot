@@ -4,7 +4,9 @@
 
 ```bash
 cp .env.example .env
-docker compose up --wait
+docker compose up -d vault postgres redis minio
+uv run python scripts/seed_vault_from_env.py .env
+docker compose up -d migrations backend
 ```
 
 ## Stop Stack
@@ -37,7 +39,7 @@ curl -s localhost:8000/health/ready | jq .
 - **Vault unreachable**: check `VAULT_ADDR`, run `docker compose ps vault`
 - **Postgres unhealthy**: check `docker compose logs postgres`
 - **pgvector not installed**: run `docker compose restart migrations`
-- **Backend crash on startup**: Vault auth failure — check `VAULT_TOKEN` and `docker compose logs vault_seed`
+- **Backend crash on startup**: secrets may not be seeded yet — re-run `uv run python scripts/seed_vault_from_env.py .env`, then `docker compose restart backend`
 
 ## Start Model Server
 
@@ -52,6 +54,36 @@ uv run uvicorn model_server.main:app --port 8001
 ```bash
 curl -s localhost:8001/health | jq .
 ```
+
+## Ingest RAG Corpus
+
+```bash
+uv run python scripts/ingest_docs.py
+uv run python scripts/ingest_resolved_issues.py --input /path/to/issues.jsonl
+```
+
+Expected: `data/processed/rag_doc_sources.jsonl`, `rag_issue_answer_sources.jsonl`, and `rag_chunks.jsonl` created.
+
+## Build RAG Index
+
+```bash
+uv run python scripts/build_rag_index.py
+```
+
+For testing without real embeddings:
+```bash
+uv run python scripts/build_rag_index.py --fake
+```
+
+Expected: `artifacts/rag/embedding_comparison.json` created with both embedding candidates recorded.
+
+## Evaluate RAG Pipeline
+
+```bash
+uv run python scripts/evaluate_rag.py --exploratory
+```
+
+Expected: `evals/rag_eval_report.json` created with baseline-vs-advanced comparison, judge_id, embedding comparison, and disagreement notes.
 
 ## Measure Classifier Latency
 

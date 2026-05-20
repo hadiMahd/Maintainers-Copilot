@@ -53,6 +53,25 @@ class AppSettings(BaseSettings):
     langsmith_endpoint: str | None = None
     langsmith_project: str | None = None
 
+    # Phase 5 — RAG pipeline settings
+    rag_embedding_model: str = "all-MiniLM-L6-v2"
+    rag_embedding_dim: int = 384
+    rag_embedding_candidates: list[str] = ["all-MiniLM-L6-v2", "text-embedding-3-small"]
+    rag_hybrid_sparse_weight: float = 0.3
+    rag_hybrid_dense_weight: float = 0.7
+    rag_reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    rag_reranker_top_k: int = 10
+    rag_generation_timeout_seconds: int = 30
+    rag_judge_timeout_seconds: int = 15
+    rag_snapshot_retention_conversations: int = 50
+    rag_eval_hit_at_5_threshold: float = 0.0
+    rag_eval_mrr_at_10_threshold: float = 0.0
+    rag_azure_embedding_endpoint: str | None = None
+    rag_azure_embedding_api_key: str | None = None
+    rag_azure_generation_endpoint: str | None = None
+    rag_azure_generation_api_key: str | None = None
+    rag_azure_generation_model: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

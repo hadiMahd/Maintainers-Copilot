@@ -27,8 +27,11 @@ data/raw/
 data/processed/
 artifacts/
 
-# Phase 3 classifier outputs
-evals/
+# Evaluation outputs (keep static Phase 5 inputs in the image)
+evals/*
+!evals/
+!evals/rag_golden_set.jsonl
+!evals/eval_thresholds.yaml
 *.safetensors
 *.bin
 *.onnx

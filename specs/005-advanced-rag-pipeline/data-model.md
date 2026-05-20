@@ -49,6 +49,8 @@
 
 **Fields**:
 - `chunk_id`: stable chunk identifier.
+- `parent_id`: stable parent-document identifier linking child chunks back to
+  the original document or issue-answer source.
 - `source_type`: `docs` or `issue`.
 - `source_path`: document path when source type is `docs`.
 - `issue_number`: issue number when source type is `issue`.
@@ -65,6 +67,8 @@
 
 **Validation Rules**:
 - Required metadata from the spec must be present on every stored chunk.
+- `parent_id` is required on every stored child chunk and must reference the
+  parent-document retriever source record.
 - `chunk_id` is stable for unchanged source, chunking policy, and chunk index.
 - `content_hash` changes when normalized chunk content changes.
 - `token_count` must be positive and within the configured chunking limits.
@@ -201,8 +205,8 @@ candidate.
 - `query_transformation_enabled`: boolean.
 - `reranking_enabled`: boolean.
 - `metrics`: retrieval, generation, and latency metrics.
-- `judge_backend`: frozen local/mockable judge used for CI, or optional
-  non-CI evaluator label.
+- `judge_id`: stable judge identifier for required CI metrics, such as
+  `token-overlap-f1-v1`.
 - `optional_ragas_metrics`: optional RAGAS-style metric values when available.
 - `limitations`: known run limitations.
 
@@ -210,8 +214,8 @@ candidate.
 - Baseline and advanced runs must use the same golden set.
 - Baseline uses fixed-size chunking plus pure dense retrieval.
 - Advanced run records all enabled retrieval controls.
-- Required CI runs use the frozen local/mockable judge and do not require paid
-  provider credentials.
+- Required CI runs record the frozen local/mockable `judge_id` and do not
+  require paid provider credentials.
 
 ## RAG Evaluation Report
 
@@ -230,7 +234,7 @@ candidate.
 - `generation_latency`: latency summary by run.
 - `reranking_impact`: ranking changes and metric impact.
 - `judge_disagreement_notes`: notes for five hand-labeled examples.
-- `judge_backend`: frozen local/mockable CI judge identity.
+- `judge_id`: frozen local/mockable CI judge identity.
 - `optional_ragas_metrics`: optional RAGAS-style metrics, stored separately from
   required CI judge metrics.
 - `generated_at`: report timestamp.
@@ -257,12 +261,12 @@ conversations.
 - `retrieved_chunks`: bounded list of chunk IDs, source metadata, scores, and
   redacted previews.
 - `created_at`: snapshot timestamp.
-- `retention_rank`: ordering value used to keep only the last N conversations.
+- `retention_rank`: ordering value used to keep only the last 50 conversations.
 
 **Validation Rules**:
 - Stored previews must be redacted and bounded.
 - Full raw chunks, full prompts, and raw secrets are not stored.
-- Retention keeps only the configured last N conversations.
+- Retention keeps only the configured last 50 conversations.
 - Snapshot creation is callable by the chat phase without rerunning ingestion or
   embedding.
 

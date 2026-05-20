@@ -22,6 +22,14 @@ def _transformers_available() -> bool:
         return False
 
 
+def _accelerate_available() -> bool:
+    try:
+        import accelerate  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 def _sklearn_available() -> bool:
     try:
         import sklearn  # noqa: F401
@@ -108,8 +116,8 @@ class TestTrainingArguments:
     """Tests for the TrainingArguments defaults matching the dump notebook."""
 
     @pytest.mark.skipif(
-        not _transformers_available(),
-        reason="transformers not installed (install with: uv sync --extra train)",
+        not _transformers_available() or not _accelerate_available(),
+        reason="transformers or accelerate not installed (install with: uv sync --extra train)",
     )
     def test_training_args_hyperparameters(self):
         """TrainingArguments must match dump: 3 epochs, lr 2e-5, batch 16."""

@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Request
 
 from app.api.dependencies.settings import get_settings
 from app.core.config import AppSettings
-from app.core.application import app
 from app.services.health_service import check_liveness, check_readiness
 
 router = APIRouter(tags=["health"])
@@ -36,7 +35,3 @@ async def ready(request: Request, settings: AppSettings = Depends(get_settings))
         status_code=503,
         content=jsonable_encoder(status),
     )
-
-
-# Register router on the global app instance
-app.include_router(router, prefix="/health")

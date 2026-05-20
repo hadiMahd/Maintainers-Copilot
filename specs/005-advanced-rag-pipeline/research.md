@@ -26,11 +26,14 @@ repository layer.
 - External search service: rejected because it adds infrastructure outside the
   current phase needs.
 
-## Decision: Use structure-aware chunking instead of naive fixed-size chunks
+## Decision: Use a parent-document retriever instead of naive fixed-size chunks
 
 **Rationale**: Documentation headings, code blocks, lists, and issue-answer
-conversation boundaries carry meaning. Preserving those boundaries should improve
-retrieval quality and produces a defensible contrast against the naive baseline.
+conversation boundaries carry meaning. The chosen parent-document retriever
+stores small child chunks for embedding and retrieval while preserving a parent
+document boundary for grounded answer context. That produces a defensible
+contrast against the naive baseline and matches the Phase 5 requirement that
+retrieved children carry a stable `parent_id`.
 
 **Alternatives considered**:
 - Fixed-size chunks only: kept as the baseline but rejected for the advanced
@@ -136,7 +139,7 @@ replace the CI judge gate.
 ## Decision: Store redacted retrieved-chunk snapshots for recent conversations
 
 **Rationale**: The project brief requires per-conversation retrieved-chunk
-snapshots for the last N conversations. The RAG service provides a snapshot
+snapshots for the last 50 conversations. The RAG service provides a snapshot
 operation that stores chunk IDs, scores, metadata, and redacted previews so
 Phase 7 can call it after RAG tool use without rerunning ingestion or indexing.
 

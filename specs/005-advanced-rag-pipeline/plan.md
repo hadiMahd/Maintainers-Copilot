@@ -7,15 +7,17 @@
 
 Build the Phase 5 advanced RAG pipeline for Maintainer's Copilot. The work
 ingests project documentation and held-out resolved issues with maintainer
-answers, creates structure-aware chunks with metadata, stores chunks and
-embeddings in PostgreSQL with pgvector, implements sparse/dense/hybrid retrieval,
-adds query transformation, metadata filtering, small cross-encoder reranking, and
-grounded answer generation, then evaluates the advanced pipeline against a naive
-fixed-size chunking plus pure dense retrieval baseline on a 25-example RAG golden
-set using a frozen local/mockable judge for CI faithfulness and answer relevancy.
-The RAG service also exposes redacted retrieved-chunk snapshot storage for the
-last N conversations when later chat phases call it. Long-running ingestion,
-embedding, and evaluation run through scripts, not API request paths.
+answers, creates parent-document retriever chunks with `parent_id`-carrying
+child metadata, stores chunks and embeddings in PostgreSQL with pgvector,
+implements sparse/dense/hybrid retrieval, adds query transformation, metadata
+filtering, small cross-encoder reranking, and grounded answer generation, then
+evaluates the advanced pipeline against a naive fixed-size chunking plus pure
+dense retrieval baseline on a 25-example RAG golden set using a frozen
+local/mockable judge with a stable `judge_id` for CI faithfulness and answer
+relevancy. The RAG service also exposes redacted retrieved-chunk snapshot
+storage for the last 50 conversations when later chat phases call it.
+Long-running ingestion, embedding, and evaluation run through scripts, not API
+request paths.
 
 ## Technical Context
 
@@ -27,17 +29,20 @@ tables/indexes; small sentence-transformers embedding candidates for comparison;
 a small cross-encoder reranker; pytest for chunking, filtering, retrieval schema,
 deduplication, and eval-report tests; a frozen local/mockable judge for required
 CI generation metrics; optional async LLM/model client adapters with explicit
-timeouts for query transformation, grounded generation, optional RAGAS-style
-metrics, and non-CI judging  
+timeouts, trace hooks, and typed settings backed by Vault or test fakes for
+query transformation, grounded generation, optional RAGAS-style metrics, and
+non-CI judging  
 **Storage**: PostgreSQL tables for RAG sources, chunks, embeddings, sparse search
 fields, eval run metadata, and redacted retrieved-chunk snapshots; JSONL/JSON
 artifacts under `data/processed/`, `evals/`, and `artifacts/rag/`;
 `DECISIONS.md` for selected RAG choices  
 **Testing**: pytest unit tests for chunking, metadata filtering, score merging,
 query transformation toggling, reranker impact, grounded answer behavior,
-embedding deduplication, eval metric calculation, report schema, and redaction;
-integration tests for repeatable scripts and pgvector-backed retrieval where the
-local database is available; snapshot tests for redaction and last-N retention  
+embedding deduplication, eval metric calculation, report schema, trace-safe
+redaction, and provider-resolution behavior; integration tests for repeatable
+scripts and pgvector-backed retrieval where the local database is available;
+snapshot tests for redaction, metadata association, and last-50-conversation
+retention  
 **Target Platform**: Local developer environment, Docker Compose PostgreSQL with
 pgvector, and future CI jobs  
 **Project Type**: Script-driven RAG ingestion/indexing/evaluation plus backend
@@ -89,8 +94,8 @@ evaluation/decision report
   expose stack traces or raw payloads.
 - **AI Evidence And Eval Gates**: PASS. The plan requires a 25-example golden
   set, naive baseline, hit@5, MRR@10, faithfulness, answer relevancy, latency,
-  frozen judge metadata, judge disagreement notes, non-zero thresholds, and
-  `DECISIONS.md` updates.
+  a stable frozen `judge_id`, judge disagreement notes, non-zero thresholds,
+  and `DECISIONS.md` updates.
 - **Critical Tests And CI**: PASS. Tests cover chunking, filtering, retrieval
   schemas, duplicate embedding avoidance, query transformation, reranking impact,
   grounded-answer behavior, eval report completeness, and redaction leaks.
@@ -181,16 +186,24 @@ artifacts/
     └── embedding_comparison.json
 
 tests/
+├── contract/
+│   ├── test_rag_commands.py
+│   └── test_rag_service_contract.py
 ├── unit/
 │   ├── test_rag_chunking.py
+│   ├── test_rag_generation_service.py
 │   ├── test_rag_metadata_filtering.py
 │   ├── test_rag_retrieval_schema.py
 │   ├── test_rag_hybrid_scoring.py
 │   ├── test_rag_query_transformation.py
 │   ├── test_rag_reranking.py
 │   ├── test_rag_eval_metrics.py
-│   └── test_rag_redaction.py
+│   ├── test_rag_observability.py
+│   ├── test_rag_provider_resolution.py
+│   ├── test_rag_redaction.py
+│   └── test_rag_snapshot_service.py
 └── integration/
+    ├── test_rag_grounded_answers.py
     ├── test_rag_index_scripts.py
     └── test_rag_pgvector_retrieval.py
 

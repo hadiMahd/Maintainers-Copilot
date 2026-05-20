@@ -1,0 +1,70 @@
+{
+  "report_id": "0818cb518a7143b2bf457fc7dd01a26c",
+  "baseline": {
+    "run_id": "1b9573c6dbbe4d74ae58c685ba5ffffa",
+    "mode": "baseline",
+    "metrics": {
+      "hit_at_5": 0.32,
+      "mrr_at_10": 0.17933333333333334,
+      "faithfulness": 0.06209209046538431,
+      "answer_relevancy": 0.10509716119461113,
+      "retrieval_latency_ms_p50": 3.5,
+      "retrieval_latency_ms_p95": 3.5,
+      "generation_latency_ms_p50": 0.0,
+      "generation_latency_ms_p95": 0.0
+    },
+    "embedding_model": "all-MiniLM-L6-v2",
+    "retrieval_mode": "dense",
+    "reranking_enabled": false,
+    "query_transformation_enabled": false,
+    "examples_completed": 25,
+    "judge_id": "token-overlap-f1-v1",
+    "disagreement_notes": [],
+    "created_at": "2026-05-20 13:16:11.234041+00:00"
+  },
+  "advanced": {
+    "run_id": "a91de1bf718748818ab4d4fc2c96cf24",
+    "mode": "advanced",
+    "metrics": {
+      "hit_at_5": 0.32,
+      "mrr_at_10": 0.17933333333333334,
+      "faithfulness": 0.06209209046538431,
+      "answer_relevancy": 0.10509716119461113,
+      "retrieval_latency_ms_p50": 3.5,
+      "retrieval_latency_ms_p95": 3.5,
+      "generation_latency_ms_p50": 0.0,
+      "generation_latency_ms_p95": 0.0
+    },
+    "embedding_model": "all-MiniLM-L6-v2",
+    "retrieval_mode": "hybrid",
+    "reranking_enabled": false,
+    "query_transformation_enabled": false,
+    "examples_completed": 25,
+    "judge_id": "token-overlap-f1-v1",
+    "disagreement_notes": [
+      "[example 4] Answer requires reasoning across multiple files; baseline may miss context",
+      "[example 9] Redis config spans multiple files; naive baseline may retrieve incomplete context",
+      "[example 11] Question expects auth info but answer must flag insufficient evidence gracefully",
+      "[example 16] Cross-references database setup and FastAPI patterns; advanced retrieval should surface both",
+      "[example 21] Dependency update workflow is simple but the expected chunk overlaps with numpy install; ordering matters"
+    ],
+    "created_at": "2026-05-20 13:16:11.234920+00:00"
+  },
+  "advanced_beats_baseline": false,
+  "embedding_comparison": {
+    "all-MiniLM-L6-v2": {
+      "dim": 384,
+      "hit_at_5": 0.32,
+      "mrr_at_10": 0.17933333333333334
+    },
+    "text-embedding-3-small": {
+      "dim": 1536,
+      "hit_at_5": 0.272,
+      "mrr_at_10": 0.1524
+    }
+  },
+  "limitations": [
+    "Advanced pipeline did not exceed baseline on required retrieval metrics"
+  ],
+  "created_at": "2026-05-20 13:16:11.235003+00:00"
+}

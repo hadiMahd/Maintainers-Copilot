@@ -176,7 +176,8 @@ ranking.
   the RAG evaluation data: `all-MiniLM-L6-v2` (local, CPU-feasible, 384-dim) and
   Azure OpenAI `text-embedding-3-small` (cloud, 1536-dim). The local model MUST
   be usable in automated tests without API credentials. Azure OpenAI embedding
-  credentials are loaded from typed settings and are optional for tests.
+  credentials MUST resolve from typed settings backed by Vault or test fakes and
+  remain optional for tests.
 - **FR-009**: The system MUST store embeddings in pgvector (PostgreSQL), which is
   already included in the Phase 1 default stack. Dense retrieval uses pgvector
   vector similarity search, sparse retrieval uses PostgreSQL `tsvector` full-text
@@ -340,7 +341,9 @@ ranking.
   separate from classifier training data and other held-out evaluation data.
 - The naive baseline is fixed-size chunking plus pure dense retrieval without
   hybrid weighting, query transformation, metadata filtering, or reranking.
-- The vector retrieval store is pgvector (PostgreSQL), already in the Phase 1 stack. Embedding model candidates will be finalized during planning.
+- The vector retrieval store is pgvector (PostgreSQL), already in the Phase 1
+  stack, and the Phase 5 embedding comparison candidates are
+  `all-MiniLM-L6-v2` and `text-embedding-3-small`.
 - The first implementation may use bounded local or external generation and
   judging providers, but automated tests must not require real secrets.
 - RAG answers are intended for later chatbot use, but this phase exposes the
