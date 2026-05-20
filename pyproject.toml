@@ -19,6 +19,7 @@ dependencies = [
     "scikit-learn>=1.4.0",
     "safetensors>=0.4.0",
     "spacy>=3.7.0",
+    "pgvector>=0.3.0",
 ]
 
 [project.optional-dependencies]
@@ -33,6 +34,9 @@ llm = [
     "langchain-core>=0.2.0",
 ]
 ner = []
+rag = [
+    "sentence-transformers>=3.0.0",
+]
 
 [dependency-groups]
 dev = [
@@ -81,3 +85,11 @@ addopts = "-v --tb=short"
 profile = "black"
 line_length = 100
 known_first_party = ["app", "tests"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

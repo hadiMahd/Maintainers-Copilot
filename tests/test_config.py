@@ -81,6 +81,12 @@ def test_vault_resolved_llm_fields_default_none(monkeypatch):
     """Azure OpenAI and LangSmith fields default to None until Vault resolves them."""
     monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
     monkeypatch.setenv("VAULT_TOKEN", "token")
+    for key in ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_MODEL",
+                "AZURE_OPENAI_EMBEDDING_MODEL", "LANGCHAIN_API_KEY",
+                "LANGCHAIN_ENDPOINT", "LANGCHAIN_PROJECT",
+                "LANGSMITH_ENDPOINT", "LANGSMITH_PROJECT",
+                "SUMMARIZATION_TIMEOUT_SECONDS", "LANGSMITH_TRACING_V2"):
+        monkeypatch.delenv(key, raising=False)
     settings = AppSettings(_env_file=None)
     assert settings.azure_openai_endpoint is None
     assert settings.azure_openai_api_key is None

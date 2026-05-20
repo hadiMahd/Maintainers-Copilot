@@ -127,3 +127,97 @@ def redact_log_payload(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             safe[key] = value
     return safe
+
+
+# -- Phase 5 RAG redaction -----------------------------------------------------
+
+_RAG_REDACTED_FIELDS = {"content", "content_preview", "maintainer_answer", "question_context"}
+
+_SAFE_RAG_KEYS = {
+    "request_id",
+    "trace_id",
+    "chunk_id",
+    "parent_id",
+    "source_type",
+    "source_path",
+    "retrieval_mode",
+    "embedding_model",
+    "top_k",
+    "rank",
+    "final_score",
+    "insufficient_evidence",
+    "chunk_ids",
+    "supporting_chunk_ids",
+    "generation_latency_ms",
+    "retrieval_latency_ms",
+    "query",
+    "query_transformation_applied",
+    "reranking_applied",
+    "conversation_id",
+    "message_id",
+    "scores",
+    "run_id",
+    "mode",
+    "judge_id",
+    "report_id",
+}
+
+
+def redact_chunk_preview(chunk: dict[str, Any]) -> dict[str, Any]:
+    """Strip full chunk content; keep id, parent_id, score metadata."""
+    safe: dict[str, Any] = {}
+    for key in _SAFE_RAG_KEYS:
+        if key in chunk:
+            safe[key] = chunk[key]
+    return safe
+
+
+def redact_rag_prompt(payload: dict[str, Any]) -> dict[str, Any]:
+    """Replace full prompt text with length-only metadata."""
+    safe: dict[str, Any] = {}
+    for key, value in payload.items():
+        if key in _RAG_REDACTED_FIELDS:
+            if isinstance(value, str):
+                safe[f"{key}_len"] = len(value)
+            continue
+        if key in _SAFE_RAG_KEYS or isinstance(value, (int, float, bool)):
+            if isinstance(value, str):
+                safe[key] = redact_string(value)
+            else:
+                safe[key] = value
+        elif isinstance(value, str):
+            safe[key] = redact_string(value)
+    return safe
+
+
+def redact_snapshot_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Redact a snapshot row for safe storage — keep chunk IDs and scores only."""
+    safe: dict[str, Any] = {}
+    for key in {"snapshot_id", "conversation_id", "message_id", "trace_id",
+                "chunk_ids", "scores", "created_at", "query"}:
+        if key in row:
+            if key == "query":
+                safe[key] = redact_string(row[key])
+            else:
+                safe[key] = row[key]
+    return safe
+
+
+def redact_eval_report(report: dict[str, Any]) -> dict[str, Any]:
+    """Redact eval report — suppress raw chunks, prompts, and full previews."""
+    safe: dict[str, Any] = {}
+    for key, value in report.items():
+        if key in _RAG_REDACTED_FIELDS:
+            continue
+        if isinstance(value, dict):
+            safe[key] = redact_dict(value, _RAG_REDACTED_FIELDS)
+        elif isinstance(value, list):
+            safe[key] = [
+                redact_chunk_preview(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+        elif isinstance(value, str):
+            safe[key] = redact_string(value)
+        else:
+            safe[key] = value
+    return safe

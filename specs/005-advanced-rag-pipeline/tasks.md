@@ -22,9 +22,9 @@
 
 **Purpose**: Add the Phase 5 dependencies and create the file skeletons required by the design.
 
-- [ ] T001 Add Phase 5 runtime dependencies for pgvector, sentence-transformers, cross-encoder reranking, and optional provider adapters in `pyproject.toml`
-- [ ] T002 [P] Create Phase 5 service, repository, infra, and script skeletons in `app/domain/rag.py`, `app/services/rag_ingestion_service.py`, `app/services/rag_index_service.py`, `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, `app/services/rag_evaluation_service.py`, `app/services/rag_snapshot_service.py`, `app/repositories/rag_chunk_repository.py`, `app/repositories/rag_embedding_repository.py`, `app/repositories/rag_snapshot_repository.py`, `app/infra/embedding_client.py`, `app/infra/reranker_client.py`, `app/infra/rag_generation_client.py`, `app/infra/rag_judge_client.py`, `scripts/ingest_docs.py`, `scripts/ingest_resolved_issues.py`, `scripts/build_rag_index.py`, and `scripts/evaluate_rag.py`
-- [ ] T003 [P] Create Phase 5 test file skeletons in `tests/contract/test_rag_commands.py`, `tests/contract/test_rag_service_contract.py`, `tests/unit/test_rag_chunking.py`, `tests/unit/test_rag_generation_service.py`, `tests/unit/test_rag_metadata_filtering.py`, `tests/unit/test_rag_retrieval_schema.py`, `tests/unit/test_rag_hybrid_scoring.py`, `tests/unit/test_rag_query_transformation.py`, `tests/unit/test_rag_reranking.py`, `tests/unit/test_rag_eval_metrics.py`, `tests/unit/test_rag_observability.py`, `tests/unit/test_rag_provider_resolution.py`, `tests/unit/test_rag_redaction.py`, `tests/unit/test_rag_snapshot_service.py`, `tests/integration/test_rag_grounded_answers.py`, `tests/integration/test_rag_index_scripts.py`, and `tests/integration/test_rag_pgvector_retrieval.py`
+- [x] T001 Add Phase 5 runtime dependencies for pgvector, sentence-transformers, cross-encoder reranking, and optional provider adapters in `pyproject.toml`
+- [x] T002 [P] Create Phase 5 service, repository, infra, and script skeletons in `app/domain/rag.py`, `app/services/rag_ingestion_service.py`, `app/services/rag_index_service.py`, `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, `app/services/rag_evaluation_service.py`, `app/services/rag_snapshot_service.py`, `app/repositories/rag_chunk_repository.py`, `app/repositories/rag_embedding_repository.py`, `app/repositories/rag_snapshot_repository.py`, `app/infra/embedding_client.py`, `app/infra/reranker_client.py`, `app/infra/rag_generation_client.py`, `app/infra/rag_judge_client.py`, `scripts/ingest_docs.py`, `scripts/ingest_resolved_issues.py`, `scripts/build_rag_index.py`, and `scripts/evaluate_rag.py`
+- [x] T003 [P] Create Phase 5 test file skeletons in `tests/contract/test_rag_commands.py`, `tests/contract/test_rag_service_contract.py`, `tests/unit/test_rag_chunking.py`, `tests/unit/test_rag_generation_service.py`, `tests/unit/test_rag_metadata_filtering.py`, `tests/unit/test_rag_retrieval_schema.py`, `tests/unit/test_rag_hybrid_scoring.py`, `tests/unit/test_rag_query_transformation.py`, `tests/unit/test_rag_reranking.py`, `tests/unit/test_rag_eval_metrics.py`, `tests/unit/test_rag_observability.py`, `tests/unit/test_rag_provider_resolution.py`, `tests/unit/test_rag_redaction.py`, `tests/unit/test_rag_snapshot_service.py`, `tests/integration/test_rag_grounded_answers.py`, `tests/integration/test_rag_index_scripts.py`, and `tests/integration/test_rag_pgvector_retrieval.py`
 
 ---
 
@@ -34,15 +34,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Create typed RAG entities, queries, retrieval results, grounded answers, eval runs, eval reports, and snapshot schemas in `app/domain/rag.py`
-- [ ] T005 [P] Extend typed RAG settings for embedding candidates, hybrid weights, reranker controls, generation/judge timeouts, snapshot retention, eval thresholds, and Vault-backed provider resolution in `app/core/config.py`
-- [ ] T006 [P] Add RAG redaction helpers for source payloads, prompts, retrieved previews, trace attributes, snapshot rows, and eval reports in `app/infra/redaction.py`
-- [ ] T007 [P] Add Phase 5 Alembic tables and indexes for RAG sources, chunks, embeddings, sparse search fields, and retrieved-chunk snapshots in `migrations/versions/0002_phase5_rag_tables.py`
-- [ ] T008 [P] Implement async repository scaffolding for chunks, embeddings, and snapshots in `app/repositories/rag_chunk_repository.py`, `app/repositories/rag_embedding_repository.py`, and `app/repositories/rag_snapshot_repository.py`
-- [ ] T009 [P] Add unit tests for Vault-backed provider resolution, fake-provider fallback, and no-secret config handling in `tests/unit/test_rag_provider_resolution.py`
-- [ ] T010 [P] Add unit tests for retrieval, generation, judge, and eval trace emission with safe redacted attributes in `tests/unit/test_rag_observability.py`
-- [ ] T011 [P] Implement provider/client seams for local and Azure embeddings, reranking, grounded generation, and frozen judging with Vault-backed secret resolution and trace hooks in `app/infra/embedding_client.py`, `app/infra/reranker_client.py`, `app/infra/rag_generation_client.py`, and `app/infra/rag_judge_client.py`
-- [ ] T012 Wire shared RAG service scaffolding, structured domain errors, request_id/trace_id correlation, and trace emission helpers in `app/services/rag_ingestion_service.py`, `app/services/rag_index_service.py`, `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, `app/services/rag_evaluation_service.py`, `app/services/rag_snapshot_service.py`, and `app/domain/rag.py`
+- [x] T004 Create typed RAG entities, queries, retrieval results, grounded answers, eval runs, eval reports, and snapshot schemas in `app/domain/rag.py`
+- [x] T005 [P] Extend typed RAG settings for embedding candidates, hybrid weights, reranker controls, generation/judge timeouts, snapshot retention, eval thresholds, and Vault-backed provider resolution in `app/core/config.py`
+- [x] T006 [P] Add RAG redaction helpers for source payloads, prompts, retrieved previews, trace attributes, snapshot rows, and eval reports in `app/infra/redaction.py`
+- [x] T007 [P] Add Phase 5 Alembic tables and indexes for RAG sources, chunks, embeddings, sparse search fields, and retrieved-chunk snapshots in `migrations/versions/0002_phase5_rag_tables.py`
+- [x] T008 [P] Implement async repository scaffolding for chunks, embeddings, and snapshots in `app/repositories/rag_chunk_repository.py`, `app/repositories/rag_embedding_repository.py`, and `app/repositories/rag_snapshot_repository.py`
+- [x] T009 [P] Add unit tests for Vault-backed provider resolution, fake-provider fallback, and no-secret config handling in `tests/unit/test_rag_provider_resolution.py`
+- [x] T010 [P] Add unit tests for retrieval, generation, judge, and eval trace emission with safe redacted attributes in `tests/unit/test_rag_observability.py`
+- [x] T011 [P] Implement provider/client seams for local and Azure embeddings, reranking, grounded generation, and frozen judging with Vault-backed secret resolution and trace hooks in `app/infra/embedding_client.py`, `app/infra/reranker_client.py`, `app/infra/rag_generation_client.py`, and `app/infra/rag_judge_client.py`
+- [x] T012 Wire shared RAG service scaffolding, structured domain errors, request_id/trace_id correlation, and trace emission helpers in `app/services/rag_ingestion_service.py`, `app/services/rag_index_service.py`, `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, `app/services/rag_evaluation_service.py`, `app/services/rag_snapshot_service.py`, and `app/domain/rag.py`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel.
 
@@ -58,16 +58,16 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T013 [P] [US1] Add service-contract tests for retrieval result schemas, supporting chunk references, and insufficient-evidence responses in `tests/contract/test_rag_service_contract.py`
-- [ ] T014 [P] [US1] Add unit tests for grounded-answer shaping, evidence-only generation, and redacted prompt handling in `tests/unit/test_rag_generation_service.py` and `tests/unit/test_rag_redaction.py`
-- [ ] T015 [P] [US1] Add integration tests for question-to-answer flow using fixture-backed retrieval results and fake generation adapters in `tests/integration/test_rag_grounded_answers.py`
+- [x] T013 [P] [US1] Add service-contract tests for retrieval result schemas, supporting chunk references, and insufficient-evidence responses in `tests/contract/test_rag_service_contract.py`
+- [x] T014 [P] [US1] Add unit tests for grounded-answer shaping, evidence-only generation, and redacted prompt handling in `tests/unit/test_rag_generation_service.py` and `tests/unit/test_rag_redaction.py`
+- [x] T015 [P] [US1] Add integration tests for question-to-answer flow using fixture-backed retrieval results and fake generation adapters in `tests/integration/test_rag_grounded_answers.py`
 
 ### Implementation for User Story 1
 
-- [ ] T016 [P] [US1] Implement retrieval-result shaping, metadata filter application, empty-result explanations, and retrieval span emission in `app/services/rag_retrieval_service.py` and `app/repositories/rag_chunk_repository.py`
-- [ ] T017 [P] [US1] Implement grounded-generation adapter behavior, evidence citation formatting, insufficiency detection, and provider trace hooks in `app/infra/rag_generation_client.py` and `app/services/rag_generation_service.py`
-- [ ] T018 [US1] Implement the grounded-answer workflow that composes retrieval and generation with structured domain errors in `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, and `app/domain/rag.py`
-- [ ] T019 [US1] Add payload-safe logging, run/request correlation, trace-safe attributes, and safe failure mapping for grounded-answer operations in `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, and `app/infra/redaction.py`
+- [x] T016 [P] [US1] Implement retrieval-result shaping, metadata filter application, empty-result explanations, and retrieval span emission in `app/services/rag_retrieval_service.py` and `app/repositories/rag_chunk_repository.py`
+- [x] T017 [P] [US1] Implement grounded-generation adapter behavior, evidence citation formatting, insufficiency detection, and provider trace hooks in `app/infra/rag_generation_client.py` and `app/services/rag_generation_service.py`
+- [x] T018 [US1] Implement the grounded-answer workflow that composes retrieval and generation with structured domain errors in `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, and `app/domain/rag.py`
+- [x] T019 [US1] Add payload-safe logging, run/request correlation, trace-safe attributes, and safe failure mapping for grounded-answer operations in `app/services/rag_retrieval_service.py`, `app/services/rag_generation_service.py`, and `app/infra/redaction.py`
 
 **Checkpoint**: At this point, grounded question answering should be independently testable with fixture corpora and fake providers.
 
