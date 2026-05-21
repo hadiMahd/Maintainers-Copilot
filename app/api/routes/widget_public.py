@@ -4,6 +4,8 @@ Thin HTTP mapping — delegates to services for origin validation,
 token issuance, and chat orchestration.
 """
 
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -13,6 +15,8 @@ from app.services.widget_embed_service import WidgetEmbedService
 from app.services.widget_session_service import WidgetSessionService
 
 router = APIRouter(prefix="/public/widgets", tags=["widget-public"])
+
+_pending_messages: dict[str, str] = {}
 
 
 def _get_widget_config_service(request: Request):
@@ -212,6 +216,7 @@ async def submit_widget_chat_message(widget_id: str, request: Request) -> JSONRe
         conversation_id=conversation_id,
         request_id=request_id,
     )
+    _pending_messages[conv_id] = message
     return JSONResponse(
         content={"conversation_id": conv_id},
         headers={"X-Request-ID": request_id or ""},
@@ -220,15 +225,19 @@ async def submit_widget_chat_message(widget_id: str, request: Request) -> JSONRe
 
 @router.get("/{widget_id}/chat/stream")
 async def stream_widget_chat(widget_id: str, request: Request) -> StreamingResponse:
-    """Stream widget chat response via SSE."""
+    """Stream widget chat response via SSE.
+
+    Message content is never placed on the URL — it is retrieved from the
+    server-side pending message store populated by the POST submission.
+    """
     request_id = getattr(request.state, "request_id", None)
     session_token = request.query_params.get("token", "")
     conversation_id = request.query_params.get("conversation_id", "")
-    message = request.query_params.get("message", "")
 
+    message = _pending_messages.pop(conversation_id, "")
     if not message:
         return StreamingResponse(
-            iter(['data: {"event_type":"error","content":"message is required"}\n\n']),
+            iter(['data: {"event_type":"error","content":"no pending message","sequence":0}\n\n']),
             media_type="text/event-stream",
             headers={"X-Request-ID": request_id or ""},
         )

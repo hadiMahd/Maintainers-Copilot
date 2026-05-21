@@ -138,21 +138,21 @@ message, and verify streamed response content appears progressively.
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T043 [P] [US3] Vitest test for widget `App.tsx` component render (bubble + panel) in `widget/src/__tests__/App.test.tsx`
-- [ ] T044 [P] [US3] Vitest test for widget `api.ts` SSE streaming with `EventSource` in `widget/src/__tests__/api.test.ts`
-- [ ] T045 [P] [US3] Vitest test for resize message channel in `widget/src/__tests__/messages.test.ts`
-- [ ] T046 [P] [US3] Integration test for widget chat submission plus `EventSource` stream in `tests/integration/test_widget_chat_stream.py`, including compatibility with the Phase 7 chat SSE event shape reused by the widget, proof that raw chat text is not placed on the SSE URL, and browser-visible `request_id`/`trace_id` correlation on stream events when safe
+- [X] T043 [P] [US3] Vitest test for widget `App.tsx` component render (bubble + panel) in `widget/src/__tests__/App.test.tsx`
+- [X] T044 [P] [US3] Vitest test for widget `api.ts` SSE streaming with `EventSource` in `widget/src/__tests__/api.test.ts`
+- [X] T045 [P] [US3] Vitest test for resize message channel in `widget/src/__tests__/messages.test.ts`
+- [X] T046 [P] [US3] Integration test for widget chat submission plus `EventSource` stream in `tests/integration/test_widget_chat_stream.py`, including compatibility with the Phase 7 chat SSE event shape reused by the widget, proof that raw chat text is not placed on the SSE URL, and browser-visible `request_id`/`trace_id` correlation on stream events when safe
 
 ### Implementation for User Story 3
 
-- [ ] T047 [P] [US3] Create `widget/src/styles.css` — vanilla CSS for collapsed bubble, expanded panel, message list, input form, theme variants
-- [ ] T048 [P] [US3] Create `widget/src/api.ts` — typed backend API client: public config read, session token request, POST message submission, and `EventSource` SSE chat stream without raw message content on the stream URL, preserving `request_id`/`trace_id` when present in stream events
-- [ ] T049 [P] [US3] Create `widget/src/messages.ts` — `postMessage` resize channel with origin validation, bounded dimensions
-- [ ] T050 [US3] Create `widget/src/App.tsx` — React widget with collapsed bubble state, expanded panel state, greeting display, theme application, configured position, enabled-tool indicators, message list, input form, and streaming renderer
-- [ ] T051 [US3] Create `widget/src/main.tsx` — React entry point, reads bootstrap values from iframe shell, mounts `App.tsx`
-- [ ] T052 [US3] Implement `POST /public/widgets/{widget_id}/chat/messages` and `GET /public/widgets/{widget_id}/chat/stream` — validates widget session token, submits raw user messages outside the SSE URL, reuses Phase 7 `ChatbotService`, and streams events with browser-visible `request_id`/`trace_id` when safe (depends on T010, T015)
-- [ ] T053 [US3] Handle stream interruption in widget — visible partial state, retry option (depends on T050, T048)
-- [ ] T054 [US3] Handle widget errors, disabled states, blocked origins with clean user-facing states (no stack traces) in `widget/src/App.tsx`
+- [X] T047 [P] [US3] Create `widget/src/styles.css` — vanilla CSS for collapsed bubble, expanded panel, message list, input form, theme variants
+- [X] T048 [P] [US3] Create `widget/src/api.ts` — typed backend API client: public config read, session token request, POST message submission, and `EventSource` SSE chat stream without raw message content on the stream URL, preserving `request_id`/`trace_id` when present in stream events
+- [X] T049 [P] [US3] Create `widget/src/messages.ts` — `postMessage` resize channel with origin validation, bounded dimensions
+- [X] T050 [US3] Create `widget/src/App.tsx` — React widget with collapsed bubble state, expanded panel state, greeting display, theme application, configured position, enabled-tool indicators, message list, input form, and streaming renderer
+- [X] T051 [US3] Create `widget/src/main.tsx` — React entry point, reads bootstrap values from iframe shell, mounts `App.tsx`
+- [X] T052 [US3] Implement `POST /public/widgets/{widget_id}/chat/messages` and `GET /public/widgets/{widget_id}/chat/stream` — validates widget session token, submits raw user messages outside the SSE URL, reuses Phase 7 `ChatbotService`, and streams events with browser-visible `request_id`/`trace_id` when safe (depends on T010, T015)
+- [X] T053 [US3] Handle stream interruption in widget — visible partial state, retry option (depends on T050, T048)
+- [X] T054 [US3] Handle widget errors, disabled states, blocked origins with clean user-facing states (no stack traces) in `widget/src/App.tsx`
 
 **Checkpoint**: Visitors can chat through the embedded widget with streamed
 responses, configured theme, greeting, and clean error handling.
