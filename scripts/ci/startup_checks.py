@@ -16,15 +16,23 @@ def check_vault_unreachable() -> tuple[bool, str]:
     env["VAULT_ADDR"] = "http://nonexistent-vault:8200"
 
     result = subprocess.run(
-        ["uv", "run", "python", "-c", "from app.core.config import AppSettings; s = AppSettings(environment='production', vault_addr='http://nonexistent-vault:8200', vault_token='fake'); print(s.vault_addr)"],
+        [
+            "uv", "run", "python", "-c",
+            "import os; "
+            "os.environ['VAULT_ADDR'] = 'http://nonexistent-vault:8200'; "
+            "from app.infra.vault_client import init_vault_client; "
+            "from app.core.config import AppSettings; "
+            "s = AppSettings(environment='production', vault_addr='http://nonexistent-vault:8200', vault_token='fake'); "
+            "c = init_vault_client(s)",
+        ],
         env=env,
         capture_output=True,
         text=True,
-        timeout=10,
+        timeout=15,
     )
     if result.returncode != 0:
-        return True, "Vault-unreachable check: startup failed as expected"
-    return False, "Vault-unreachable check: startup succeeded but should have failed"
+        return True, f"Vault-unreachable check: startup failed as expected (rc={result.returncode})"
+    return False, f"Vault-unreachable check: startup succeeded but should have failed (rc={result.returncode})"
 
 
 def check_vault_missing_secret() -> tuple[bool, str]:

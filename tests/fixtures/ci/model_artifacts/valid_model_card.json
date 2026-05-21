@@ -1,0 +1,1 @@
+{"model_version": "0.1.0", "architecture": "distilbert-base-uncased", "artifacts": [{"path": "model.safetensors", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}]}

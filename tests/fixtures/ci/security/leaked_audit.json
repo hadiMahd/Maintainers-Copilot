@@ -1,0 +1,3 @@
+# Fake audit record containing a deliberate secret probe for leak testing.
+# None of these are real credentials.
+{"action": "memory.write", "key": "sk-fake-test-key-12345", "status": "ok"}

@@ -57,7 +57,7 @@ class TestNoPaidCredentials:
     def test_no_paid_credentials_in_ci_scripts(self):
         ci_dir = Path("scripts/ci")
         for script in ci_dir.rglob("*.py"):
-            if script.name in ("__init__.py", "secret_scan.py", "common.py", "check_redaction_leaks.py"):
+            if script.name in ("__init__.py", "secret_scan.py", "common.py", "check_redaction_leaks.py", "check_static_secret_patterns.py"):
                 continue
             content = script.read_text()
             assert "sk-" not in content, f"{script} contains sk- pattern"

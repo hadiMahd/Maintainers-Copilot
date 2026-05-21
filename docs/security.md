@@ -160,3 +160,101 @@ The `streamlit_app/` package MUST NOT import `sqlalchemy`, `asyncpg`, `redis`, `
 - Widget bundle size is measured after each build: loader < 5 KB gzip, initial bundle ≤ 150 KB gzip.
 - Report is generated at `docs/widget-bundle-report.md`.
 - Bundle tests in `tests/unit/test_widget_bundle.py` enforce size constraints at CI time.
+
+## Phase 10 Production Readiness Security Gates
+
+### Redaction Leak Gate
+
+`scripts/ci/check_redaction_leaks.py` exercises the app's `app/infra/redaction`
+layer with fake secret probes and verifies that no raw probe value appears
+unredacted in any output target:
+
+- **App redaction layer**: Calls `redact_string()` with fake probes and verifies `[REDACTED]` replaces raw values
+- **Logs**: Scans simulated log output for fake probe leakage
+- **Traces**: Scans JSON trace output for fake probes
+- **Memory**: Scans memory write/output for fake probes
+- **Audit records**: Scans JSON audit records for fake probes
+- **Captured output**: Scans all captured command output for fake probes
+
+Fake probes used:
+- `sk-fake-test-key-12345` (simulates OpenAI API key prefix)
+- `password=super_secret_test_value` (simulates hardcoded password)
+
+Fixture files in `tests/fixtures/ci/security/` contain deliberate fake probes
+for testing the leak scanner itself. These fixtures are flagged as expected
+hits and do not cause gate failure.
+
+### Static Secret Grep Gate
+
+`scripts/ci/check_static_secret_patterns.py` scans the entire repository for
+committed secret-like patterns using the `scripts/ci/secret_scan.py` helper.
+
+Unsafe patterns detected:
+- `sk-` (OpenAI-style API key prefix)
+- `password=` (hardcoded password assignment)
+- `passwd=` (hardcoded password variant)
+- `SECRET_KEY=` (hardcoded secret key)
+
+Allowlisted files (known-safe false positives):
+- `scripts/ci/secret_scan.py` — defines the patterns to scan for
+- `scripts/ci/common.py` — contains sanitization patterns
+- `scripts/ci/check_static_secret_patterns.py` — the scanner itself
+- `scripts/ci/check_redaction_leaks.py` — contains fake probe definitions
+- `.flake8` — lint configuration
+- `.github/workflows/ci.yml` — Docker Compose password env vars
+- `AGENTS.md`, `constitution.md` — documentation mentioning patterns
+
+Non-allowlisted hits cause gate failure with safe path/line reporting.
+Secret values are never printed in failure output.
+
+### Model Artifact Integrity Gate
+
+`scripts/ci/check_model_artifacts.py` validates model artifact SHA-256 hashes
+against model cards:
+
+- Locates model card at `artifacts/evals/model_card.json`
+- Computes SHA-256 for each referenced artifact
+- Verifies hash matches `sha256` field in card
+- Fails on missing artifacts, hash mismatches, or malformed cards
+- Passes gracefully when no model card exists (CI without model artifacts)
+
+Fixture files in `tests/fixtures/ci/model_artifacts/` include:
+- Valid card with expected hash
+- Card referencing nonexistent artifact
+- Card with deliberately wrong hash
+
+### Startup Failure Gate
+
+`scripts/ci/check_startup_failures.py` performs negative-test assertions to
+verify the system fails closed when any required dependency is unavailable:
+
+| Check | Expected Behavior |
+|---|---|
+| vault-unreachable | App fails when Vault is unreachable (init_vault_client raises ConfigError) |
+| vault-missing-secret | App fails when Vault is reachable but required secret is missing |
+| missing-model-artifact | App fails when required model artifact is absent |
+| model-hash-mismatch | App fails when model artifact hash does not match model card |
+| tracing-misconfig | App fails when tracing configuration is invalid |
+| disabled-thresholds | App fails when eval thresholds are zero or disabled |
+
+Each check returns `(True, message)` when the system correctly fails closed.
+A `(False, message)` means the system succeeded when it should have failed —
+this is a gate failure.
+
+### Tracing Configuration Gate
+
+`scripts/ci/validate_tracing.py` validates LangSmith tracing configuration:
+
+- Checks `LANGSMITH_API_KEY` is present and of reasonable length
+- Checks `LANGSMITH_PROJECT` is set when `LANGSMITH_ENDPOINT` is set
+- Detects obviously invalid key formats
+- In CI without credentials: passes gracefully (non-fatal — tracing is optional in CI)
+- In production with misconfigured tracing: fails the gate
+
+### Gate Order in Security Pipeline
+
+1. `check_redaction_leaks.py` — fake probe leak detection
+2. `check_static_secret_patterns.py` — committed secret pattern scan
+3. `check_model_artifacts.py` — artifact hash validation
+4. `check_startup_failures.py` — negative-case startup checks
+5. `validate_tracing.py` — tracing config validation
