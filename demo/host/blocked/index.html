@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blocked Host — Maintainer Copilot Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { color: #dc2626; }
+    .note { background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Blocked Host Demo</h1>
+  <p>This page is served from an origin NOT allowed in the widget configuration.</p>
+  <div class="note">
+    <strong>Expected behavior:</strong> The backend rejects the public config or
+    session request. The widget shows a clean blocked state without exposing
+    stack traces or admin configuration details.
+  </div>
+  <p>Replace <code>YOUR_WIDGET_ID</code> and <code>BACKEND_URL</code> below with
+    actual values from your widget configuration.</p>
+  <!-- Widget snippet — replace placeholders -->
+  <script src="BACKEND_URL/widget/loader.js" data-widget-id="YOUR_WIDGET_ID"></script>
+</body>
+</html>

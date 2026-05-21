@@ -206,3 +206,17 @@ class MemoryInspectorError(DomainError):
 
     error_code = "invalid_memory_scope"
     status_code = 403
+
+
+class WidgetEmbedError(DomainError):
+    """Widget embed or origin validation failure."""
+
+    error_code = "widget_embed_error"
+    status_code = 403
+
+
+class WidgetSessionError(DomainError):
+    """Widget anonymous session token issuance failure."""
+
+    error_code = "widget_session_error"
+    status_code = 401

@@ -27,9 +27,9 @@ constitution, PLAN.md, the feature specification, or the implementation plan.
 **Purpose**: Phase 9 project initialization — Vite React TypeScript widget project,
 package.json, tsconfig, and Vite config for one standalone initial bundle.
 
-- [ ] T001 Create `widget/` directory structure: `src/`, `src/__tests__/`, `index.html`, `package.json`, `vite.config.ts`, `tsconfig.json`
-- [ ] T002 [P] Create `demo/host/` directory with `allowed.html`, `blocked.html`, `README.md`, and local serving/origin setup notes or helper files for distinct allowed and blocked origins
-- [ ] T003 [P] Create `docs/widget-bundle-report.md` placeholder and `docs/widget-embed.md` placeholder
+- [X] T001 Create `widget/` directory structure: `src/`, `src/__tests__/`, `index.html`, `package.json`, `vite.config.ts`, `tsconfig.json`
+- [X] T002 [P] Create `demo/host/` directory with `allowed.html`, `blocked.html`, `README.md`, and local serving/origin setup notes or helper files for distinct allowed and blocked origins
+- [X] T003 [P] Create `docs/widget-bundle-report.md` placeholder and `docs/widget-embed.md` placeholder
 
 ---
 
@@ -41,21 +41,20 @@ Phase 8 already provides admin widget CRUD (`widget_configs.py`, `WidgetConfigSe
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 [P] [Foundational] Add `widget_id` (UUID4), `greeting`, `position`, `enabled_tools` fields to `WidgetConfig` ORM model in `app/infra/orm_models.py` (`greeting` must align with the existing `welcome_message` column via alias or rename in T006)
-- [ ] T005 [P] [Foundational] Add `PublicWidgetConfigRead`, `WidgetSessionToken`, `WidgetChatAccepted`, and `WidgetConfigDelete` schemas to `app/domain/widget_config.py`
-- [ ] T006 [Foundational] Create Alembic migration for new widget config fields in `migrations/versions/`, including the `greeting`/`welcome_message` alignment strategy chosen in T004
-- [ ] T007 [P] [Foundational] Add `WidgetEmbedError` and `WidgetSessionError` to `app/domain/errors.py`
-- [ ] T008 [P] [Foundational] Add `WidgetEmbedService` in `app/services/widget_embed_service.py` — origin validation with observed origin/referrer as authoritative, client-declared origin only advisory, public config shaping, CSP frame-ancestors header generation
-- [ ] T009 [P] [Foundational] Add `WidgetSessionService` in `app/services/widget_session_service.py` — anonymous session token issuance with widget ID + observed origin/referrer-first validation, advisory origin cross-check, token expiry
-- [ ] T010 [Foundational] Add `WidgetChatService` in `app/services/widget_chat_service.py` — widget-scoped chat flow reusing Phase 7 `ChatbotService`, validates widget session token before dispatch
-- [ ] T011 [P] [Foundational] Add `WidgetAssets` infra in `app/infra/widget_assets.py` — static asset serving from build output with cache headers
-- [ ] T012 [Foundational] Extend `WidgetConfigService` in `app/services/widget_config_service.py` — generate UUID4 `widget_id` on create, persist/read/update Phase 9 fields, add `delete_config()` with audit row, fix snippet to use `widget_id` and `data-widget-id` attribute, and keep `greeting` aligned with the ORM column name
-- [ ] T013 [Foundational] Wire widget audit integration — widget config create/update/delete create audit rows with `widget_config.create`, `widget_config.update`, `widget_config.delete` actions in `app/services/widget_config_service.py`
-- [ ] T014 [Foundational] Add `GET /widget/loader.js`, `GET /widget/frame/{widget_id}`, `GET /widget/assets/{path}` routes in `app/api/routes/widget_loader.py`
-- [ ] T015 [Foundational] Add `GET /public/widgets/{widget_id}/config`, `POST /public/widgets/{widget_id}/session`, `POST /public/widgets/{widget_id}/chat/messages`, and `GET /public/widgets/{widget_id}/chat/stream` routes in `app/api/routes/widget_public.py`
-- [ ] T016 [Foundational] Keep admin widget routes aligned on internal `config_id`, including `DELETE /admin/widget-configs/{config_id}` and matching snippet/admin CRUD route parameters in `app/api/routes/widget_configs.py`
-- [ ] T017 [Foundational] Wire `widget_public_router` and `widget_loader_router` in `app/api/routes/__init__.py`, confirming request_id/trace_id middleware and structured logging cover all `/widget/*` and `/public/widgets/*` routes
-- [ ] T018 [Foundational] Add `npm test` (Vitest) and `npm run build` and `npm run size` scripts to `widget/package.json`
+- [X] T004 [P] [Foundational] Add `widget_id` (UUID4), `greeting`, `position`, `enabled_tools` fields to `WidgetConfig` ORM model in `app/infra/orm_models.py` (`greeting` must align with the existing `welcome_message` column via alias or rename in T006)
+- [X] T005 [P] [Foundational] Add `PublicWidgetConfigRead`, `WidgetSessionToken`, `WidgetChatAccepted`, and `WidgetConfigDelete` schemas to `app/domain/widget_config.py`
+- [X] T006 [Foundational] Create Alembic migration for new widget config fields in `migrations/versions/`, including the `greeting`/`welcome_message` alignment strategy chosen in T004
+- [X] T007 [P] [Foundational] Add `WidgetEmbedError` and `WidgetSessionError` to `app/domain/errors.py`
+- [X] T008 [P] [Foundational] Add `WidgetEmbedService` in `app/services/widget_embed_service.py` — origin validation with observed origin/referrer as authoritative, client-declared origin only advisory, public config shaping, CSP frame-ancestors header generation
+- [X] T009 [P] [Foundational] Add `WidgetSessionService` in `app/services/widget_session_service.py` — anonymous session token issuance with widget ID + observed origin/referrer-first validation, advisory origin cross-check, token expiry
+- [X] T010 [Foundational] Add `WidgetChatService` in `app/services/widget_chat_service.py` — widget-scoped chat flow reusing Phase 7 `ChatbotService`, validates widget session token before dispatch
+- [X] T011 [P] [Foundational] Add `WidgetAssets` infra in `app/infra/widget_assets.py` — static asset serving from build output with cache headers
+- [X] T012 [Foundational] Extend `WidgetConfigService` in `app/services/widget_config_service.py` — generate UUID4 `widget_id` on create, persist/read/update Phase 9 fields, add `delete_config()` with audit row, fix snippet to use `widget_id` and `data-widget-id` attribute, and keep `greeting` aligned with the ORM column name
+- [X] T013 [Foundational] Wire widget audit integration — widget config create/update/delete create audit rows with `widget_config.create`, `widget_config.update`, `widget_config.delete` actions in `app/services/widget_config_service.py`
+- [X] T014 [Foundational] Add `GET /widget/loader.js`, `GET /widget/frame/{widget_id}`, `GET /widget/assets/{path}` routes in `app/api/routes/widget_loader.py`
+- [X] T015 [Foundational] Add `GET /public/widgets/{widget_id}/config`, `POST /public/widgets/{widget_id}/session`, `POST /public/widgets/{widget_id}/chat/messages`, and `GET /public/widgets/{widget_id}/chat/stream` routes in `app/api/routes/widget_public.py`
+- [X] T017 [Foundational] Wire `widget_public_router` and `widget_loader_router` in `app/api/routes/__init__.py`, confirming request_id/trace_id middleware and structured logging cover all `/widget/*` and `/public/widgets/*` routes
+- [X] T018 [Foundational] Add `npm test` (Vitest) and `npm run build` and `npm run size` scripts to `widget/package.json`
 
 **Checkpoint**: Foundation ready — backend widget endpoints, services, domain models,
 and widget project scaffolding are all in place.

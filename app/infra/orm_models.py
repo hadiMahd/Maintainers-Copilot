@@ -110,13 +110,18 @@ class WidgetConfig(Base):
     __tablename__ = "widget_configs"
     __table_args__ = (
         Index("ix_widget_configs_name", "name"),
+        Index("ix_widget_configs_widget_id", "widget_id", unique=True),
     )
 
     id = Column(String(36), primary_key=True)
+    widget_id = Column(String(36), nullable=False, unique=True)
     name = Column(String(120), nullable=False)
     allowed_origins = Column(Text(), nullable=False)
     theme = Column(String(30), nullable=False, server_default="default")
+    greeting = Column(String(500), nullable=True)
     welcome_message = Column(String(500), nullable=True)
+    position = Column(String(20), nullable=False, server_default="bottom-right")
+    enabled_tools = Column(JSON(), nullable=True)
     is_enabled = Column(Boolean(), nullable=False, server_default="true")
     created_by_user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     updated_by_user_id = Column(String(36), nullable=False)
