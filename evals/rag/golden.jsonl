@@ -1,0 +1,10 @@
+{"question": "how to install numpy", "answer": "pip install numpy", "expected_chunks": ["install-numpy"], "source_type": "docs"}
+{"question": "what python version is required", "answer": "Python 3.11 or newer", "expected_chunks": ["python-version"], "source_type": "docs"}
+{"question": "how to create a virtual environment", "answer": "python -m venv .venv", "expected_chunks": ["venv-setup"], "source_type": "docs"}
+{"question": "how to run tests", "answer": "Run uv run pytest from the project root", "expected_chunks": ["run-tests"], "source_type": "docs"}
+{"question": "how to configure logging", "answer": "Set log_level to INFO and use structlog", "expected_chunks": ["logging-config"], "source_type": "docs"}
+{"question": "how to apply database migrations", "answer": "Run alembic upgrade head", "expected_chunks": ["alembic-migrate"], "source_type": "docs"}
+{"question": "how to configure Redis cache", "answer": "Set REDIS_URL environment variable", "expected_chunks": ["redis-config"], "source_type": "docs"}
+{"question": "how to redact secrets from logs", "answer": "Use redact_string and redact_dict from app/infra/redaction.py", "expected_chunks": ["redaction-usage"], "source_type": "docs"}
+{"question": "how to validate RAG retrieval quality", "answer": "Use hit@5 and MRR@10 metrics", "expected_chunks": ["rag-eval"], "source_type": "docs"}
+{"question": "how to check model server health", "answer": "Call GET /health on port 8001", "expected_chunks": ["health-check"], "source_type": "docs"}

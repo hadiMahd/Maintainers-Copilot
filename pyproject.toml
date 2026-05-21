@@ -56,6 +56,8 @@ dev = [
     "mypy>=1.9.0",
     "ruff>=0.3.0",
     "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "black>=24.0.0",
 ]
 
 [build-system]
@@ -95,6 +97,10 @@ addopts = "-v --tb=short"
 profile = "black"
 line_length = 100
 known_first_party = ["app", "tests"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
