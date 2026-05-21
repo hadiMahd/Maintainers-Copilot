@@ -8,7 +8,7 @@ PROJECT_BRIEF.md
 # Agent/tool directories
 .agents
 .vscode
-.specify
+
 .claude
 .codex
 
@@ -73,7 +73,7 @@ Thumbs.db
 .agents
 .codex
 .vscode
-.specify
+
 
 AGENTS.md
 PHASE_TECH_STACK.md
@@ -82,3 +82,5 @@ PROJECT_BRIEF.md
 
 .ruff_cache/
 dump/
+node_modules/
+coverage/

@@ -245,7 +245,7 @@ tool, and RAG spans contain safe redacted metadata only.
   return structured errors or partial responses with safe metadata.
 - **Evidence And Evals**: This phase uses already selected/evaluated classifier
   and RAG capabilities. It must not change model, embedding, retrieval, or memory
-  decisions without updating `DECISIONS.md`.
+  decisions without updating `docs/decisions.md`.
 - **Critical Tests**: Critical tests must cover authenticated chat, streaming
   behavior, successful tool execution, failed tool recovery, max tool-call limit,
   full-response timeout, request/context limits, trace span creation,

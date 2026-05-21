@@ -24,6 +24,10 @@ dependencies = [
     "pyjwt[crypto]>=2.8.0",
     "python-multipart>=0.0.9",
     "email-validator>=2.1.0",
+    "langchain-core>=0.2.0",
+    "langchain-openai>=0.1.0",
+    "langgraph>=0.2.0",
+    "langsmith>=0.1.0",
 ]
 
 [project.optional-dependencies]

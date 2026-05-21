@@ -113,17 +113,21 @@ formatter can explain safely.
 - Hide all failures from the user: rejected because users need to know when a
   capability was unavailable.
 
-## Decision: Use OpenTelemetry-compatible tracing with local Jaeger or Tempo
+## Decision: Use LangSmith tracing with fake tracing adapters in tests
 
-**Rationale**: The project brief requires visible traces and a demo tracing UI.
-OpenTelemetry keeps provider-specific tracing code out of services while local
-Jaeger or Tempo gives reviewers a concrete trace tree for successful and failed
-chat paths without a paid backend.
+**Rationale**: Earlier LLM phases already use LangSmith, and the Phase 7 spec
+requires LangSmith run IDs for log correlation. Keeping LangSmith behind an
+infra tracing adapter preserves service-layer neutrality while giving reviewers
+a concrete trace tree for successful and failed chat paths when credentials are
+configured. Automated tests use a fake tracing adapter so CI does not require
+external tracing credentials.
 
 **Alternatives considered**:
 - Log-only observability: rejected because the brief requires a trace UI.
-- Hosted tracing only: rejected because local and CI review should not require
-  external credentials.
+- Local Jaeger or Tempo: rejected because the spec standardizes on LangSmith and
+  explicitly avoids adding a Jaeger/Tempo service to the local stack.
+- Hosted tracing only with no fake seam: rejected because CI review should not
+  require external credentials.
 
 ## Decision: Snapshot RAG retrieved chunks after RAG tool calls
 

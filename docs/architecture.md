@@ -162,3 +162,38 @@ POST /memory/long-term/recall
 - Repositories never commit or roll back.
 - Audit linkage for memory writes is stored as safe `audit_log_id` metadata on the memory row.
 - Recall does not create memory and does not write audit rows in Phase 6.
+
+## Phase 7 Chat Backend Architecture
+
+### Phase 7 Ownership
+
+| Layer | Files | Responsibility |
+|---|---|---|
+| api | `app/api/routes/chat.py` | Authenticated `/chat` HTTP boundary and SSE response creation only |
+| domain | `app/domain/chat.py`, `app/domain/chat_tools.py` | Chat request/event state, tool schemas, safe tool/LLM contracts |
+| services | `app/services/chatbot_service.py`, `app/services/chatbot_graph_service.py`, `app/services/tool_execution_service.py`, `app/services/conversation_state_service.py`, `app/services/chat_tracing_service.py`, `app/services/chat_rag_snapshot_coordinator.py` | Request validation, bounded context shaping, graph orchestration, tool execution, tracing, snapshot coordination |
+| infra | `app/infra/llm_adapter.py`, `app/infra/chatbot_graph.py`, `app/infra/model_server_tools.py`, `app/infra/rag_tool_client.py`, `app/infra/memory_tool_client.py`, `app/infra/conversation_state_adapter.py`, `app/infra/prompt_registry.py`, `app/infra/tracing.py` | Provider seams, prompt loading, Redis conversation-state storage, LangGraph/fallback wrapper, tracing adapter seams |
+| core | `app/core/config.py`, `app/core/lifespan.py` | Typed chat settings and startup wiring for prompts, adapters, and tool clients |
+
+### Phase 7 Request Flow
+
+```text
+POST /chat
+  -> get_current_user()
+  -> ChatbotService.execute_chat()
+    -> ConversationStateService.read_conversation()
+    -> ChatTracingService.start_chat_trace()
+    -> ChatbotGraphService.run()
+      -> LLM adapter
+      -> ToolExecutionService.execute()
+      -> ChatRAGSnapshotCoordinator.store_snapshot() when RAG succeeds
+    -> ConversationStateService.append_exchange()
+  -> StreamingResponse(text/event-stream)
+```
+
+### Phase 7 Boundary Notes
+
+- The chat route does not import `sqlalchemy`, `redis`, `hvac`, `minio`, or `httpx`.
+- The graph contains one primary LLM node plus support nodes only: `llm`, `execute_tools`, `finalize`.
+- Tool clients stay in `app/infra/`; service code depends on project-owned seams, not provider SDKs.
+- Short-term chat state reuses Redis infrastructure through a chat-specific adapter instead of direct route-level Redis access.

@@ -88,3 +88,24 @@ def test_phase6_route_modules_no_low_level_imports():
         if bad:
             offenders[file.relative_to(PROJECT_ROOT)] = bad
     assert not offenders, f"Found forbidden low-level imports in Phase 6 routes: {offenders}"
+
+
+def test_phase7_route_modules_no_low_level_imports():
+    """Assert the Phase 7 chat route stays above low-level libraries."""
+    route_files = [
+        API_DIR / "routes" / "chat.py",
+    ]
+    banned_prefixes = ("sqlalchemy", "redis", "hvac", "minio", "httpx")
+    offenders: dict[Path, list[str]] = {}
+    for file in route_files:
+        if not file.exists():
+            continue
+        imports = ast_imports(file.read_text())
+        bad = [
+            imp
+            for imp in imports
+            if any(imp == prefix or imp.startswith(f"{prefix}.") for prefix in banned_prefixes)
+        ]
+        if bad:
+            offenders[file.relative_to(PROJECT_ROOT)] = bad
+    assert not offenders, f"Found forbidden low-level imports in Phase 7 routes: {offenders}"

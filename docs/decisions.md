@@ -351,3 +351,60 @@ Runners-up and rationale:
 - **No leakage**: Another user cannot recall someone else's memory even if the query text matches.
 - **Empty result behavior**: No-match recall returns `{items: []}` safely.
 - **Response shape**: Recalled items return redacted content plus `audit_log_id` linkage, never raw secret material.
+
+## Phase 7 Single Tool-Calling Chat Decisions
+
+### One Assistant, One Tool Loop
+
+**Decision**: Build the chat backend around one primary tool-calling LLM loop with three graph nodes only: `llm`, `execute_tools`, and `finalize`.
+
+**Rationale**:
+- Preserves the constitution's single-LLM constraint.
+- Keeps the graph observable without introducing planner, router, critic, or memory agents.
+- Lets tests assert the graph shape directly.
+
+**Alternatives Rejected**:
+- Planner/router nodes: rejected because they create additional agent roles.
+- Multi-agent orchestration: rejected as out of scope for Phase 7.
+
+### Prompt Files Are Version-Controlled Runtime Inputs
+
+**Decision**: Keep chatbot behavior prompts in `prompts/chatbot_system.md`, `prompts/chatbot_tool_policy.md`, and `prompts/chatbot_untrusted_context.md`, loaded through `PromptRegistry`.
+
+**Rationale**:
+- Makes prompt behavior reviewable and diffable.
+- Keeps routes and services free of embedded prompt strings.
+- Produces a stable prompt bundle version fingerprint for traces.
+
+### Tool Execution Uses Typed Project-Owned Schemas
+
+**Decision**: The assistant exposes five tools only: `classify_issue`, `extract_entities`, `summarize_issue`, `answer_project_question`, and `write_memory`.
+
+**Rationale**:
+- Matches the phase scope exactly.
+- Keeps tool validation and timeout policy in one service.
+- Allows deterministic fake tool clients in automated tests.
+
+### Explicit Write-Memory Gating
+
+**Decision**: `write_memory` remains unavailable unless explicit remember intent is detected from the current user message.
+
+**Rationale**:
+- Preserves the Phase 6 no-auto-write rule.
+- Prevents ambiguous or implicit long-term memory creation.
+
+### Untrusted RAG Context Wrapping
+
+**Decision**: RAG results are returned to the LLM as explicitly wrapped untrusted context, and retrieved-chunk snapshots are created after successful RAG calls.
+
+**Rationale**:
+- Prevents retrieved text from overriding system or tool policy.
+- Keeps trace/log review tied to a bounded snapshot ID instead of raw chunks.
+
+### Tracing Backend and Run-ID Correlation
+
+**Decision**: Use a project-owned tracing adapter with `fake` and LangSmith-shaped seams. Structured chat logs carry `trace_id` and `run_id` when available.
+
+**Rationale**:
+- Preserves testability without external credentials.
+- Keeps Phase 7 logs and traces joinable.

@@ -1,8 +1,8 @@
 """Domain models."""
 
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RequestContext(BaseModel):
@@ -28,7 +28,7 @@ class HealthStatus(BaseModel):
     status: Literal["ok", "degraded", "unavailable"]
     service: str
     version: str | None = None
-    checks: list[ReadinessCheck] = []
+    checks: list[ReadinessCheck] = Field(default_factory=list)
     request_id: str | None = None
 
 
@@ -38,3 +38,5 @@ class ErrorResponse(BaseModel):
     error_code: str
     message: str
     request_id: str
+    trace_id: str | None = None
+    details: dict[str, Any] | None = None

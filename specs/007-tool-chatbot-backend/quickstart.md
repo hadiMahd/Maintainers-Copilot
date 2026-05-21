@@ -9,8 +9,8 @@
   provider for tests.
 - Prompt files exist under `prompts/`.
 - Authenticated user fixtures are available for chat endpoint tests.
-- Local Jaeger or Tempo is available for tracing UI review, or an
-  OpenTelemetry-compatible fake exporter is available for tests.
+- LangSmith is configured for trace review when real tracing credentials are
+  available, and a fake tracing adapter is available for tests.
 
 ## Validate Prompt Files
 
@@ -73,17 +73,17 @@ partial/error behavior.
 Run a chat request that calls the LLM, at least one tool, and the RAG tool.
 
 Expected result: one trace root exists for the user message; LLM, tool, and RAG
-spans are linked; trace IDs appear in structured logs; the successful
-conversation is visible in the local tracing UI; fake secrets do not appear
-unredacted in logs or traces.
+spans are linked; LangSmith run IDs appear in structured logs when available;
+the successful conversation is visible in LangSmith when configured; fake
+secrets do not appear unredacted in logs or traces.
 
 ## Validate Failed-Tool Trace UI
 
 Run a chat request where one fake tool fails after tracing has started.
 
 Expected result: the chatbot returns a safe partial response, the failed tool
-span appears in the local tracing UI, and the trace ID is joinable with
-structured logs.
+span appears in LangSmith when configured, and the LangSmith run ID is joinable
+with structured logs.
 
 ## Validate Retrieved-Chunk Snapshots
 
@@ -98,24 +98,15 @@ not full raw chunks.
 Run:
 
 ```bash
-python -m pytest tests/unit/test_chatbot_graph.py
-python -m pytest tests/unit/test_tool_execution_service.py
-python -m pytest tests/unit/test_chat_limits.py
-python -m pytest tests/unit/test_write_memory_intent.py
-python -m pytest tests/unit/test_untrusted_rag_context.py
-python -m pytest tests/unit/test_retrieved_chunk_snapshots.py
-python -m pytest tests/unit/test_chat_tracing.py
-python -m pytest tests/unit/test_chat_redaction.py
-python -m pytest tests/contract/test_chat_endpoint_contract.py
-python -m pytest tests/integration/test_chat_successful_tool_call.py
-python -m pytest tests/integration/test_chat_failed_tool_recovery.py
-python -m pytest tests/integration/test_chat_trace_log_correlation.py
-python -m pytest tests/integration/test_chat_redis_state.py
+uv run pytest tests/contract/test_chat_endpoint_contract.py tests/unit/test_chatbot_graph.py tests/unit/test_chat_limits.py tests/unit/test_tool_execution_service.py tests/unit/test_write_memory_intent.py tests/unit/test_untrusted_rag_context.py tests/unit/test_retrieved_chunk_snapshots.py tests/unit/test_chat_tracing.py tests/unit/test_chat_redaction.py tests/integration/test_chat_successful_tool_call.py tests/integration/test_chat_redis_state.py tests/integration/test_chat_failed_tool_recovery.py tests/integration/test_chat_trace_log_correlation.py -q
+uv run pytest tests/test_config.py tests/test_import_side_effects.py tests/test_route_boundaries.py tests/test_no_secrets.py tests/test_errors.py -q
 ```
 
 Expected result: authenticated chat, streaming contract, tool success/failure,
 limits, explicit memory gating, retrieved-chunk snapshots, Redis state, tracing,
 trace/log correlation, and redaction behavior pass.
+
+Validated result during implementation: the focused chat suite passed with `32 passed`, and the Phase 7 cross-cutting guardrails passed with `55 passed`.
 
 ## Validate Single-LLM Constraint
 

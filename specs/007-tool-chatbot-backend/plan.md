@@ -13,10 +13,10 @@ chatbot streams responses, stores short-term conversation state in Redis, calls
 typed tools for classifier, NER, summarization, RAG, and explicit write_memory,
 enforces tool-call, recursion, request-size, context-size, and total-response
 limits, writes redacted retrieved-chunk snapshots after RAG tool calls, and
-redacts user/tool/LLM/RAG payloads before logs and traces. OpenTelemetry-
-compatible tracing uses local Jaeger or Tempo for dev/demo and chat logs include
-trace IDs. It does not create planner, researcher, critic, router, memory, or
-other agents.
+redacts user/tool/LLM/RAG payloads before logs and traces. LangSmith tracing is
+used for LLM/tool/RAG run visibility when configured, and chat logs include
+LangSmith run IDs for correlation. It does not create planner, researcher,
+critic, router, memory, or other agents.
 
 ## Technical Context
 
@@ -53,7 +53,7 @@ critic, memory, router, or specialist agents
 **Scale/Scope**: One authenticated chat endpoint, one primary tool-calling LLM
 node, one tool execution path, five typed tools, prompt files, Redis conversation
 state, conversation trace root, LLM/tool/RAG spans, limit enforcement, graceful
-tool failure recovery, retrieved-chunk snapshots, local tracing UI review, and
+tool failure recovery, retrieved-chunk snapshots, LangSmith trace review, and
 critical tests for success/failure paths
 
 ## Constitution Check
@@ -80,13 +80,13 @@ critical tests for success/failure paths
   and Vault/test fakes. User messages, prompts, tool payloads, retrieved chunks,
   and LLM payloads are redacted or bounded before logs/traces.
 - **Observability And Errors**: PASS. Each user message creates a trace root with
-  LLM call spans, tool call spans, and RAG retrieval spans. OpenTelemetry-
-  compatible traces are exported to local Jaeger or Tempo for dev/demo, and
-  trace IDs are included in structured logs. Tool failures, recursion/limit
+  LLM call spans, tool call spans, and RAG retrieval spans. LangSmith traces are
+  emitted when a LangSmith API key is configured, and LangSmith run IDs are
+  included in structured logs when available. Tool failures, recursion/limit
   errors, and timeouts recover to partial responses where possible.
 - **AI Evidence And Eval Gates**: PASS. This phase uses already selected
   classifier/RAG/memory decisions and does not change model/retrieval choices.
-  Any changes would require `DECISIONS.md` updates.
+  Any changes would require `docs/decisions.md` updates.
 - **Critical Tests And CI**: PASS. Tests cover authenticated chat, streaming,
   successful tool execution, failed tool recovery, max tool-call limit,
   recursion limit, total timeout, request/context limits, trace spans,
@@ -145,7 +145,7 @@ app/
 │   ├── tool_execution_service.py
 │   ├── conversation_state_service.py
 │   ├── chat_tracing_service.py
-│   └── retrieved_chunk_snapshot_service.py
+│   └── chat_rag_snapshot_coordinator.py
 ├── domain/
 │   ├── chat.py
 │   └── chat_tools.py
@@ -155,7 +155,7 @@ app/
     ├── model_server_tools.py
     ├── rag_tool_client.py
     ├── memory_tool_client.py
-    ├── redis_conversation_state.py
+    ├── conversation_state_adapter.py
     └── tracing.py
 
 prompts/
@@ -170,6 +170,7 @@ tests/
 │   ├── test_chat_limits.py
 │   ├── test_write_memory_intent.py
 │   ├── test_untrusted_rag_context.py
+│   ├── test_retrieved_chunk_snapshots.py
 │   ├── test_chat_tracing.py
 │   └── test_chat_redaction.py
 ├── contract/
@@ -177,6 +178,7 @@ tests/
 └── integration/
     ├── test_chat_successful_tool_call.py
     ├── test_chat_failed_tool_recovery.py
+    ├── test_chat_trace_log_correlation.py
     └── test_chat_redis_state.py
 ```
 
@@ -186,9 +188,12 @@ run the LangGraph state graph and `app/infra/chatbot_graph.py` to construct the
 thin graph. Provider-specific LLM calls belong in `app/infra/llm_adapter.py`.
 Typed tool models live in `app/domain/chat_tools.py`; tool orchestration and
 validation live in services. Prompts are version-controlled under `prompts/`.
-Tracing uses OpenTelemetry-compatible adapters with local Jaeger or Tempo for
-dev/demo, and RAG tool calls delegate redacted snapshot storage to the RAG
-snapshot service.
+Tracing uses LangSmith when configured, with fake trace adapters in tests. RAG
+tool calls delegate redacted snapshot storage to the existing Phase 5
+`app/services/rag_snapshot_service.py` instead of introducing a separate
+snapshot implementation. Conversation state should reuse Phase 6 Redis memory
+infrastructure where practical, adding only chat-specific adapter code needed to
+map chat conversation IDs and TTL policy.
 
 ## Complexity Tracking
 

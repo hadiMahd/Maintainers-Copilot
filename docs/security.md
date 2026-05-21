@@ -51,6 +51,15 @@
 - No raw title, body, comment text, prompts, credentials, provider responses, or stack traces reach logs or traces.
 - Request IDs and trace IDs are preserved in redacted metadata for correlation without exposing payloads.
 
+### Phase 7 Chat Redaction Rules
+
+- `redact_chat_message()` runs before short-term chat state persistence and before chat payloads are logged or traced.
+- `redact_chat_prompt_payload()` and `redact_llm_payload()` replace full prompt text with bounded metadata in telemetry paths.
+- `redact_tool_payload()` and `redact_sse_event()` remove or bound secret-like values before tool telemetry or SSE-event telemetry is logged.
+- `redact_trace_metadata()` runs before chat roots, LLM spans, tool spans, and RAG spans are recorded.
+- Chat SSE responses may contain assistant-visible content, but logs and traces must not persist raw user messages, raw tool payloads, raw LLM prompts, or full retrieved chunks.
+- Retrieved RAG context is wrapped as untrusted evidence and snapshot persistence stores bounded references only.
+
 ## Model Artifact Security
 
 - Only hash-validated classifier artifacts can be marked deployable or uploaded to MinIO.

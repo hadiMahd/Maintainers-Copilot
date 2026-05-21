@@ -61,3 +61,5 @@ Dockerfile*
 docker-compose*.yml
 docker-compose*.yaml
 .dockerignore
+node_modules/
+coverage/

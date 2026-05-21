@@ -91,6 +91,20 @@ class AppSettings(BaseSettings):
     jwt_private_key: str | None = None
     jwt_public_key: str | None = None
 
+    # Phase 7 — Chat backend settings
+    chat_max_tool_calls: int = 5
+    chat_total_timeout_seconds: int = 60
+    chat_per_tool_timeout_seconds: int = 10
+    chat_request_size_limit_bytes: int = 8_000
+    chat_context_size_limit_chars: int = 12_000
+    chat_recursion_limit: int = 8
+    chat_prompt_system_path: str = "prompts/chatbot_system.md"
+    chat_prompt_tool_policy_path: str = "prompts/chatbot_tool_policy.md"
+    chat_prompt_untrusted_context_path: str = "prompts/chatbot_untrusted_context.md"
+    chat_tracing_backend: str = "fake"
+    chat_model_server_base_url: str = "http://localhost:8001"
+    azure_openai_api_version: str = "2024-02-01"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

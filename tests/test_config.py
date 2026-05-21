@@ -93,3 +93,30 @@ def test_vault_resolved_llm_fields_default_none(monkeypatch):
     assert settings.azure_openai_model is None
     assert settings.azure_openai_embedding_model is None
     assert settings.langchain_api_key is None
+
+
+def test_phase7_chat_settings_defaults_and_override(monkeypatch):
+    """Phase 7 chat settings expose safe defaults and env overrides."""
+    monkeypatch.setenv("VAULT_ADDR", "http://localhost:8200")
+    monkeypatch.setenv("VAULT_TOKEN", "token")
+    monkeypatch.setenv("CHAT_MAX_TOOL_CALLS", "7")
+    monkeypatch.setenv("CHAT_TOTAL_TIMEOUT_SECONDS", "75")
+    monkeypatch.setenv("CHAT_PER_TOOL_TIMEOUT_SECONDS", "9")
+    monkeypatch.setenv("CHAT_REQUEST_SIZE_LIMIT_BYTES", "9000")
+    monkeypatch.setenv("CHAT_CONTEXT_SIZE_LIMIT_CHARS", "15000")
+    monkeypatch.setenv("CHAT_RECURSION_LIMIT", "10")
+    monkeypatch.setenv("CHAT_PROMPT_SYSTEM_PATH", "prompts/chatbot_system.md")
+    monkeypatch.setenv("CHAT_PROMPT_TOOL_POLICY_PATH", "prompts/chatbot_tool_policy.md")
+    monkeypatch.setenv("CHAT_PROMPT_UNTRUSTED_CONTEXT_PATH", "prompts/chatbot_untrusted_context.md")
+    monkeypatch.setenv("CHAT_TRACING_BACKEND", "langsmith")
+    settings = AppSettings(_env_file=None)
+    assert settings.chat_max_tool_calls == 7
+    assert settings.chat_total_timeout_seconds == 75
+    assert settings.chat_per_tool_timeout_seconds == 9
+    assert settings.chat_request_size_limit_bytes == 9000
+    assert settings.chat_context_size_limit_chars == 15000
+    assert settings.chat_recursion_limit == 10
+    assert settings.chat_prompt_system_path.endswith("chatbot_system.md")
+    assert settings.chat_prompt_tool_policy_path.endswith("chatbot_tool_policy.md")
+    assert settings.chat_prompt_untrusted_context_path.endswith("chatbot_untrusted_context.md")
+    assert settings.chat_tracing_backend == "langsmith"
