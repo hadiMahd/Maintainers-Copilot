@@ -178,10 +178,13 @@ class BackendAPIClient:
             return [
                 WidgetConfigView(
                     id=item.get("id", ""),
+                    widget_id=item.get("widget_id", ""),
                     name=item.get("name", ""),
                     allowed_origins=item.get("allowed_origins", []),
-                    theme=item.get("theme", "default"),
-                    welcome_message=item.get("welcome_message"),
+                    theme=item.get("theme", "light"),
+                    greeting=item.get("greeting"),
+                    position=item.get("position", "bottom-right"),
+                    enabled_tools=item.get("enabled_tools", []),
                     is_enabled=item.get("is_enabled", True),
                     updated_at=item.get("updated_at", ""),
                 )
@@ -194,9 +197,10 @@ class BackendAPIClient:
             "allowed_origins": form.allowed_origins,
             "theme": form.theme,
             "is_enabled": form.is_enabled,
+            "greeting": form.greeting or None,
+            "position": form.position,
+            "enabled_tools": form.enabled_tools,
         }
-        if form.welcome_message:
-            payload["welcome_message"] = form.welcome_message
         with self._build_client(self._timeout_rest) as client:
             response = client.post(
                 f"{self._base}/admin/widget-configs/",
@@ -206,10 +210,13 @@ class BackendAPIClient:
             data = self._handle_response(response)
             return WidgetConfigView(
                 id=data.get("id", ""),
+                widget_id=data.get("widget_id", ""),
                 name=data.get("name", ""),
                 allowed_origins=data.get("allowed_origins", []),
-                theme=data.get("theme", "default"),
-                welcome_message=data.get("welcome_message"),
+                theme=data.get("theme", "light"),
+                greeting=data.get("greeting"),
+                position=data.get("position", "bottom-right"),
+                enabled_tools=data.get("enabled_tools", []),
                 is_enabled=data.get("is_enabled", True),
                 updated_at=data.get("updated_at", ""),
             )
@@ -217,13 +224,20 @@ class BackendAPIClient:
     def update_widget_config(
         self, config_id: str, form: WidgetConfigForm
     ) -> WidgetConfigView:
-        payload: dict = {k: v for k, v in {
-            "name": form.name or None,
-            "allowed_origins": form.allowed_origins or None,
-            "theme": form.theme or None,
-            "is_enabled": form.is_enabled,
-            "welcome_message": form.welcome_message or None,
-        }.items() if v is not None}
+        payload: dict = {}
+        if form.name:
+            payload["name"] = form.name
+        if form.allowed_origins:
+            payload["allowed_origins"] = form.allowed_origins
+        if form.theme:
+            payload["theme"] = form.theme
+        if form.greeting is not None:
+            payload["greeting"] = form.greeting or None
+        if form.position:
+            payload["position"] = form.position
+        if form.enabled_tools is not None:
+            payload["enabled_tools"] = form.enabled_tools
+        payload["is_enabled"] = form.is_enabled
         with self._build_client(self._timeout_rest) as client:
             response = client.patch(
                 f"{self._base}/admin/widget-configs/{config_id}",
@@ -233,10 +247,13 @@ class BackendAPIClient:
             data = self._handle_response(response)
             return WidgetConfigView(
                 id=data.get("id", ""),
+                widget_id=data.get("widget_id", ""),
                 name=data.get("name", ""),
                 allowed_origins=data.get("allowed_origins", []),
-                theme=data.get("theme", "default"),
-                welcome_message=data.get("welcome_message"),
+                theme=data.get("theme", "light"),
+                greeting=data.get("greeting"),
+                position=data.get("position", "bottom-right"),
+                enabled_tools=data.get("enabled_tools", []),
                 is_enabled=data.get("is_enabled", True),
                 updated_at=data.get("updated_at", ""),
             )
@@ -253,6 +270,14 @@ class BackendAPIClient:
                 snippet=data.get("snippet", ""),
                 generated_at=data.get("generated_at", ""),
             )
+
+    def delete_widget_config(self, config_id: str) -> None:
+        with self._build_client(self._timeout_rest) as client:
+            response = client.delete(
+                f"{self._base}/admin/widget-configs/{config_id}",
+                headers=self._headers(),
+            )
+            self._handle_response(response)
 
     def inspect_memory(self, query: MemoryInspectionQuery) -> MemoryInspectionResult:
         params: dict = {"limit": query.limit}

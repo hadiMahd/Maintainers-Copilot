@@ -126,16 +126,19 @@ def test_full_login_chat_widget_memory_flow(settings):
             wid = f"wc-{len(widget_store) + 1}"
             cfg = {
                 "name": body.get("name", ""), "allowed_origins": body.get("allowed_origins", []),
-                "theme": body.get("theme", "default"),
-                "welcome_message": body.get("welcome_message"),
+                "theme": body.get("theme", "light"),
+                "greeting": body.get("greeting"),
+                "position": body.get("position", "bottom-right"),
+                "enabled_tools": body.get("enabled_tools", []),
                 "is_enabled": body.get("is_enabled", True),
             }
             widget_store[wid] = cfg
             call_log.append("widget_create")
             return httpx.Response(201, json={
-                "id": wid, **cfg,
+                "id": wid, "widget_id": f"wid-{wid}",
                 "created_at": "2026-01-01T00:00:00Z",
                 "updated_at": "2026-01-01T00:00:00Z",
+                **cfg,
             })
 
         if method == "PATCH" and path.startswith("/admin/widget-configs/"):
@@ -146,9 +149,21 @@ def test_full_login_chat_widget_memory_flow(settings):
             widget_store[wid].update({k: v for k, v in body.items() if v is not None})
             call_log.append("widget_update")
             return httpx.Response(200, json={
-                "id": wid, **widget_store[wid],
+                "id": wid, "widget_id": f"wid-{wid}",
                 "created_at": "2026-01-01T00:00:00Z",
                 "updated_at": "2026-01-01T00:00:00Z",
+                **widget_store[wid],
+            })
+
+        if method == "DELETE" and path.startswith("/admin/widget-configs/"):
+            wid = path.split("/")[-1]
+            if wid not in widget_store:
+                return httpx.Response(404, json={"message": "Not found"})
+            del widget_store[wid]
+            call_log.append("widget_delete")
+            return httpx.Response(200, json={
+                "id": wid, "widget_id": f"wid-{wid}",
+                "deleted_at": "2026-01-01T00:00:00Z",
             })
 
         # ── Embed Snippet ──
@@ -159,7 +174,7 @@ def test_full_login_chat_widget_memory_flow(settings):
             call_log.append("embed_snippet")
             return httpx.Response(200, json={
                 "widget_config_id": wid,
-                "snippet": f'<script data-mc-widget-config="{wid}"></script>\n<script src="BASE_URL/widget/loader.js"></script>',
+                "snippet": f'<!-- Maintainer Copilot Widget (id: wid-{wid}) -->\n<script src="BASE_URL/widget/loader.js" data-widget-id="wid-{wid}"></script>',
                 "generated_at": "2026-01-01T00:00:00Z",
             })
 
@@ -209,10 +224,20 @@ def test_full_login_chat_widget_memory_flow(settings):
     assert "chat_stream" in call_log
 
     # 5. Create widget config
-    form = WidgetConfigForm(name="MyWidget", allowed_origins=["https://a.com"], theme="dark")
+    form = WidgetConfigForm(
+        name="MyWidget",
+        allowed_origins=["https://a.com"],
+        theme="dark",
+        greeting="Hi!",
+        position="bottom-left",
+        enabled_tools=["classify_issue"],
+    )
     cfg = c.create_widget_config(form)
     assert cfg.id.startswith("wc-")
     assert cfg.name == "MyWidget"
+    assert cfg.widget_id.startswith("wid-")
+    assert cfg.greeting == "Hi!"
+    assert cfg.position == "bottom-left"
     assert "widget_create" in call_log
 
     # 6. List widget configs
@@ -227,17 +252,24 @@ def test_full_login_chat_widget_memory_flow(settings):
 
     # 8. Get embed snippet
     snippet = c.get_embed_snippet(cfg.id)
-    assert cfg.id in snippet.snippet
+    assert "wid-" + cfg.id in snippet.snippet
     assert "loader.js" in snippet.snippet
+    assert "data-widget-id" in snippet.snippet
     assert "embed_snippet" in call_log
 
-    # 9. Inspect memory
+    # 9. Delete widget config
+    c.delete_widget_config(cfg.id)
+    assert "widget_delete" in call_log
+    configs_after = c.list_widget_configs()
+    assert len(configs_after) == 0
+
+    # 10. Inspect memory
     result = c.inspect_memory(MemoryInspectionQuery(limit=5))
     assert len(result.items) == 2
     assert result.scope == "own"
     assert "memory_inspect" in call_log
 
-    # 10. 401 invalidates session
+    # 11. 401 invalidates session
     token_store["token"] = "bad-token"
     with pytest.raises(BackendAPIError):
         c.get_current_user()

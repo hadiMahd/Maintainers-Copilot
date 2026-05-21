@@ -36,10 +36,13 @@ class ChatEventView:
 @dataclass
 class WidgetConfigView:
     id: str
-    name: str
+    widget_id: str = ""
+    name: str = ""
     allowed_origins: list[str] = field(default_factory=list)
-    theme: str = "default"
-    welcome_message: str | None = None
+    theme: str = "light"
+    greeting: str | None = None
+    position: str = "bottom-right"
+    enabled_tools: list[str] = field(default_factory=list)
     is_enabled: bool = True
     updated_at: str = ""
 
@@ -48,8 +51,10 @@ class WidgetConfigView:
 class WidgetConfigForm:
     name: str = ""
     allowed_origins: list[str] = field(default_factory=list)
-    theme: str = "default"
-    welcome_message: str = ""
+    theme: str = "light"
+    greeting: str = ""
+    position: str = "bottom-right"
+    enabled_tools: list[str] = field(default_factory=list)
     is_enabled: bool = True
 
 
