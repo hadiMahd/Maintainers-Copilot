@@ -41,6 +41,7 @@ class ToolExecutionService:
         self._rag_snapshot_coordinator = rag_snapshot_coordinator
         self._per_tool_timeout_seconds = per_tool_timeout_seconds
         self._definitions = definitions or build_default_tool_definitions(per_tool_timeout_seconds)
+        self._write_memory_called = False
 
     def registered_tools(self) -> list[ToolDefinition]:
         """Return the supported tool registry."""
@@ -90,6 +91,17 @@ class ToolExecutionService:
                 tool_call=tool_call,
                 code="tool_execution_failed",
                 message="Explicit remember intent is required for write_memory",
+                request_id=request_id,
+                trace_id=trace_id,
+                duration_ms=self._duration_ms(started),
+                redacted_input=redacted_input,
+            )
+
+        if tool_call.name == "write_memory" and self._write_memory_called:
+            return self._failed_result(
+                tool_call=tool_call,
+                code="tool_execution_failed",
+                message="write_memory is limited to one call per request",
                 request_id=request_id,
                 trace_id=trace_id,
                 duration_ms=self._duration_ms(started),
@@ -219,6 +231,7 @@ class ToolExecutionService:
                 untrusted_context_used=True,
             )
         if tool_name == "write_memory":
+            self._write_memory_called = True
             return await self._memory_tool_client.write_memory(
                 user_id,
                 parsed_input,
