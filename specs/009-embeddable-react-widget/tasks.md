@@ -73,19 +73,19 @@ rows are created. Verify regular user cannot create/edit.
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T019 [P] [US1] Unit test for `WidgetConfigService.delete_config()` with audit in `tests/unit/test_widget_config_service.py`
-- [ ] T020 [P] [US1] Unit test for widget config audit row creation on create/update/delete in `tests/unit/test_widget_config_audit.py`
-- [ ] T021 [P] [US1] Contract test for admin widget CRUD endpoints in `tests/contract/test_widget_api_contract.py`, including `config_id` admin route consistency and compatibility with the existing Phase 8 Streamlit widget-config API shape
-- [ ] T022 [P] [US1] Integration test for admin create → view → update → delete → audit in `tests/integration/test_widget_admin_crud.py`
-- [ ] T023 [P] [US1] Authorization test: regular user denied widget config create/edit/delete in `tests/integration/test_widget_admin_crud.py`
+- [X] T019 [P] [US1] Unit test for `WidgetConfigService.delete_config()` with audit in `tests/unit/test_widget_config_service.py`
+- [X] T020 [P] [US1] Unit test for widget config audit row creation on create/update/delete in `tests/unit/test_widget_config_audit.py`
+- [X] T021 [P] [US1] Contract test for admin widget CRUD endpoints in `tests/contract/test_widget_api_contract.py`, including `config_id` admin route consistency and compatibility with the existing Phase 8 Streamlit widget-config API shape
+- [X] T022 [P] [US1] Integration test for admin create → view → update → delete → audit in `tests/integration/test_widget_admin_crud.py`
+- [X] T023 [P] [US1] Authorization test: regular user denied widget config create/edit/delete in `tests/integration/test_widget_admin_crud.py`
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] Implement `delete_config()` in `app/services/widget_config_service.py` with audit row and transaction (depends on T005, T013)
-- [ ] T025 [US1] Fix `generate_embed_snippet()` to use `widget_id` and `<script src="{base}/widget/loader.js" data-widget-id="{widget_id}">` format, and confirm the `greeting` field name aligns with the ORM column choice from T004/T006 (depends on T004)
-- [ ] T026 [US1] Add `DELETE /admin/widget-configs/{config_id}` route in `app/api/routes/widget_configs.py` (depends on T016)
-- [ ] T027 [US1] Wire audit service calls in create/update/delete workflows (depends on T013)
-- [ ] T028 [US1] Add redaction test: audit metadata must not contain secrets or raw config payloads in `tests/unit/test_widget_config_audit.py`
+- [X] T024 [US1] Implement `delete_config()` in `app/services/widget_config_service.py` with audit row and transaction (depends on T005, T013)
+- [X] T025 [US1] Fix `generate_embed_snippet()` to use `widget_id` and `<script src="{base}/widget/loader.js" data-widget-id="{widget_id}">` format, and confirm the `greeting` field name aligns with the ORM column choice from T004/T006 (depends on T004)
+- [X] T026 [US1] Add `DELETE /admin/widget-configs/{config_id}` route in `app/api/routes/widget_configs.py` (depends on T016)
+- [X] T027 [US1] Wire audit service calls in create/update/delete workflows (depends on T013)
+- [X] T028 [US1] Add redaction test: audit metadata must not contain secrets or raw config payloads in `tests/unit/test_widget_config_audit.py`
 
 **Checkpoint**: Admin can fully manage widget configurations with audit trail.
 Script snippet is correctly shaped for host page installation.
