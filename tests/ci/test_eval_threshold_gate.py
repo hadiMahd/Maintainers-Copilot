@@ -110,3 +110,51 @@ class TestThresholdValidation:
         }
         errors = validate_thresholds_nonzero(data)
         assert len(errors) >= 1
+
+    def test_disabled_thresholds_detected(self):
+        """Thresholds must be enabled (non-zero). Zero effectively means disabled."""
+        data = {
+            "classifier": {"accuracy_min": 0.0, "macro_f1_min": 0.0},
+            "rag": {
+                "hit_at_5_min": 0.0,
+                "mrr_at_10_min": 0.0,
+                "faithfulness_min": 0.0,
+                "answer_relevancy_min": 0.0,
+            },
+        }
+        errors = validate_thresholds_nonzero(data)
+        assert len(errors) >= 6
+
+    def test_missing_rag_thresholds_fail(self):
+        data = {"classifier": {"accuracy_min": 0.55, "macro_f1_min": 0.50}, "rag": {}}
+        errors = validate_thresholds_nonzero(data)
+        assert len(errors) >= 1
+        assert any("rag" in e for e in errors)
+
+    def test_all_thresholds_missing_fails(self):
+        data = {}
+        errors = validate_thresholds_nonzero(data)
+        assert len(errors) >= 1
+
+    def test_empty_yaml_file(self):
+        import yaml
+
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w") as f:
+            f.write("")
+            f.flush()
+            data = load_thresholds(Path(f.name))
+        assert data == {}
+
+    def test_malformed_threshold_strictly_invalid(self):
+        """Malformed YAML (None sections) should fail validation gracefully."""
+        data = {"classifier": None, "rag": None}
+        errors = validate_thresholds_nonzero(data)
+        assert len(errors) >= 1
+
+    def test_infinite_threshold_fails(self):
+        data = {
+            "classifier": {"accuracy_min": float("inf"), "macro_f1_min": 0.50},
+            "rag": {},
+        }
+        errors = validate_thresholds_nonzero(data)
+        assert len(errors) >= 1

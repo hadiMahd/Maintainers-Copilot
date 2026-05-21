@@ -25,8 +25,8 @@ def load_thresholds(path: Optional[Path] = None) -> dict[str, Any]:
 def validate_thresholds_nonzero(data: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
-    classifier = data.get("classifier", {})
-    rag = data.get("rag", {})
+    classifier = data.get("classifier") or {}
+    rag = data.get("rag") or {}
 
     classifier_thresholds = [
         ("classifier.accuracy_min", classifier.get("accuracy_min")),
