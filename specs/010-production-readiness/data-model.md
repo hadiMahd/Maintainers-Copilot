@@ -68,7 +68,8 @@ security, build, smoke, artifact, tracing, and documentation gates.
 - Thresholds must be enabled, present, numeric, finite, and greater than zero.
 - Missing, disabled, zero, negative, or malformed thresholds fail the workflow
   and startup validation.
-- Threshold changes require `DECISIONS.md` or `EVALS.md` explanation.
+- Threshold changes require `docs/decisions.md` or `docs/evals.md`
+  explanation.
 
 ## Evaluation Result
 
@@ -97,20 +98,17 @@ security, build, smoke, artifact, tracing, and documentation gates.
 
 **Fields**:
 
-- `schema_version`: report schema version.
 - `run_id`: validation workflow run identifier.
-- `created_at`: report timestamp.
-- `git_sha`: source revision when available.
-- `classifier`: classifier evaluation result.
-- `rag`: RAG evaluation result.
-- `thresholds`: thresholds used by both tracks.
-- `redaction`: redaction leak gate summary.
-- `artifact_integrity`: model artifact hash gate summary.
-- `startup`: Vault and model artifact startup gate summary.
-- `tracing`: tracing configuration gate summary.
-- `storage`: report storage destination metadata.
-- `previous_green_comparison`: diff metadata against the previous green report.
-- `overall_passed`: final report pass/fail.
+- `timestamp`: report timestamp.
+- `classifier`: classifier evaluation result containing `accuracy`,
+  `macro_f1`, `per_class_f1`, and threshold-aligned pass/fail data.
+- `rag`: RAG evaluation result containing `hit_at_5`, `mrr_at_10`,
+  `faithfulness`, `answer_relevancy`, and threshold-aligned pass/fail data.
+- `storage`: report storage destination metadata with `bucket` and `key`.
+- `passed`: final report pass/fail.
+- Optional safe metadata may include schema version, git SHA, gate summaries,
+  and previous-green comparison details as long as the required fields remain
+  stable and documented by the contract.
 
 **Validation rules**:
 
@@ -130,7 +128,7 @@ minimum thresholds.
 **Fields**:
 - `report_ref`: MinIO object reference or safe artifact identifier.
 - `git_sha`: commit associated with the previous green report.
-- `created_at`: previous report timestamp.
+- `timestamp`: previous report timestamp.
 - `classifier_metrics`: comparable classifier metrics.
 - `rag_metrics`: comparable RAG metrics.
 - `comparison_result`: pass/fail diff summary.
@@ -240,7 +238,7 @@ tool, and RAG observability.
 
 ## Stack Smoke Test Run
 
-**Purpose**: Minimal Docker Compose stack validation.
+**Purpose**: Full production-functional Docker Compose stack validation.
 
 **Fields**:
 
@@ -253,7 +251,8 @@ tool, and RAG observability.
 
 **Validation rules**:
 
-- Smoke test starts only the core stack required for health.
+- Smoke test starts the full production-functional stack required by the spec,
+  including the model server.
 - Health endpoint must be reached before timeout.
 - Logs collected for failure must be safe for CI output.
 
@@ -276,7 +275,7 @@ tool, and RAG observability.
 
 - Missing document fails documentation validation.
 - Missing required section fails documentation validation.
-- `DECISIONS.md` must include numeric evidence for classifier, embedding,
+- `docs/decisions.md` must include numeric evidence for classifier, embedding,
   chunking, retrieval weighting, reranking, memory type, and tracing backend.
 
 ## State Transitions

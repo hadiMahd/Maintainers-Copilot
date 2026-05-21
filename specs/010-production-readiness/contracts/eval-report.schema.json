@@ -4,20 +4,12 @@
   "title": "Maintainer Copilot Evaluation Report",
   "type": "object",
   "required": [
-    "schema_version",
     "run_id",
-    "created_at",
-    "thresholds",
+    "timestamp",
     "classifier",
     "rag",
-    "redaction",
-    "static_secret_grep",
-    "artifact_integrity",
-    "startup",
-    "tracing",
     "storage",
-    "previous_green_comparison",
-    "overall_passed"
+    "passed"
   ],
   "additionalProperties": false,
   "properties": {
@@ -29,7 +21,7 @@
       "type": "string",
       "minLength": 1
     },
-    "created_at": {
+    "timestamp": {
       "type": "string",
       "format": "date-time"
     },
@@ -40,10 +32,10 @@
       "$ref": "#/$defs/thresholds"
     },
     "classifier": {
-      "$ref": "#/$defs/eval_result"
+      "$ref": "#/$defs/classifier_result"
     },
     "rag": {
-      "$ref": "#/$defs/eval_result"
+      "$ref": "#/$defs/rag_result"
     },
     "redaction": {
       "$ref": "#/$defs/gate_summary"
@@ -62,18 +54,16 @@
     },
     "storage": {
       "type": "object",
-      "required": ["destination", "stored", "uri"],
+      "required": ["bucket", "key"],
       "additionalProperties": false,
       "properties": {
-        "destination": {
+        "bucket": {
           "type": "string",
-          "enum": ["minio", "local-compatible"]
+          "minLength": 1
         },
-        "stored": {
-          "type": "boolean"
-        },
-        "uri": {
-          "type": "string"
+        "key": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -102,11 +92,16 @@
         }
       }
     },
-    "overall_passed": {
+    "passed": {
       "type": "boolean"
     }
   },
   "$defs": {
+    "metric": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
     "thresholds": {
       "type": "object",
       "required": [
@@ -151,26 +146,80 @@
         }
       }
     },
-    "eval_result": {
+    "classifier_result": {
       "type": "object",
-      "required": ["track", "dataset_id", "metrics", "thresholds", "passed", "failures"],
+      "required": ["accuracy", "macro_f1", "per_class_f1", "threshold"],
       "additionalProperties": false,
       "properties": {
-        "track": {
-          "type": "string",
-          "enum": ["classifier", "rag"]
-        },
         "dataset_id": {
           "type": "string"
         },
         "artifact_id": {
           "type": ["string", "null"]
         },
-        "metrics": {
+        "accuracy": {
+          "$ref": "#/$defs/metric"
+        },
+        "macro_f1": {
+          "$ref": "#/$defs/metric"
+        },
+        "per_class_f1": {
           "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/metric"
+          }
+        },
+        "threshold": {
+          "$ref": "#/$defs/metric"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "latency": {
+          "type": ["object", "null"],
           "additionalProperties": {
             "type": "number"
           }
+        }
+      }
+    },
+    "rag_result": {
+      "type": "object",
+      "required": [
+        "hit_at_5",
+        "mrr_at_10",
+        "faithfulness",
+        "answer_relevancy",
+        "threshold"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "dataset_id": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": ["string", "null"]
+        },
+        "hit_at_5": {
+          "$ref": "#/$defs/metric"
+        },
+        "mrr_at_10": {
+          "$ref": "#/$defs/metric"
+        },
+        "faithfulness": {
+          "$ref": "#/$defs/metric"
+        },
+        "answer_relevancy": {
+          "$ref": "#/$defs/metric"
+        },
+        "threshold": {
+          "$ref": "#/$defs/metric"
         },
         "thresholds": {
           "type": "object",

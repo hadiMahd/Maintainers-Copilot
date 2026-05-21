@@ -4,10 +4,13 @@
 
 - Provider: GitHub Actions unless the repository already has a committed CI
   provider before implementation.
+- Local orchestration: `Makefile` targets wrap the same required gates as CI.
 - Dependency installation: `uv`.
-- Python quality checks: `ruff check` and `ruff format --check`.
+- Python quality checks: `flake8`, `black --check`, and `isort --check-only`.
+- Python type checks: `mypy`.
 - Python tests: `pytest`.
-- Smoke testing: Docker Compose where practical.
+- Smoke testing: Docker Compose full production-functional stack including
+  model server where practical.
 - Provider calls: fake providers, local fixtures, or mocked calls only.
 
 ## Required Gate Order
@@ -15,24 +18,33 @@
 | Order | Gate | Command Shape | Required Outcome |
 |-------|------|---------------|------------------|
 | 1 | Dependency install | `uv sync --all-extras --dev` | Dependencies install without real paid API credentials. |
-| 2 | Lint | `uv run ruff check .` | No lint failures. |
-| 3 | Format check | `uv run ruff format --check .` | No formatting drift. |
-| 4 | Type check | `scripts/ci/run_type_check.sh` | Type-check passes. |
-| 5 | Tests | `uv run pytest` | Test suite passes. |
-| 6 | Threshold validation | `uv run python scripts/ci/check_eval_thresholds.py` | Thresholds exist, are enabled, and are greater than zero. |
-| 7 | Classifier eval | `uv run python scripts/ci/run_evals.sh classifier` | Metrics meet thresholds. |
-| 8 | RAG eval | `uv run python scripts/ci/run_evals.sh rag` | Metrics meet thresholds. |
-| 9 | Redaction leak | `uv run python scripts/ci/check_redaction_leaks.py` | Fake secret is absent from logs, traces, memory, audit records, and captured outputs. |
-| 10 | Static secret grep | `uv run python scripts/ci/check_static_secret_patterns.py` | Unsafe `sk-` and `password` patterns are absent or safely allowlisted. |
-| 11 | Model artifacts | `uv run python scripts/ci/check_model_artifacts.py` | Required artifacts exist and hashes match model cards. |
-| 12 | Startup failures | `uv run python scripts/ci/check_startup_failures.py` | Vault, model, tracing, and eval-threshold negative cases fail closed. |
-| 13 | Tracing config | `uv run python scripts/ci/validate_tracing.py` | Tracing config is valid for the test profile. |
-| 14 | Docker build | `docker compose build` | Core images build. |
-| 15 | Stack smoke | `scripts/ci/smoke_stack.sh` | Core stack starts and health endpoint responds. |
-| 16 | Eval report | `uv run python scripts/ci/build_eval_report.py` | Combined report is valid JSON. |
-| 17 | Previous green diff | `uv run python scripts/ci/compare_previous_green_report.py` | Current report does not regress beyond configured tolerances. |
-| 18 | Report storage | `uv run python scripts/ci/store_eval_report.py` | CI report is stored in MinIO. |
-| 19 | Docs completeness | `uv run python scripts/ci/validate_docs.py` | Required docs and sections exist. |
+| 2 | Lint | `make lint` / `uv run flake8 .` | No lint failures. |
+| 3 | Format check | `make format-check` / `uv run black --check .` | No formatting drift. |
+| 4 | Import-order check | `make import-check` / `uv run isort --check-only .` | No import-order drift. |
+| 5 | Type check | `make type-check` / `uv run mypy .` | Type-check passes. |
+| 6 | Tests | `make test` / `uv run pytest` | Test suite passes. |
+| 7 | Threshold validation | `uv run python scripts/ci/check_eval_thresholds.py` | Thresholds exist, are enabled, and are greater than zero. |
+| 8 | Classifier eval | `scripts/ci/run_evals.sh classifier` | Metrics meet thresholds. |
+| 9 | RAG eval | `scripts/ci/run_evals.sh rag` | Metrics meet thresholds. |
+| 10 | Redaction leak | `uv run python scripts/ci/check_redaction_leaks.py` | Fake secret is absent from logs, traces, memory, audit records, and captured outputs. |
+| 11 | Static secret grep | `uv run python scripts/ci/check_static_secret_patterns.py` | Unsafe `sk-` and `password` patterns are absent or safely allowlisted. |
+| 12 | Model artifacts | `uv run python scripts/ci/check_model_artifacts.py` | Required artifacts exist and hashes match model cards. |
+| 13 | Startup failures | `uv run python scripts/ci/check_startup_failures.py` | Vault, model, tracing, and eval-threshold negative cases fail closed. |
+| 14 | Tracing config | `uv run python scripts/ci/validate_tracing.py` | Tracing config is valid for the test profile. |
+| 15 | Docker build | `docker compose build` | Core images build. |
+| 16 | Stack smoke | `scripts/ci/smoke_stack.sh` | Full production-functional stack starts and backend health endpoint responds. |
+| 17 | Eval report | `uv run python scripts/ci/build_eval_report.py` | Combined report is valid JSON. |
+| 18 | Previous green diff | `uv run python scripts/ci/compare_previous_green_report.py` | Current report does not regress beyond configured tolerances. |
+| 19 | Report storage | `uv run python scripts/ci/store_eval_report.py` | CI report is stored in MinIO. |
+| 20 | Docs completeness | `uv run python scripts/ci/validate_docs.py` | Required docs and sections exist. |
+
+## Local Makefile Contract
+
+- `make validate` runs the complete required gate sequence locally.
+- `make lint`, `make format-check`, `make import-check`, `make type-check`, and
+  `make test` expose the core quality gates individually.
+- Make targets delegate to reusable `scripts/ci/` commands where possible so CI
+  and local validation do not drift.
 
 ## Failure Contract
 
@@ -97,11 +109,11 @@
 ## Documentation Contract
 
 - `README.md` explains setup, architecture overview, commands, and demo.
-- `docs/ARCH.md` explains layers, runtime services, and request flow.
-- `docs/DECISIONS.md` includes numeric evidence for classifier, embedding,
+- `docs/architecture.md` explains layers, runtime services, and request flow.
+- `docs/decisions.md` includes numeric evidence for classifier, embedding,
   chunking, retrieval weighting, reranking, memory type, and tracing backend.
-- `docs/EVALS.md` explains golden sets, thresholds, commands, reports, and
+- `docs/evals.md` explains golden sets, thresholds, commands, reports, and
   previous-green diff interpretation.
-- `docs/SECURITY.md` explains secret policy, static secret grep checks, and
+- `docs/security.md` explains secret policy, static secret grep checks, and
   redaction patterns.
-- `docs/RUNBOOK.md` explains common failure paths and debugging steps.
+- `docs/runbook.md` explains common failure paths and debugging steps.
