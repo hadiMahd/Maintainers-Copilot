@@ -6,15 +6,17 @@
 ## Summary
 
 Build Phase 9 as the production-shaped embedded chatbot surface: a Vite React
-widget, a small `/widget.js` loader, iframe isolation, public widget config
-reads, origin-gated streamed widget chat, admin widget configuration, and an
-allowed plus blocked host demo. Reuse or extend the Phase 8 widget admin API
-shape rather than creating a parallel admin surface. Widget configuration
-create/update/delete flows go through backend services and write audit rows.
-Serve the loader from the FastAPI backend, configure Vite to emit one standalone
-initial widget JavaScript bundle, serve widget assets from an API static route
-with cache headers for the first implementation, use vanilla CSS to keep the
-bundle small, and restrict `postMessage` to controlled resize messages.
+widget, a small `/widget/loader.js` loader, iframe isolation, public widget
+config reads, widget-scoped anonymous session token issuance, a two-step widget
+chat flow that submits raw user messages over POST and streams responses over
+native `EventSource`, admin widget configuration, and an allowed plus blocked
+host demo. Reuse or extend the Phase 8 widget admin API shape rather than
+creating a parallel admin surface. Widget configuration create/update/delete
+flows go through backend services and write audit rows. Serve the loader from
+the FastAPI backend, configure Vite to emit one standalone initial widget
+JavaScript bundle, serve widget assets from an API static route with cache
+headers for the first implementation, use vanilla CSS to keep the bundle small,
+and restrict `postMessage` to controlled resize messages.
 
 ## Technical Context
 
@@ -37,34 +39,37 @@ widget JavaScript bundle or documents an exception
 browsers on allowed host pages, and the existing FastAPI backend  
 **Project Type**: Web-service extension plus embeddable frontend widget and host
 demo  
-**Performance Goals**: `/widget.js` remains below 5 KB gzip; the initial widget
-bundle target is below 120 KB gzip; public config reads and widget chat setup are
-bounded by explicit backend timeouts; widget asset responses use appropriate
-cache headers  
+**Performance Goals**: `/widget/loader.js` remains below 5 KB gzip; the initial
+widget bundle internal target is below 120 KB gzip and the hard acceptance cap
+remains 150 KB gzipped; public config reads, anonymous session issuance, and
+widget chat setup are bounded by explicit backend timeouts; widget asset
+responses use appropriate cache headers  
 **Constraints**: Phase 9 only; no new chatbot intelligence, model training, RAG
 indexing, Streamlit UI work, or broad CI/security polish; dependencies stay
 minimal; no large UI libraries; Tailwind is not added unless already configured
 without material bundle growth; `postMessage` is only for controlled resize
 messages; widget code must not reference Streamlit  
 **Scale/Scope**: Widget config persistence and API extensions, public widget
-config and chat endpoints, `/widget.js` loader, iframe HTML route, Vite React
-widget bundle, allowed and blocked host demo paths, bundle-size report, and
-widget config audit rows, standalone bundle validation, and focused
-backend/frontend tests
+config and token issuance endpoints, widget message-submission and streamed chat
+endpoints, `/widget/loader.js` loader, iframe HTML route, Vite React widget
+bundle, allowed and blocked host demo paths, bundle-size report, widget config
+audit rows, standalone bundle validation, and focused backend/frontend tests
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - **Phase Scope**: PASS. The plan implements only `PLAN.md` Phase 9:
-  embeddable widget, loader, widget config API, public config reads, iframe
-  embed behavior, and host demo. New model behavior, RAG indexing, Streamlit UI
-  changes, and final polish remain out of scope.
+  embeddable widget, loader, widget config API, public config reads, anonymous
+  widget session issuance, widget message submission, iframe embed behavior,
+  streamed widget chat, and host demo. New model behavior, RAG indexing,
+  Streamlit UI changes, and final polish remain out of scope.
 - **Layered Architecture**: PASS. Backend routes stay HTTP-only. Services own
   widget validation, origin decisions, snippet generation, public config
-  shaping, cache-header decisions, audit row coordination, and widget chat
-  workflow. Repositories own widget configuration SQL only. Widget frontend code
-  calls backend APIs and never imports backend internals or persistence.
+  shaping, anonymous token issuance, cache-header decisions, audit row
+  coordination, widget message submission, and widget chat workflow.
+  Repositories own widget configuration SQL only. Widget frontend code calls
+  backend APIs and never imports backend internals or persistence.
 - **FastAPI Resource Management**: PASS. Backend additions use the existing app
   factory, lifespan-managed resources, dependency injection, async sessions, and
   settings. Widget assets are served through configured static asset handling,
@@ -77,17 +82,17 @@ backend/frontend tests
   Public config responses exclude admin-only and sensitive fields.
 - **Observability And Errors**: PASS. Backend errors are structured and include
   request IDs where available. Disabled widgets, blocked origins, invalid widget
-  IDs, frame policy failures, and chat stream interruptions return clean states
-  without stack traces.
+  IDs, invalid widget session tokens, frame policy failures, and chat stream
+  interruptions return clean states without stack traces.
 - **AI Evidence And Eval Gates**: PASS. No classifier, RAG, embedding, memory,
   or model decisions are changed. The required evidence is bundle-size
   measurement, standalone bundle behavior, and widget security limitation
   documentation.
 - **Critical Tests And CI**: PASS. Tests cover admin authorization, public config
-  exposure, origin allowlisting, CSP frame ancestors, loader iframe injection,
-  runtime config application, resize message validation, streamed widget chat,
-  widget config audit rows, standalone bundle validation, no Streamlit
-  references, and bundle-size reporting.
+  exposure, origin allowlisting, widget session issuance, CSP frame ancestors,
+  loader iframe injection, runtime config application, resize message
+  validation, streamed widget chat, widget config audit rows, standalone bundle
+  validation, no Streamlit references, and bundle-size reporting.
 - **Simplicity**: PASS. The design uses Vite React with vanilla CSS, no large UI
   libraries, one small loader, one iframe widget app, and no additional
   datastore or multi-agent workflow.
@@ -126,8 +131,8 @@ app/
 │   └── widget_config_repository.py
 └── services/
     ├── widget_config_service.py
-    ├── widget_config_audit_service.py
     ├── widget_embed_service.py
+    ├── widget_session_service.py
     └── widget_chat_service.py
 
 migrations/
@@ -177,11 +182,15 @@ tests/
 FastAPI app layers and keep the embedded frontend under `widget/`. If Phase 8
 already implemented widget configuration modules, Phase 9 extends those modules
 instead of duplicating them. The loader lives with widget frontend source but is
-served by backend `/widget.js`; the React app is served as a cacheable static
-asset behind an iframe route with one standalone initial JavaScript bundle. Demo host
-pages remain under `demo/host/` and do not
-depend on Streamlit. Widget config changes reuse the Phase 6 audit service and
-reserved widget audit action names.
+served by backend `GET /widget/loader.js`; the React app is served as a
+cacheable static asset behind an iframe route with one standalone initial
+JavaScript bundle. Public widget routes own config reads, anonymous
+widget-session issuance, raw message submission, and streamed chat
+authorization. Those routes validate observed request origin or referrer first,
+cross-check any client-declared origin only as advisory input, and fail closed
+when no approved origin can be established. Demo host pages remain under
+`demo/host/` and do not depend on Streamlit. Widget config changes reuse the
+Phase 6 audit service and reserved widget audit action names.
 
 ## Complexity Tracking
 
@@ -190,7 +199,8 @@ No constitution violations are planned.
 ## Post-Design Constitution Check
 
 - **Phase Scope**: PASS. Research, models, contracts, and quickstart cover only
-  the Phase 9 widget, loader, widget config API, and host demo.
+  the Phase 9 widget, loader, widget config API, anonymous widget session
+  issuance, streamed widget chat, and host demo.
 - **Layered Architecture**: PASS. Backend contracts preserve route/service/
   repository ownership, while widget code remains a separate frontend client.
 - **FastAPI Resource Management**: PASS. Asset serving, config access, and

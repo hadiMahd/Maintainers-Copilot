@@ -114,3 +114,49 @@ The `streamlit_app/` package MUST NOT import `sqlalchemy`, `asyncpg`, `redis`, `
 - Timeouts: Show a retryable warning; UI does not hang.
 - Backend validation errors: Show field-level feedback via `display_error()`.
 - Server errors (5xx): Show a generic retryable message without stack traces.
+
+## Phase 9 Widget Security Boundaries
+
+### Origin Allowlisting
+
+- All public widget endpoints (`/public/widgets/{id}/config`, `/public/widgets/{id}/session`, `/widget/frame/{id}`) validate the observed request `Origin` header against the widget's `allowed_origins` list.
+- `Referer` header is used as a fallback when `Origin` is absent (e.g., same-origin navigation).
+- Client-declared origin in request bodies is advisory only and never authoritative.
+- If origin validation fails, the endpoint returns `403` with a clean error message — no stack traces, no config details.
+
+### CSP Frame-Ancestors
+
+- The `/widget/frame/{widget_id}` response includes `Content-Security-Policy: frame-ancestors <allowed_origins>` derived from the widget's allowed origins list.
+- Browsers that honor CSP will refuse to render the iframe on unapproved origins.
+- `X-Frame-Options: SAMEORIGIN` is also set as a fallback for older browsers.
+
+### Anonymous Session Tokens
+
+- Widget session tokens are UUID4 hex strings with 60-minute TTL.
+- Tokens are scoped to a specific widget ID and issued only after origin validation.
+- Tokens are passed via `?token=` query parameter on the SSE stream URL — never in request bodies or headers.
+- Tokens are stateless (not stored server-side); validation checks format and origin alignment.
+
+### No Streamlit Coupling
+
+- Widget code (`widget/`), demo hosts (`demo/host/`), and public widget routes (`widget_public.py`, `widget_loader.py`) contain zero references to Streamlit.
+- Static tests in `tests/unit/test_widget_no_streamlit.py` enforce this at CI time.
+- The widget uses the same FastAPI backend as the Streamlit admin app but has no dependency on it.
+
+### postMessage Restriction
+
+- The widget uses `postMessage` exclusively for the `maintainer-copilot-widget:resize` channel.
+- No other message types are sent or accepted.
+- Static tests verify no unauthorized `postMessage` usage in widget or demo host code.
+
+### Raw Message Content Never on SSE URL
+
+- User message content is submitted via POST and stored server-side in a pending message map.
+- The SSE stream URL (`GET /chat/stream?token=...&conversation_id=...`) contains only the session token and conversation ID.
+- This prevents raw message content from appearing in browser history, proxy logs, or server access logs.
+
+### Bundle Integrity
+
+- Widget bundle size is measured after each build: loader < 5 KB gzip, initial bundle ≤ 150 KB gzip.
+- Report is generated at `docs/widget-bundle-report.md`.
+- Bundle tests in `tests/unit/test_widget_bundle.py` enforce size constraints at CI time.

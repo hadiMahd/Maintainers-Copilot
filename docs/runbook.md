@@ -236,3 +236,40 @@ curl -H "Authorization: Bearer $TOKEN" \
 | Admin tabs not visible | Verify `GET /users/me` returns `role: "admin"` |
 | Chat stuck on "pending" | Backend SSE endpoint timing out; check `sse_timeout_seconds` |
 | Widget config save fails with 403 | User is not admin; verify role in `st.session_state` |
+
+## Phase 9 Embeddable Widget
+
+### Build Widget Assets
+
+```bash
+cd widget
+npm install
+npm run build
+npm run size
+```
+
+Expected: `dist/assets/loader.js` (< 5 KB gzip) and `dist/assets/widget-*.js` (≤ 150 KB gzip). Report written to `docs/widget-bundle-report.md`.
+
+### Start Widget Demo Hosts
+
+```bash
+docker compose --profile skeletal up -d demo_host
+```
+
+The demo host serves `demo/host/allowed/index.html` and `demo/host/blocked/index.html` for origin allowlist testing.
+
+### Verify Widget Embed
+
+1. Create a widget config via the admin API with an allowed origin matching the demo host.
+2. Get the embed snippet from `GET /admin/widget-configs/{id}/embed-snippet`.
+3. Serve `demo/host/allowed/index.html` from the allowed origin with the snippet injected.
+4. The widget bubble should appear in the configured position.
+
+### Widget Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| Widget not appearing | Verify `data-widget-id` matches a valid, enabled widget config |
+| 403 on config fetch | Origin not in allowed_origins list |
+| Chat not streaming | Check `POST /chat/messages` returns conversation_id, then `GET /chat/stream` is called |
+| Bundle too large | Run `npm run size`; review `docs/widget-bundle-report.md` |

@@ -41,6 +41,7 @@ class WidgetConfigService:
         self,
         data: WidgetConfigCreate,
         created_by_user_id: str,
+        audit_service,
         request_id: str | None = None,
     ) -> WidgetConfigRead:
         trace = self._trace(request_id)
@@ -51,9 +52,20 @@ class WidgetConfigService:
                 name=data.name,
                 allowed_origins=data.allowed_origins,
                 theme=data.theme,
+                greeting=data.greeting,
                 welcome_message=data.welcome_message,
+                position=data.position,
+                enabled_tools=data.enabled_tools if data.enabled_tools else None,
                 is_enabled=data.is_enabled,
                 created_by_user_id=created_by_user_id,
+            )
+            await audit_service.log_action(
+                actor_user_id=created_by_user_id,
+                action="widget_config.create",
+                target_type="widget_config",
+                target_id=row.widget_id,
+                extra_data={"name": row.name},
+                request_id=request_id,
             )
             await session.commit()
             return self._to_read(row)
@@ -84,11 +96,30 @@ class WidgetConfigService:
                 )
             return self._to_read(row)
 
+    async def get_by_widget_id(
+        self,
+        widget_id: str,
+        request_id: str | None = None,
+    ) -> dict:
+        trace = self._trace(request_id)
+        async with self._session_factory() as session:
+            repo = self._repo_cls(session)
+            row = await repo.get_by_widget_id(widget_id)
+            if row is None:
+                raise WidgetConfigNotFoundError(
+                    f"Widget configuration {widget_id} not found",
+                    details={"widget_id": widget_id, "request_id": request_id},
+                    trace_id=trace["trace_id"],
+                )
+            read = self._to_read(row)
+            return read.model_dump()
+
     async def update_config(
         self,
         config_id: str,
         data: WidgetConfigUpdate,
         updated_by_user_id: str,
+        audit_service,
         request_id: str | None = None,
     ) -> WidgetConfigRead:
         trace = self._trace(request_id)
@@ -107,6 +138,14 @@ class WidgetConfigService:
                 config_id=config_id,
                 updated_by_user_id=updated_by_user_id,
                 **update_fields,
+            )
+            await audit_service.log_action(
+                actor_user_id=updated_by_user_id,
+                action="widget_config.update",
+                target_type="widget_config",
+                target_id=row.widget_id,
+                extra_data={"changed_fields": list(update_fields.keys())},
+                request_id=request_id,
             )
             await session.commit()
             if row is None:
@@ -133,15 +172,45 @@ class WidgetConfigService:
                     trace_id=trace["trace_id"],
                 )
         snippet = (
-            f'<!-- Maintainer Copilot Widget (config: {row.id}) -->\n'
-            f'<script data-mc-widget-config="{row.id}"></script>\n'
-            f'<script src="BASE_URL/widget/loader.js"></script>'
+            f'<!-- Maintainer Copilot Widget (id: {row.widget_id}) -->\n'
+            f'<script src="BASE_URL/widget/loader.js" data-widget-id="{row.widget_id}"></script>'
         )
         return EmbedSnippetRead(
             widget_config_id=config_id,
             snippet=snippet,
             generated_at=datetime.now(timezone.utc),
         )
+
+    async def delete_config(
+        self,
+        config_id: str,
+        deleted_by_user_id: str,
+        audit_service,
+        request_id: str | None = None,
+    ) -> WidgetConfigRead:
+        trace = self._trace(request_id)
+        _log().info("widget_config.delete", **trace)
+        async with self._session_factory() as session:
+            repo = self._repo_cls(session)
+            row = await repo.get_by_id(config_id)
+            if row is None:
+                raise WidgetConfigNotFoundError(
+                    f"Widget configuration {config_id} not found",
+                    details={"config_id": config_id, "request_id": request_id},
+                    trace_id=trace["trace_id"],
+                )
+            read_before = self._to_read(row)
+            await repo.delete(config_id)
+            await audit_service.log_action(
+                actor_user_id=deleted_by_user_id,
+                action="widget_config.delete",
+                target_type="widget_config",
+                target_id=row.widget_id,
+                extra_data={"name": row.name},
+                request_id=request_id,
+            )
+            await session.commit()
+            return read_before
 
     @staticmethod
     def _to_read(row: WidgetConfig) -> WidgetConfigRead:
@@ -150,12 +219,19 @@ class WidgetConfigService:
         origins = row.allowed_origins
         if isinstance(origins, str):
             origins = json.loads(origins)
+        tools = row.enabled_tools
+        if isinstance(tools, str):
+            tools = json.loads(tools)
         return WidgetConfigRead(
             id=row.id,
+            widget_id=row.widget_id,
             name=row.name,
             allowed_origins=origins if isinstance(origins, list) else [],
             theme=row.theme or "default",
+            greeting=row.greeting,
             welcome_message=row.welcome_message,
+            position=row.position or "bottom-right",
+            enabled_tools=tools if isinstance(tools, list) else [],
             is_enabled=row.is_enabled,
             created_at=row.created_at,
             updated_at=row.updated_at,

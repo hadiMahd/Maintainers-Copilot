@@ -11,7 +11,7 @@
 
 - Q: How does the embedded widget authenticate chat requests to the backend? → A: Widget-scoped anonymous session token issued by the backend at widget load time, validated against the widget's allowed origin; expires with the session.
 - Q: Where is the loader script served from? → A: FastAPI backend route (`GET /widget/loader.js`) — one origin, no CDN or separate static host required.
-- Q: How should the widget iframe consume the backend SSE chat stream? → A: Native `EventSource` API — built-in, no library, auto-reconnect; session token passed as query parameter.
+- Q: How should the widget iframe consume the backend SSE chat stream? → A: Native `EventSource` API — built-in, no library, auto-reconnect; session token passed as query parameter, while raw user messages are submitted separately so chat text never appears in the SSE URL.
 - Q: What is the maximum acceptable widget bundle size? → A: 150 KB gzipped — covers React + lean chat UI; any exception must be documented with measured size and rationale.
 - Q: What format should the public widget identifier use? → A: UUID4 — random, non-enumerable, generated at config creation time.
 
@@ -132,6 +132,8 @@ no widget code references the internal Streamlit app.
 - Host page includes multiple widget script tags or repeats the same widget ID.
 - Public widget configuration is changed after the host page has already loaded.
 - Backend configuration read succeeds but chat streaming later fails.
+- Backend cannot establish an approved origin from request metadata, even if the
+  client declares one.
 - Chat stream is interrupted while a partial answer is visible.
 - Runtime theme, greeting, position, or enabled tools contain unsupported values.
 - Browser blocks frame loading, script execution, or cross-window messaging.
@@ -161,8 +163,8 @@ no widget code references the internal Streamlit app.
   widget configuration capabilities.
 - **FR-005**: Host pages MUST be able to embed a widget using one script tag
   whose `src` points to `GET /widget/loader.js` on the FastAPI backend, with
-  the widget identifier supplied as a `data-widget-id` attribute or query
-  parameter on the script tag.
+  the widget identifier supplied as a `data-widget-id` attribute on the script
+  tag.
 - **FR-006**: The loader MUST create an isolated widget frame using the widget
   identifier from the host page. The FastAPI backend MUST serve the loader
   JavaScript at `GET /widget/loader.js` with appropriate `Cache-Control` and
@@ -172,18 +174,23 @@ no widget code references the internal Streamlit app.
   The token is issued only for enabled widgets from approved host origins and
   expires at the end of the visitor's session.
 - **FR-007a**: The backend MUST provide a token-issuance endpoint that validates
-  the requesting origin against the widget configuration's allowed origins before
-  issuing a widget-scoped anonymous session token.
+  the observed request origin or referrer against the widget configuration's
+  allowed origins before issuing a widget-scoped anonymous session token. Any
+  client-declared origin is advisory only and MUST NOT be trusted as the sole
+  authorization signal.
 - **FR-008**: Public widget configuration reads MUST be allowed only for enabled
-  widgets and approved host origins. Widget chat calls MUST require a valid
-  widget-scoped anonymous session token issued for that widget.
+  widgets and approved host origins. Public widget routes MUST fail closed when
+  the backend cannot establish an approved host origin from request metadata.
+  Widget chat calls MUST require a valid widget-scoped anonymous session token
+  issued for that widget.
 - **FR-009**: The widget MUST support a collapsed bubble state and an expanded
   chat panel state.
 - **FR-010**: The widget MUST show the configured greeting, theme, position, and
   enabled tool availability at runtime.
-- **FR-011**: The widget MUST support streamed chat messages through the shared
-  backend chat capability using the native browser `EventSource` API. The
-  widget-scoped anonymous session token MUST be passed as a query parameter on
+- **FR-011**: The widget MUST submit chat messages through the shared backend
+  chat capability and receive streamed chat responses using the native browser
+  `EventSource` API. The widget-scoped anonymous session token MUST be passed as
+  a query parameter on the SSE URL. Raw user message content MUST NOT appear in
   the SSE URL. The widget MUST NOT use a third-party SSE client library.
 - **FR-012**: The widget frame MUST communicate resize changes to the host page
   through a constrained message channel.
@@ -214,7 +221,8 @@ no widget code references the internal Streamlit app.
 - **FR-022**: Tests MUST cover admin widget configuration, snippet display,
   public configuration read, allowed-origin embed, blocked-origin behavior,
   loader frame injection, runtime configuration application, streamed chat,
-  resize messaging, frame ancestor protection, widget config audit rows,
+  widget message submission, resize messaging, frame ancestor protection,
+  widget config audit rows, request/trace correlation on widget public routes,
   standalone bundle validation, bundle-size reporting, and absence of Streamlit
   references in widget code.
 
@@ -236,9 +244,9 @@ no widget code references the internal Streamlit app.
   origins, and must not expose privileged admin data through public widget
   configuration reads.
 - **Observability And Errors**: Backend requests must preserve request IDs and
-  structured errors. Chat streaming failures, blocked origins, disabled widgets,
-  invalid widget identifiers, and embed delivery failures must return clean
-  errors or safe widget states without stack traces.
+  structured errors. Chat submission failures, chat streaming failures, blocked
+  origins, disabled widgets, invalid widget identifiers, and embed delivery
+  failures must return clean errors or safe widget states without stack traces.
 - **Evidence And Evals**: This phase makes no new model, classifier, embedding,
   RAG, or memory-quality decision. It must document bundle-size measurement and
   standalone bundle behavior, plus any widget security limitations relevant to

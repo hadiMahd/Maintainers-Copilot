@@ -2,12 +2,12 @@
 
 ## Loader Contract
 
-**Route**: `GET /widget.js`
+**Route**: `GET /widget/loader.js`
 
 **Host usage**:
 
 ```html
-<script src="https://backend.example.com/widget.js" data-widget-id="PUBLIC_WIDGET_ID"></script>
+<script src="https://backend.example.com/widget/loader.js" data-widget-id="PUBLIC_WIDGET_ID"></script>
 ```
 
 **Behavior**:
@@ -34,6 +34,8 @@
 
 - Frame route validates widget ID, enabled status, and host origin before
   serving the widget shell.
+- Backend trusts observed request origin or referrer first and treats any
+  loader-declared origin only as advisory input.
 - Frame response sets `Content-Security-Policy` with `frame-ancestors` derived
   from the widget configuration's allowed origins.
 - Frame shell loads one standalone initial widget JavaScript bundle from the
@@ -47,14 +49,23 @@
 **Behavior**:
 
 - Widget reads public config before showing the expanded chat panel.
+- Widget requests a widget-scoped anonymous session token before opening the
+  chat stream.
+- Widget submits raw user messages through a separate POST endpoint before
+  opening the `EventSource` stream.
 - Widget starts in collapsed bubble state.
 - Widget supports expanded panel state with greeting, theme, position, and
   enabled tool indicators.
-- Widget sends chat messages through the widget public chat endpoint.
+- Widget sends chat messages through the widget public message-submission
+  endpoint, then consumes the response over the widget public streamed chat
+  endpoint.
 - Widget renders streamed chat events progressively.
+- Stream events may carry `request_id` and `trace_id` when safe so browser
+  debugging can correlate the public chat flow.
 - Widget handles stream interruption with a clean retryable state.
 - Widget does not reference Streamlit routes, Streamlit state, or Streamlit
   assets.
+- Raw user message content never appears in the SSE URL.
 
 ## Resize Message Contract
 
@@ -85,8 +96,9 @@
 
 ## Bundle Contract
 
-- `/widget.js` target: below 5 KB gzip.
-- Initial widget app target: below 120 KB gzip.
+- `/widget/loader.js` target: below 5 KB gzip.
+- Initial widget app internal target: below 120 KB gzip; hard acceptance cap:
+  150 KB gzip.
 - Vite build must emit one standalone initial widget JavaScript bundle. Any
   unavoidable extra initial JS asset must be documented in the bundle report
   with measured size, reason, and impact.

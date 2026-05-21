@@ -23,6 +23,18 @@ from streamlit_app.components.snippets import display_embed_snippet
 from streamlit_app.config import StreamlitSettings
 from streamlit_app.models import WidgetConfigForm
 
+AVAILABLE_TOOLS = [
+    "classify_issue",
+    "extract_entities",
+    "summarize_issue",
+    "answer_project_question",
+    "write_memory",
+]
+
+THEME_OPTIONS = ["light", "dark", "system"]
+
+POSITION_OPTIONS = ["bottom-right", "bottom-left", "top-right", "top-left"]
+
 init_auth_state()
 
 if not st.session_state.get("is_authenticated"):
@@ -69,15 +81,17 @@ with tab_list:
         for cfg in configs:
             with st.expander(f"{cfg.name} ({'enabled' if cfg.is_enabled else 'disabled'})"):
                 st.json({
-                    "ID": cfg.id,
+                    "Widget ID": cfg.widget_id,
                     "Name": cfg.name,
                     "Origins": cfg.allowed_origins,
                     "Theme": cfg.theme,
-                    "Welcome": cfg.welcome_message,
+                    "Greeting": cfg.greeting,
+                    "Position": cfg.position,
+                    "Enabled Tools": cfg.enabled_tools,
                     "Enabled": cfg.is_enabled,
                     "Updated": cfg.updated_at,
                 })
-                col_edit, col_snippet = st.columns(2)
+                col_edit, col_snippet, col_delete = st.columns(3)
                 with col_edit:
                     if st.button(f"Edit {cfg.name}", key=f"edit_{cfg.id}"):
                         st.session_state.edit_config_id = cfg.id
@@ -86,6 +100,32 @@ with tab_list:
                     if st.button(f"Snippet {cfg.name}", key=f"snippet_{cfg.id}"):
                         st.session_state.snippet_config_id = cfg.id
                         st.rerun()
+                with col_delete:
+                    if st.button(f"Delete {cfg.name}", key=f"delete_{cfg.id}"):
+                        st.session_state.delete_config_id = cfg.id
+                        st.rerun()
+
+    delete_id = st.session_state.get("delete_config_id", "")
+    if delete_id:
+        cfg = next((c for c in configs if c.id == delete_id), None)
+        cfg_name = cfg.name if cfg else delete_id
+        st.warning(f"Delete widget configuration **{cfg_name}**? This cannot be undone.")
+        col_confirm, col_cancel = st.columns(2)
+        with col_confirm:
+            if st.button("Confirm Delete", key="confirm_delete"):
+                try:
+                    client.delete_widget_config(delete_id)
+                    st.success(f"Deleted {cfg_name}.")
+                except BackendAPIError as exc:
+                    display_error(exc.ui_error)
+                except Exception:
+                    st.error("Unable to delete widget configuration.")
+                st.session_state.pop("delete_config_id", None)
+                st.rerun()
+        with col_cancel:
+            if st.button("Cancel", key="cancel_delete"):
+                st.session_state.pop("delete_config_id", None)
+                st.rerun()
 
 with tab_create:
     st.subheader("Create / Edit Configuration")
@@ -104,17 +144,61 @@ with tab_create:
             st.session_state.pop("snippet_config_id", None)
             st.rerun()
     else:
+        edit_defaults: dict = {}
+        if edit_id:
+            try:
+                existing = client.list_widget_configs()
+                match = next((c for c in existing if c.id == edit_id), None)
+                if match:
+                    edit_defaults = {
+                        "name": match.name,
+                        "origins": "\n".join(match.allowed_origins),
+                        "theme": match.theme,
+                        "greeting": match.greeting or "",
+                        "position": match.position,
+                        "tools": match.enabled_tools,
+                        "enabled": match.is_enabled,
+                    }
+            except Exception:
+                pass
+
         with st.form("widget_config_form"):
-            name = st.text_input("Name", max_chars=120, placeholder="My Widget")
+            name = st.text_input(
+                "Name", value=edit_defaults.get("name", ""),
+                max_chars=120, placeholder="My Widget",
+            )
             origins_text = st.text_area(
                 "Allowed Origins (one per line)",
+                value=edit_defaults.get("origins", ""),
                 placeholder="https://example.com",
                 help="Each origin on its own line.",
             )
-            theme = st.selectbox("Theme", ["default", "light", "dark"])
-            welcome = st.text_area("Welcome Message", max_chars=500, placeholder="Hello! How can I help?")
-            is_enabled = st.checkbox("Enabled", value=True)
-            submitted = st.form_submit_button("Save" if edit_id else "Create")
+            greeting = st.text_area(
+                "Greeting", value=edit_defaults.get("greeting", ""),
+                max_chars=500, placeholder="Hello! How can I help?",
+            )
+            col_theme, col_position = st.columns(2)
+            with col_theme:
+                theme = st.selectbox(
+                    "Theme", THEME_OPTIONS,
+                    index=THEME_OPTIONS.index(edit_defaults.get("theme", "light"))
+                    if edit_defaults.get("theme") in THEME_OPTIONS else 0,
+                )
+            with col_position:
+                position = st.selectbox(
+                    "Position", POSITION_OPTIONS,
+                    index=POSITION_OPTIONS.index(edit_defaults.get("position", "bottom-right"))
+                    if edit_defaults.get("position") in POSITION_OPTIONS else 0,
+                )
+            tools_default = edit_defaults.get("tools", [])
+            enabled_tools = st.multiselect(
+                "Enabled Tools",
+                AVAILABLE_TOOLS,
+                default=[t for t in tools_default if t in AVAILABLE_TOOLS],
+                help="Select the tools available in the widget chat.",
+            )
+            is_enabled = st.checkbox("Enabled", value=edit_defaults.get("enabled", True))
+            submitted = st.form_submit_button("Update" if edit_id else "Create")
 
             if submitted:
                 if not name:
@@ -127,7 +211,9 @@ with tab_create:
                         name=name,
                         allowed_origins=origins,
                         theme=theme,
-                        welcome_message=welcome or None,
+                        greeting=greeting or None,
+                        position=position,
+                        enabled_tools=enabled_tools,
                         is_enabled=is_enabled,
                     )
                     try:

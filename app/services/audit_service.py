@@ -88,3 +88,33 @@ class AuditService:
                 )
                 for r in rows
             ]
+
+    async def log_action(
+        self,
+        *,
+        actor_user_id: str,
+        action: str,
+        target_type: str,
+        target_id: str,
+        extra_data: dict | None = None,
+        request_id: str | None = None,
+    ) -> None:
+        t = self._trace(request_id)
+        safe_data = redact_audit_metadata(extra_data or {})
+        async with self._session_factory() as session:
+            repo = self._audit_repo_cls(session)
+            await repo.create(
+                actor_user_id=actor_user_id,
+                action=action,
+                target_type=target_type,
+                target_id=target_id,
+                extra_data=safe_data,
+            )
+            await session.commit()
+        _log().info(
+            "audit_action_logged",
+            action=action,
+            target_type=target_type,
+            target_id=target_id,
+            request_id=request_id,
+        )
