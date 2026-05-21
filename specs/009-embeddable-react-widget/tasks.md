@@ -104,23 +104,23 @@ is blocked with a clean error.
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
-- [ ] T029 [P] [US2] Unit test for `WidgetEmbedService.origin_allowed()` in `tests/unit/test_widget_origin_policy.py`
-- [ ] T030 [P] [US2] Unit test for `WidgetSessionService.issue_token()` in `tests/unit/test_widget_session_service.py`
-- [ ] T031 [P] [US2] Contract test for public config read, session issuance, message submission, loader delivery, fail-closed origin enforcement, request_id/trace_id-safe error mapping, and widget public API compatibility with the internal app backend surface in `tests/contract/test_widget_api_contract.py`
-- [ ] T032 [P] [US2] Integration test for allowed-origin embed flow in `tests/integration/test_widget_allowed_origin.py`
-- [ ] T033 [P] [US2] Integration test for blocked-origin embed flow in `tests/integration/test_widget_blocked_origin.py`
-- [ ] T034 [P] [US2] Integration test for frame response headers (CSP frame-ancestors) in `tests/integration/test_widget_frame_headers.py`
+- [X] T029 [P] [US2] Unit test for `WidgetEmbedService.origin_allowed()` in `tests/unit/test_widget_origin_policy.py`
+- [X] T030 [P] [US2] Unit test for `WidgetSessionService.issue_token()` in `tests/unit/test_widget_session_service.py`
+- [X] T031 [P] [US2] Contract test for public config read, session issuance, message submission, loader delivery, fail-closed origin enforcement, request_id/trace_id-safe error mapping, and widget public API compatibility with the internal app backend surface in `tests/contract/test_widget_api_contract.py`
+- [X] T032 [P] [US2] Integration test for allowed-origin embed flow in `tests/integration/test_widget_allowed_origin.py`
+- [X] T033 [P] [US2] Integration test for blocked-origin embed flow in `tests/integration/test_widget_blocked_origin.py`
+- [X] T034 [P] [US2] Integration test for frame response headers (CSP frame-ancestors) in `tests/integration/test_widget_frame_headers.py`
 
 ### Implementation for User Story 2
 
-- [ ] T035 [P] [US2] Create `loader.ts` — vanilla JS that reads `data-widget-id`, injects iframe, listens for resize messages, and does not require query-string widget IDs in `widget/src/loader.ts`
-- [ ] T036 [US2] Implement `GET /widget/loader.js` route in `app/api/routes/widget_loader.py` — serves built loader.js with `Cache-Control` and `Content-Type` headers (depends on T014)
-- [ ] T037 [US2] Implement `GET /widget/frame/{widget_id}` route — validates widget enabled plus approved observed origin/referrer, cross-checks any declared origin, and serves iframe HTML with CSP frame-ancestors header (depends on T014, T008)
-- [ ] T038 [US2] Implement `GET /public/widgets/{widget_id}/config` public config endpoint — returns `PublicWidgetConfigRead` with observed-origin-first validation, advisory origin cross-check, and no-store cache (depends on T008, T015)
-- [ ] T039 [US2] Implement `POST /public/widgets/{widget_id}/session` anonymous session token endpoint — validates widget enabled plus approved observed origin/referrer, cross-checks any declared origin, and issues scoped token (depends on T009, T015)
-- [ ] T040 [US2] Create `demo/host/allowed.html` plus runnable allowed-origin host setup so the demo can be served from a distinct approved local origin (depends on T035)
-- [ ] T041 [US2] Create `demo/host/blocked.html` plus runnable blocked-origin host setup so the demo can be served from a distinct unapproved local origin (depends on T035)
-- [ ] T042 [US2] Implement `GET /widget/assets/{path}` static asset serving with immutable cache headers for hashed assets (depends on T011, T014)
+- [X] T035 [P] [US2] Create `loader.ts` — vanilla JS that reads `data-widget-id`, injects iframe, listens for resize messages, and does not require query-string widget IDs in `widget/src/loader.ts`
+- [X] T036 [US2] Implement `GET /widget/loader.js` route in `app/api/routes/widget_loader.py` — serves built loader.js with `Cache-Control` and `Content-Type` headers (depends on T014)
+- [X] T037 [US2] Implement `GET /widget/frame/{widget_id}` route — validates widget enabled plus approved observed origin/referrer, cross-checks any declared origin, and serves iframe HTML with CSP frame-ancestors header (depends on T014, T008)
+- [X] T038 [US2] Implement `GET /public/widgets/{widget_id}/config` public config endpoint — returns `PublicWidgetConfigRead` with observed-origin-first validation, advisory origin cross-check, and no-store cache (depends on T008, T015)
+- [X] T039 [US2] Implement `POST /public/widgets/{widget_id}/session` anonymous session token endpoint — validates widget enabled plus approved observed origin/referrer, cross-checks any declared origin, and issues scoped token (depends on T009, T015)
+- [X] T040 [US2] Create `demo/host/allowed.html` plus runnable allowed-origin host setup so the demo can be served from a distinct approved local origin (depends on T035)
+- [X] T041 [US2] Create `demo/host/blocked.html` plus runnable blocked-origin host setup so the demo can be served from a distinct unapproved local origin (depends on T035)
+- [X] T042 [US2] Implement `GET /widget/assets/{path}` static asset serving with immutable cache headers for hashed assets (depends on T011, T014)
 
 **Checkpoint**: Allowed host pages can embed the widget. Blocked origins are
 rejected cleanly. Frame headers enforce origin restrictions.

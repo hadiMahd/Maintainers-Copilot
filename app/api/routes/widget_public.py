@@ -177,8 +177,13 @@ async def issue_widget_session(widget_id: str, request: Request) -> JSONResponse
         origin=origin or "",
         request_id=request_id,
     )
+    token_obj = WidgetSessionToken(**token_data)
     return JSONResponse(
-        content=WidgetSessionToken(**token_data).model_dump(exclude_none=True),
+        content={
+            "token": token_obj.token,
+            "expires_at": token_obj.expires_at.isoformat(),
+            "widget_id": token_obj.widget_id,
+        },
         headers={"X-Request-ID": request_id or ""},
     )
 

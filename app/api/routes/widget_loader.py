@@ -13,6 +13,16 @@ from app.services.widget_embed_service import WidgetEmbedService
 router = APIRouter(prefix="/widget", tags=["widget"])
 
 
+def _get_widget_config_service(request: Request):
+    from app.repositories.widget_config_repository import WidgetConfigRepository
+    from app.services.widget_config_service import WidgetConfigService
+    import app.infra.database as db_mod
+    return WidgetConfigService(
+        widget_config_repo=WidgetConfigRepository,
+        session_factory=db_mod.async_session_factory,
+    )
+
+
 @router.get("/loader.js")
 async def serve_loader(request: Request) -> Response:
     """Serve the widget loader JavaScript with cache headers."""
@@ -34,9 +44,35 @@ async def serve_loader(request: Request) -> Response:
 async def serve_widget_frame(widget_id: str, request: Request) -> HTMLResponse:
     """Serve the widget iframe shell with CSP frame-ancestors header."""
     request_id = getattr(request.state, "request_id", None)
-    origin = request.headers.get("origin") or request.headers.get("referer", "")
-    svc = WidgetEmbedService()
-    csp = svc.build_csp_frame_ancestors([])
+    origin = request.headers.get("origin") or request.headers.get("referer")
+
+    config_svc = _get_widget_config_service(request)
+    embed_svc = WidgetEmbedService()
+
+    try:
+        config = await config_svc.get_by_widget_id(widget_id, request_id=request_id)
+    except Exception:
+        raise WidgetEmbedError(
+            "Widget not found",
+            details={"widget_id": widget_id},
+            trace_id=request_id,
+        )
+
+    decision = embed_svc.validate_widget_for_embed(
+        is_enabled=config["is_enabled"],
+        allowed_origins=config["allowed_origins"],
+        requested_origin=origin,
+        widget_id=widget_id,
+        request_id=request_id,
+    )
+    if not decision.allowed:
+        raise WidgetEmbedError(
+            f"Origin not allowed: {decision.reason}",
+            details={"widget_id": widget_id, "reason": decision.reason},
+            trace_id=request_id,
+        )
+
+    csp = embed_svc.build_csp_frame_ancestors(config["allowed_origins"])
     html = (
         "<!DOCTYPE html>"
         "<html><head>"
@@ -46,7 +82,7 @@ async def serve_widget_frame(widget_id: str, request: Request) -> HTMLResponse:
         "</head><body>"
         "<div id='root'></div>"
         f"<script>window.__WIDGET_ID__='{widget_id}';</script>"
-        f"<script>window.__ORIGIN__='{origin}';</script>"
+        f"<script>window.__ORIGIN__='{origin or ''}';</script>"
         "<script type='module' src='/widget/assets/widget-main.js'></script>"
         "</body></html>"
     )

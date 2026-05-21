@@ -219,4 +219,4 @@ class WidgetSessionError(DomainError):
     """Widget anonymous session token issuance failure."""
 
     error_code = "widget_session_error"
-    status_code = 401
+    status_code = 403
