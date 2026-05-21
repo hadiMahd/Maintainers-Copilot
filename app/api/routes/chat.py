@@ -28,7 +28,7 @@ from app.services.conversation_state_service import ConversationStateService
 from app.services.long_term_memory_service import LongTermMemoryService
 from app.services.rag_snapshot_service import RAGSnapshotService
 from app.services.tool_execution_service import ToolExecutionService
-from app.infra.memory_embedding_client import MemoryEmbeddingClient
+from app.infra.memory_embedding_client import resolve_memory_embedding_client
 
 router = APIRouter()
 
@@ -77,7 +77,7 @@ def _get_memory_tool_client(request: Request):
     service = LongTermMemoryService(
         memory_repo=MemoryRepository,
         audit_repo=AuditLogRepository,
-        embedding_client=MemoryEmbeddingClient(),
+        embedding_client=resolve_memory_embedding_client(),
         session_factory=session_factory,
     )
     return MemoryToolClient(service)

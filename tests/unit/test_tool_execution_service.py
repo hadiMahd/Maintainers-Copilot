@@ -124,3 +124,131 @@ async def test_oversized_tool_output_returns_safe_failure():
     )
     assert result.status == "failed"
     assert result.error.code in {"tool_output_too_large", "invalid_tool_output"}
+
+
+@pytest.mark.asyncio
+async def test_write_memory_allowed_once_per_service_instance():
+    service = _service()
+    intent = MemoryWriteIntent(present=True, evidence="explicit remember request detected")
+    call1 = LLMToolCall(
+        name="write_memory",
+        arguments={"content": "first write", "memory_type": "semantic", "metadata": {}},
+    )
+    result1 = await service.execute(
+        tool_call=call1,
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert result1.status == "success"
+
+    call2 = LLMToolCall(
+        name="write_memory",
+        arguments={"content": "second write", "memory_type": "semantic", "metadata": {}},
+    )
+    result2 = await service.execute(
+        tool_call=call2,
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert result2.status == "failed"
+    assert result2.error.message == "write_memory is limited to one call per request"
+
+
+@pytest.mark.asyncio
+async def test_new_service_instance_resets_write_memory_guard():
+    intent = MemoryWriteIntent(present=True, evidence="explicit remember request detected")
+
+    service1 = _service()
+    result1 = await service1.execute(
+        tool_call=LLMToolCall(
+            name="write_memory",
+            arguments={"content": "first request", "memory_type": "semantic", "metadata": {}},
+        ),
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert result1.status == "success"
+
+    service2 = _service()
+    result2 = await service2.execute(
+        tool_call=LLMToolCall(
+            name="write_memory",
+            arguments={"content": "second request", "memory_type": "semantic", "metadata": {}},
+        ),
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m2",
+        request_id="req-2",
+        trace_id="trace-2",
+        memory_intent=intent,
+    )
+    assert result2.status == "success"
+
+
+@pytest.mark.asyncio
+async def test_other_tools_unaffected_by_write_memory_guard():
+    service = _service()
+    intent = MemoryWriteIntent(present=True, evidence="explicit remember request detected")
+
+    write_result = await service.execute(
+        tool_call=LLMToolCall(
+            name="write_memory",
+            arguments={"content": "first write", "memory_type": "semantic", "metadata": {}},
+        ),
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert write_result.status == "success"
+
+    classify_result = await service.execute(
+        tool_call=LLMToolCall(name="classify_issue", arguments={"title": "bug"}),
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert classify_result.status == "success"
+
+    blocked_result = await service.execute(
+        tool_call=LLMToolCall(
+            name="write_memory",
+            arguments={"content": "second write", "memory_type": "semantic", "metadata": {}},
+        ),
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert blocked_result.status == "failed"
+    assert blocked_result.error.message == "write_memory is limited to one call per request"
+
+    extract_result = await service.execute(
+        tool_call=LLMToolCall(name="extract_entities", arguments={"title": "bug"}),
+        user_id="u1",
+        conversation_id="c1",
+        message_id="m1",
+        request_id="req-1",
+        trace_id="trace-1",
+        memory_intent=intent,
+    )
+    assert extract_result.status == "success"

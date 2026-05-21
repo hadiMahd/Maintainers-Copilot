@@ -102,7 +102,7 @@ class AppSettings(BaseSettings):
     chat_prompt_tool_policy_path: str = "prompts/chatbot_tool_policy.md"
     chat_prompt_untrusted_context_path: str = "prompts/chatbot_untrusted_context.md"
     chat_tracing_backend: str = "fake"
-    chat_model_server_base_url: str = "http://localhost:8001"
+    chat_model_server_base_url: str = "http://model_server:8001"
     azure_openai_api_version: str = "2024-02-01"
 
     model_config = SettingsConfigDict(

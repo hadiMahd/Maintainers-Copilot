@@ -57,36 +57,13 @@ def build_chatbot_graph(
 ) -> ChatbotGraph:
     """Build the thin Phase 7 chat graph.
 
-    The graph contains one primary LLM node plus support nodes for tool execution
-    and final formatting only.
+    The project currently uses a plain ``dict`` state shape. With the installed
+    LangGraph version, that path can retain stale list fields across loop
+    iterations and never exit a completed tool cycle. The fallback executor keeps
+    the intended single-LLM loop semantics deterministic for both tests and local
+    runtime.
     """
-    try:
-        from langgraph.graph import END, StateGraph
-
-        graph = StateGraph(dict)
-        graph.add_node("llm", llm_step)
-        graph.add_node("execute_tools", tool_step)
-        graph.add_node("finalize", finalize_step)
-        graph.set_entry_point("llm")
-
-        def route_after_llm(state: dict[str, Any]) -> str:
-            if state.get("tool_calls"):
-                return "execute_tools"
-            return "finalize"
-
-        graph.add_conditional_edges(
-            "llm",
-            route_after_llm,
-            {
-                "execute_tools": "execute_tools",
-                "finalize": "finalize",
-            },
-        )
-        graph.add_edge("execute_tools", "llm")
-        graph.add_edge("finalize", END)
-        compiled = graph.compile()
-    except ImportError:
-        compiled = _FallbackCompiledGraph(llm_step, tool_step, finalize_step)
+    compiled = _FallbackCompiledGraph(llm_step, tool_step, finalize_step)
 
     return ChatbotGraph(
         compiled_graph=compiled,

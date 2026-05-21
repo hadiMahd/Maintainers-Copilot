@@ -4,6 +4,8 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, JSON, String, Text, func
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 
+from app.infra.memory_embedding_client import DEFAULT_MEMORY_EMBEDDING_DIM
+
 
 class Base(DeclarativeBase):
     pass
@@ -81,7 +83,7 @@ class LongTermMemory(Base):
     memory_type = Column(String(16), nullable=False, server_default="semantic")
     redacted_content = Column(Text(), nullable=False)
     content_hash = Column(String(64), nullable=False)
-    embedding = Column(Vector(384), nullable=True)
+    embedding = Column(Vector(DEFAULT_MEMORY_EMBEDDING_DIM), nullable=True)
     source = Column(String(64), nullable=True)
     created_by_user_id = Column(String(36), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -102,3 +104,21 @@ class AuditLog(Base):
     target_id = Column(String(36), nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     extra_data = Column(JSON(), nullable=True)
+
+
+class WidgetConfig(Base):
+    __tablename__ = "widget_configs"
+    __table_args__ = (
+        Index("ix_widget_configs_name", "name"),
+    )
+
+    id = Column(String(36), primary_key=True)
+    name = Column(String(120), nullable=False)
+    allowed_origins = Column(Text(), nullable=False)
+    theme = Column(String(30), nullable=False, server_default="default")
+    welcome_message = Column(String(500), nullable=True)
+    is_enabled = Column(Boolean(), nullable=False, server_default="true")
+    created_by_user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    updated_by_user_id = Column(String(36), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now())

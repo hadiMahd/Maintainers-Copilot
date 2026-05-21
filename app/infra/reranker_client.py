@@ -112,8 +112,14 @@ class CrossEncoderReranker(BaseRerankerClient):
         return ranked[:top_k]
 
 
-def resolve_reranker(settings) -> BaseRerankerClient:
-    return FakeRerankerClient()
+def resolve_reranker(settings, *, force_fake: bool = False) -> BaseRerankerClient:
+    if force_fake or getattr(settings, "environment", "") == "test":
+        return FakeRerankerClient()
+    try:
+        return CrossEncoderReranker(model_name=settings.rag_reranker_model_name)
+    except Exception as exc:
+        logger.warning("CrossEncoderReranker unavailable, falling back to fake: %s", exc)
+        return FakeRerankerClient()
 
 
 __all__ = [

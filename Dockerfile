@@ -5,12 +5,13 @@ WORKDIR /app
 RUN pip install uv
 
 ENV PATH="/app/.venv/bin:$PATH"
+ARG UV_SYNC_EXTRAS="--extra llm"
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --extra llm --no-install-project
+RUN uv sync --frozen --no-dev $UV_SYNC_EXTRAS --no-install-project
 
 COPY . .
-RUN uv sync --frozen --no-dev --extra llm
+RUN uv sync --frozen --no-dev $UV_SYNC_EXTRAS
 
 EXPOSE 8000
 
