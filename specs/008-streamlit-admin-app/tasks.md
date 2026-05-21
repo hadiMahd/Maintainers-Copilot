@@ -19,10 +19,10 @@
 
 **Purpose**: Streamlit project initialization and basic package structure.
 
-- [ ] T001 Create streamlit_app/ directory structure: app.py, config.py, models.py, clients/, components/, pages/ with __init__.py files
-- [ ] T002 Add streamlit and streamlit-cookies-manager dependencies to pyproject.toml
-- [ ] T003 [P] Create streamlit_app/config.py with typed StreamlitSettings (base_url: str, rest_timeout_seconds: int, sse_timeout_seconds: int, connect_timeout_seconds: int, read_timeout_seconds: int) loaded from env vars prefixed MAINTAINER_COPILOT_UI_; validate base_url is non-empty at startup and raise a clear StreamlitSettingsError with actionable message if missing or invalid
-- [ ] T004 [P] Create streamlit_app/models.py with UI/client models: CurrentUserView, LoginCredentials, ChatMessage, ChatEventView, WidgetConfigView, WidgetConfigForm, EmbedSnippetView, MemoryInspectionQuery, MemoryRecordView, MemoryInspectionResult, UIErrorMessage
+- [X] T001 Create streamlit_app/ directory structure: app.py, config.py, models.py, clients/, components/, pages/ with __init__.py files
+- [X] T002 Add streamlit and streamlit-cookies-manager dependencies to pyproject.toml
+- [X] T003 [P] Create streamlit_app/config.py with typed StreamlitSettings (base_url: str, rest_timeout_seconds: int, sse_timeout_seconds: int, connect_timeout_seconds: int, read_timeout_seconds: int) loaded from env vars prefixed MAINTAINER_COPILOT_UI_; validate base_url is non-empty at startup and raise a clear StreamlitSettingsError with actionable message if missing or invalid
+- [X] T004 [P] Create streamlit_app/models.py with UI/client models: CurrentUserView, LoginCredentials, ChatMessage, ChatEventView, WidgetConfigView, WidgetConfigForm, EmbedSnippetView, MemoryInspectionQuery, MemoryRecordView, MemoryInspectionResult, UIErrorMessage
 
 ---
 
@@ -34,42 +34,42 @@
 
 ### Backend Domain Models
 
-- [ ] T005 [P] Create app/domain/widget_config.py with WidgetConfigCreate, WidgetConfigUpdate, WidgetConfigRead, EmbedSnippetRead Pydantic schemas per contracts/internal-ui-backend.openapi.yaml
-- [ ] T006 [P] Create app/domain/memory_inspector.py with MemoryInspectionQuery, MemoryRecordRead, MemoryInspectionResult Pydantic schemas per contracts/internal-ui-backend.openapi.yaml
+- [X] T005 [P] Create app/domain/widget_config.py with WidgetConfigCreate, WidgetConfigUpdate, WidgetConfigRead, EmbedSnippetRead Pydantic schemas per contracts/internal-ui-backend.openapi.yaml
+- [X] T006 [P] Create app/domain/memory_inspector.py with MemoryInspectionQuery, MemoryRecordRead, MemoryInspectionResult Pydantic schemas per contracts/internal-ui-backend.openapi.yaml
 
 ### Backend Repositories
 
-- [ ] T007 [P] Create app/repositories/widget_config_repository.py with SQLAlchemy async CRUD for widget_configs table (list_all, get_by_id, create, update) — no commit/rollback
-- [ ] T008 [P] Create app/repositories/memory_inspector_repository.py with list_by_user (paginated listing filtered by owner_user_id, memory_type, cursor/limit) and list_all (admin-only unfiltered listing) — queries are distinct from existing MemoryRepository semantic-search methods; this repo adds inspection-specific list/filter/paginate operations only — no commit/rollback
+- [X] T007 [P] Create app/repositories/widget_config_repository.py with SQLAlchemy async CRUD for widget_configs table (list_all, get_by_id, create, update) — no commit/rollback
+- [X] T008 [P] Create app/repositories/memory_inspector_repository.py with list_by_user (paginated listing filtered by owner_user_id, memory_type, cursor/limit) and list_all (admin-only unfiltered listing) — queries are distinct from existing MemoryRepository semantic-search methods; this repo adds inspection-specific list/filter/paginate operations only — no commit/rollback
 
 ### Backend Services
 
-- [ ] T009 Create app/services/widget_config_service.py (create/edit/list/get configs, generate embed snippet as placeholder string referencing widget_config_id for now — Phase 9 will replace with actual embed <script> generation, admin-only gating, field validation, transactional commit/rollback) — depends on T005, T007
-- [ ] T010 Create app/services/memory_inspector_service.py (authorized listing with user-scope vs admin-scope gating, pagination, redacted-content-only responses) — depends on T006, T008
+- [X] T009 Create app/services/widget_config_service.py (create/edit/list/get configs, generate embed snippet as placeholder string referencing widget_config_id for now — Phase 9 will replace with actual embed <script> generation, admin-only gating, field validation, transactional commit/rollback) — depends on T005, T007
+- [X] T010 Create app/services/memory_inspector_service.py (authorized listing with user-scope vs admin-scope gating, pagination, redacted-content-only responses) — depends on T006, T008
 
 ### Backend Routes
 
-- [ ] T011 Create app/api/routes/widget_configs.py with thin routes (GET /, POST /, PATCH /{config_id}, GET /{config_id}/embed-snippet) using require_admin dependency per contracts/internal-ui-backend.openapi.yaml — depends on T009
-- [ ] T012 Create app/api/routes/memory_inspector.py with thin route (GET /long-term with query params: owner_user_id, memory_type, limit, cursor) using get_current_user dependency per contracts/internal-ui-backend.openapi.yaml — depends on T010
-- [ ] T013 Wire new routes into app/api/routes/__init__.py (include widget_configs_router under prefix="/admin/widget-configs", include memory_inspector_router under prefix="/memory" alongside existing memory_router — note: two routers share the /memory prefix; memory.py owns POST /long-term and POST /long-term/recall; memory_inspector.py owns GET /long-term; document the split with a comment in __init__.py) — depends on T011, T012
+- [X] T011 Create app/api/routes/widget_configs.py with thin routes (GET /, POST /, PATCH /{config_id}, GET /{config_id}/embed-snippet) using require_admin dependency per contracts/internal-ui-backend.openapi.yaml — depends on T009
+- [X] T012 Create app/api/routes/memory_inspector.py with thin route (GET /long-term with query params: owner_user_id, memory_type, limit, cursor) using get_current_user dependency per contracts/internal-ui-backend.openapi.yaml — depends on T010
+- [X] T013 Wire new routes into app/api/routes/__init__.py (include widget_configs_router under prefix="/admin/widget-configs", include memory_inspector_router under prefix="/memory" alongside existing memory_router — note: two routers share the /memory prefix; memory.py owns POST /long-term and POST /long-term/recall; memory_inspector.py owns GET /long-term; document the split with a comment in __init__.py) — depends on T011, T012
 
 ### Backend Config and ORM
 
-- [ ] T014 Add widget_configs SQLAlchemy ORM model to app/infra/orm_models.py (table: widget_configs, columns: id, name, allowed_origins JSON, theme, welcome_message, is_enabled, created_by_user_id, updated_by_user_id, created_at, updated_at); generate migration with `alembic revision --autogenerate -m "add widget_configs table"`; review the generated migration file; apply with `alembic upgrade head` via Docker Compose — depends on T007
+- [X] T014 Add widget_configs SQLAlchemy ORM model to app/infra/orm_models.py (table: widget_configs, columns: id, name, allowed_origins JSON, theme, welcome_message, is_enabled, created_by_user_id, updated_by_user_id, created_at, updated_at); generate migration with `alembic revision --autogenerate -m "add widget_configs table"`; review the generated migration file; apply with `alembic upgrade head` via Docker Compose — depends on T007
 
 ### Streamlit Backend API Client
 
-- [ ] T015 Implement streamlit_app/clients/backend_api.py: BackendAPIClient class with typed httpx client (login, get_current_user, chat_stream SSE generator via httpx.stream, list_widget_configs, create_widget_config, update_widget_config, get_embed_snippet, inspect_memory); all calls use explicit httpx.Timeout from StreamlitSettings (30s REST, 70s SSE); Authorization header from token provider; 401 triggers on_auth_invalid callback; all errors mapped to UIErrorMessage — depends on T003, T004
+- [X] T015 Implement streamlit_app/clients/backend_api.py: BackendAPIClient class with typed httpx client (login, get_current_user, chat_stream SSE generator via httpx.stream, list_widget_configs, create_widget_config, update_widget_config, get_embed_snippet, inspect_memory); all calls use explicit httpx.Timeout from StreamlitSettings (30s REST, 70s SSE); Authorization header from token provider; 401 triggers on_auth_invalid callback; all errors mapped to UIErrorMessage — depends on T003, T004
 
 ### Streamlit Shared Components
 
-- [ ] T016 [P] Create streamlit_app/components/auth.py: login_form(email, password, client) that calls backend login, stores token in cookie via streamlit-cookies-manager, populates st.session_state with non-secret user/role state; restore_session() that reads token from cookie on page refresh; logout() that clears cookie and st.session_state
-- [ ] T017 [P] Create streamlit_app/components/errors.py: display_error(error: UIErrorMessage) rendering with appropriate st.error/st.warning severity per error code; backend_timeout → retryable warning; authentication_required → redirect to login
-- [ ] T018 [P] Create streamlit_app/components/snippets.py: display_embed_snippet(snippet: EmbedSnippetView) rendering snippet in copyable st.code block
+- [X] T016 [P] Create streamlit_app/components/auth.py: login_form(email, password, client) that calls backend login, stores token in cookie via streamlit-cookies-manager, populates st.session_state with non-secret user/role state; restore_session() that reads token from cookie on page refresh; logout() that clears cookie and st.session_state
+- [X] T017 [P] Create streamlit_app/components/errors.py: display_error(error: UIErrorMessage) rendering with appropriate st.error/st.warning severity per error code; backend_timeout → retryable warning; authentication_required → redirect to login
+- [X] T018 [P] Create streamlit_app/components/snippets.py: display_embed_snippet(snippet: EmbedSnippetView) rendering snippet in copyable st.code block
 
 ### Streamlit App Entry Point
 
-- [ ] T019 Create streamlit_app/app.py: entry point with st.navigation() building runtime page list from role (authenticated pages: chat, memory_inspector; admin-only pages: admin_widget_config added only when role=="admin"); cookie restore on startup; unauthenticated → login page; authenticated → chat default page — depends on T015, T016, T017
+- [X] T019 Create streamlit_app/app.py: entry point with st.navigation() building runtime page list from role (authenticated pages: chat, memory_inspector; admin-only pages: admin_widget_config added only when role=="admin"); cookie restore on startup; unauthenticated → login page; authenticated → chat default page — depends on T015, T016, T017
 
 **Checkpoint**: Foundation ready — all backend endpoints (widget configs + memory inspection) are functional, Streamlit client can call them, and the app shell with auth cookie, navigation guard, and shared components is wired. User story implementation can now begin.
 
@@ -83,16 +83,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T020 [P] [US1] Contract test: verify login POST /auth/login and GET /users/me response shapes in tests/contract/test_streamlit_backend_contract.py (mocked httpx transport)
-- [ ] T021 [P] [US1] Unit test: verify BackendAPIClient.login() and .chat_stream() methods in tests/unit/test_streamlit_backend_client.py (mocked httpx transport)
-- [ ] T022 [P] [US1] Unit test: verify Streamlit login/logout cookie lifecycle (store, restore on refresh, clear on logout, clear on 401) in tests/unit/test_streamlit_session_auth.py (AppTest with mocked backend)
-- [ ] T023 [P] [US1] Unit test: verify chat page renders SSE stream events via st.write_stream() without full-response buffering in tests/unit/test_streamlit_chat_streaming.py (AppTest with mocked SSE generator)
+- [X] T020 [P] [US1] Contract test: verify login POST /auth/login and GET /users/me response shapes in tests/contract/test_streamlit_backend_contract.py (mocked httpx transport)
+- [X] T021 [P] [US1] Unit test: verify BackendAPIClient.login() and .chat_stream() methods in tests/unit/test_streamlit_backend_client.py (mocked httpx transport)
+- [X] T022 [P] [US1] Unit test: verify Streamlit login/logout cookie lifecycle (store, restore on refresh, clear on logout, clear on 401) in tests/unit/test_streamlit_session_auth.py (AppTest with mocked backend)
+- [X] T023 [P] [US1] Unit test: verify chat page renders SSE stream events via st.write_stream() without full-response buffering in tests/unit/test_streamlit_chat_streaming.py (AppTest with mocked SSE generator)
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] Implement login page in streamlit_app/app.py (unauthenticated view: email/password form → client.login() → cookie store → st.rerun)
-- [ ] T025 [US1] Create streamlit_app/pages/chat.py: message input, conversation display using st.chat_message, SSE streaming via st.write_stream(BackendAPIClient.chat_stream(...)), event-type rendering (message_delta, tool_status, error, done), pending/error/empty states, trace_id display when present — depends on T015, T017, T019
-- [ ] T026 [US1] Wire cookie-backed session restore in streamlit_app/app.py: read token from cookie on each page load, validate via GET /users/me, clear and redirect to login on invalid/missing token
+- [X] T024 [US1] Implement login page in streamlit_app/app.py (unauthenticated view: email/password form → client.login() → cookie store → st.rerun)
+- [X] T025 [US1] Create streamlit_app/pages/chat.py: message input, conversation display using st.chat_message, SSE streaming via st.write_stream(BackendAPIClient.chat_stream(...)), event-type rendering (message_delta, tool_status, error, done), pending/error/empty states, trace_id display when present — depends on T015, T017, T019
+- [X] T026 [US1] Wire cookie-backed session restore in streamlit_app/app.py: read token from cookie on each page load, validate via GET /users/me, clear and redirect to login on invalid/missing token
 
 **Checkpoint**: User Story 1 is fully functional — login with cookie persistence across page refreshes, SSE chat streaming with clean error handling. Independently testable.
 
@@ -106,17 +106,17 @@
 
 ### Tests for User Story 2
 
-- [ ] T027 [P] [US2] Contract test: verify widget config CRUD endpoints (GET/POST/PATCH /admin/widget-configs, GET embed-snippet) response shapes in tests/contract/test_internal_ui_backend_contract.py (mock transport or test client)
-- [ ] T028 [P] [US2] Unit test: verify WidgetConfigService CRUD and admin gating in tests/unit/test_widget_config_service.py
-- [ ] T029 [P] [US2] Unit test: verify admin widget config page calls BackendAPIClient methods with correct auth in tests/unit/test_streamlit_admin_guard.py (AppTest)
-- [ ] T030 [P] [US2] Unit test: verify st.navigation() excludes admin_widget_config page for regular users and no admin API calls are made for non-admin sessions in tests/unit/test_streamlit_admin_guard.py (AppTest)
-- [ ] T031 [P] [US2] Unit test: verify embed snippet renders in copyable code block and is not mutated in tests/unit/test_streamlit_chat_streaming.py (AppTest)
+- [X] T027 [P] [US2] Contract test: verify widget config CRUD endpoints (GET/POST/PATCH /admin/widget-configs, GET embed-snippet) response shapes in tests/contract/test_internal_ui_backend_contract.py (mock transport or test client)
+- [X] T028 [P] [US2] Unit test: verify WidgetConfigService CRUD and admin gating in tests/unit/test_widget_config_service.py
+- [X] T029 [P] [US2] Unit test: verify admin widget config page calls BackendAPIClient methods with correct auth in tests/unit/test_streamlit_admin_guard.py (AppTest)
+- [X] T030 [P] [US2] Unit test: verify st.navigation() excludes admin_widget_config page for regular users and no admin API calls are made for non-admin sessions in tests/unit/test_streamlit_admin_guard.py (AppTest)
+- [X] T031 [P] [US2] Unit test: verify embed snippet renders in copyable code block and is not mutated in tests/unit/test_streamlit_chat_streaming.py (AppTest)
 
 ### Implementation for User Story 2
 
-- [ ] T032 [US2] Create streamlit_app/pages/admin_widget_config.py: list widget configs table, create/edit form (name, allowed_origins, theme, welcome_message, is_enabled), call BackendAPIClient methods, display backend validation errors via display_error(), delete stub (backend not required by contract) — depends on T015, T017, T019
-- [ ] T033 [US2] Wire embed snippet display: after create or on config selection, call client.get_embed_snippet(config_id) and render via display_embed_snippet() in streamlit_app/pages/admin_widget_config.py — depends on T018, T032
-- [ ] T034 [US2] Verify admin guard in streamlit_app/app.py: st.navigation() builds admin_widget_config page entry only when st.session_state.role == "admin"; regular users never see it
+- [X] T032 [US2] Create streamlit_app/pages/admin_widget_config.py: list widget configs table, create/edit form (name, allowed_origins, theme, welcome_message, is_enabled), call BackendAPIClient methods, display backend validation errors via display_error(), delete stub (backend not required by contract) — depends on T015, T017, T019
+- [X] T033 [US2] Wire embed snippet display: after create or on config selection, call client.get_embed_snippet(config_id) and render via display_embed_snippet() in streamlit_app/pages/admin_widget_config.py — depends on T018, T032
+- [X] T034 [US2] Verify admin guard in streamlit_app/app.py: st.navigation() builds admin_widget_config page entry only when st.session_state.role == "admin"; regular users never see it
 
 **Checkpoint**: Admin widget configuration management works end-to-end with proper role gating. Independently testable alongside US1.
 
@@ -130,13 +130,13 @@
 
 ### Tests for User Story 3
 
-- [ ] T035 [P] [US3] Unit test: verify MemoryInspectorService authorization (user sees own records, admin sees all allowed) in tests/unit/test_memory_inspector_service.py
-- [ ] T036 [P] [US3] Contract test: verify GET /memory/long-term response shape, 401/403 error codes in tests/contract/test_internal_ui_backend_contract.py (mock transport or test client)
+- [X] T035 [P] [US3] Unit test: verify MemoryInspectorService authorization (user sees own records, admin sees all allowed) in tests/unit/test_memory_inspector_service.py
+- [X] T036 [P] [US3] Contract test: verify GET /memory/long-term response shape, 401/403 error codes in tests/contract/test_internal_ui_backend_contract.py (mock transport or test client)
 
 ### Implementation for User Story 3
 
-- [ ] T037 [US3] Create streamlit_app/pages/memory_inspector.py: filter form (memory_type dropdown, search_text, limit), paginated memory records table, call BackendAPIClient.inspect_memory(), display records with redacted_content/source/created_at, handle 403 with clean access-denied message, handle empty results — depends on T015, T017, T019
-- [ ] T038 [US3] Verify memory inspector authorization: admin sees all users' records (owner_user_id column shown), regular user sees only own records — confirm backend scope gating is enforced
+- [X] T037 [US3] Create streamlit_app/pages/memory_inspector.py: filter form (memory_type dropdown, search_text, limit), paginated memory records table, call BackendAPIClient.inspect_memory(), display records with redacted_content/source/created_at, handle 403 with clean access-denied message, handle empty results — depends on T015, T017, T019
+- [X] T038 [US3] Verify memory inspector authorization: admin sees all users' records (owner_user_id column shown), regular user sees only own records — confirm backend scope gating is enforced
 
 **Checkpoint**: Memory inspector works for both roles with proper authorization boundaries. Independently testable alongside US1 and US2.
 
@@ -150,16 +150,16 @@
 
 ### Tests for User Story 4
 
-- [ ] T039 [P] [US4] Unit test: verify all BackendAPIClient methods pass explicit httpx.Timeout with correct values from StreamlitSettings (30s REST, 70s SSE) in tests/unit/test_streamlit_backend_client.py
-- [ ] T040 [P] [US4] Unit test: verify clean error display for each error category (timeout, auth failure, validation, backend unavailable, unknown) in tests/unit/test_streamlit_error_display.py (AppTest with mocked backend responses)
-- [ ] T041 [P] [US4] Static check test: verify no sqlalchemy, asyncpg, psycopg, redis, hvac, minio, Repository, Session imports from streamlit_app/ in tests/unit/test_streamlit_no_direct_db_or_secrets.py
-- [ ] T042 [P] [US4] Static check test: verify no hardcoded secrets (password=, token=, secret=, api_key=, PRIVATE KEY) in streamlit_app/ in tests/unit/test_streamlit_no_direct_db_or_secrets.py
+- [X] T039 [P] [US4] Unit test: verify all BackendAPIClient methods pass explicit httpx.Timeout with correct values from StreamlitSettings (30s REST, 70s SSE) in tests/unit/test_streamlit_backend_client.py
+- [X] T040 [P] [US4] Unit test: verify clean error display for each error category (timeout, auth failure, validation, backend unavailable, unknown) in tests/unit/test_streamlit_error_display.py (AppTest with mocked backend responses)
+- [X] T041 [P] [US4] Static check test: verify no sqlalchemy, asyncpg, psycopg, redis, hvac, minio, Repository, Session imports from streamlit_app/ in tests/unit/test_streamlit_no_direct_db_or_secrets.py
+- [X] T042 [P] [US4] Static check test: verify no hardcoded secrets (password=, token=, secret=, api_key=, PRIVATE KEY) in streamlit_app/ in tests/unit/test_streamlit_no_direct_db_or_secrets.py
 - [ ] T043 [P] [US4] Integration test: full login → chat → widget config → memory inspector flow with mocked backend in tests/integration/test_streamlit_backend_flow.py (AppTest)
 
 ### Implementation for User Story 4
 
-- [ ] T044 [US4] Audit streamlit_app/ for redaction compliance: ensure no raw chat messages, memory contents, tokens, embed snippets, or backend error traces are logged via st.write or Python logging
-- [ ] T045 [US4] Audit streamlit_app/ for architecture boundary compliance: confirm no direct imports of app/repositories/, app/infra/orm_models, app/infra/database, app/infra/redis, app/infra/vault, app/infra/minio, app/infra/llm_adapter, or model_server/
+- [X] T044 [US4] Audit streamlit_app/ for redaction compliance: ensure no raw chat messages, memory contents, tokens, embed snippets, or backend error traces are logged via st.write or Python logging
+- [X] T045 [US4] Audit streamlit_app/ for architecture boundary compliance: confirm no direct imports of app/repositories/, app/infra/orm_models, app/infra/database, app/infra/redis, app/infra/vault, app/infra/minio, app/infra/llm_adapter, or model_server/
 
 **Checkpoint**: All safety properties verified — timeouts enforced, errors clean, no direct DB access, no secrets. Full integration flow works.
 
