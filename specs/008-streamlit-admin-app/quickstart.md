@@ -40,9 +40,10 @@ backend-authorized redacted records.
 
 Log in with a regular backend user.
 
-Expected result: the app calls backend auth, stores token state in
-`st.session_state`, loads the current user profile, and navigates to an
-authenticated page.
+Expected result: the app calls backend auth, stores the auth token in a browser
+cookie via `streamlit-cookies-manager`, keeps only safe non-secret profile/role
+UI state in `st.session_state`, loads the current user profile, and navigates
+to an authenticated page.
 
 Invalid credentials should show a clean login error and leave the session
 unauthenticated.
@@ -51,9 +52,11 @@ unauthenticated.
 
 Open the chat page and send a short maintainer question.
 
-Expected result: the app sends the message to `POST /chat`, displays backend
-response events, and shows a clean error if the backend times out or rejects the
-request.
+Expected result: the app sends the message to `POST /chat`, renders the SSE
+response with `st.write_stream()` from an `httpx` generator adapter, does not
+buffer the full chat response before display, and shows a clean error if the
+backend times out or rejects the request. REST calls use a 30-second timeout;
+the SSE chat stream uses a 70-second timeout.
 
 ## Verify Admin Widget Configuration
 
@@ -64,8 +67,9 @@ backend API calls and displays the backend-generated embed snippet.
 
 Log in as a regular user and attempt to open the admin page.
 
-Expected result: the admin UI is hidden or denied, and no admin mutation request
-is sent.
+Expected result: programmatic `st.navigation()` excludes admin pages from the
+regular-user page list, the admin UI is hidden or denied, and no admin mutation
+request is sent.
 
 ## Verify Memory Inspector
 
@@ -77,22 +81,23 @@ authorization. Backend `403` responses render a clean access message.
 ## Run Tests
 
 ```bash
-python -m pytest tests/unit/test_streamlit_backend_client.py
-python -m pytest tests/unit/test_widget_config_service.py
-python -m pytest tests/unit/test_memory_inspector_service.py
-python -m pytest tests/unit/test_streamlit_session_auth.py
-python -m pytest tests/unit/test_streamlit_admin_guard.py
-python -m pytest tests/unit/test_streamlit_error_display.py
-python -m pytest tests/unit/test_streamlit_no_direct_db_or_secrets.py
-python -m pytest tests/contract/test_internal_ui_backend_contract.py
-python -m pytest tests/contract/test_streamlit_backend_contract.py
-python -m pytest tests/integration/test_streamlit_backend_flow.py
+uv run pytest tests/unit/test_streamlit_backend_client.py
+uv run pytest tests/unit/test_widget_config_service.py
+uv run pytest tests/unit/test_memory_inspector_service.py
+uv run pytest tests/unit/test_streamlit_session_auth.py
+uv run pytest tests/unit/test_streamlit_admin_guard.py
+uv run pytest tests/unit/test_streamlit_error_display.py
+uv run pytest tests/unit/test_streamlit_no_direct_db_or_secrets.py
+uv run pytest tests/contract/test_internal_ui_backend_contract.py
+uv run pytest tests/contract/test_streamlit_backend_contract.py
+uv run pytest tests/integration/test_streamlit_backend_flow.py
 ```
 
-Expected result: tests prove backend-only data access, token session handling,
-admin guard behavior, chat API usage, memory authorization handling, snippet
-display, timeout handling, clean errors, and absence of direct persistence or
-secret usage in Streamlit code.
+Expected result: tests use `streamlit.testing.v1.AppTest` with mocked backend
+API calls and prove backend-only data access, cookie-backed token handling,
+`st.navigation()` admin guard behavior, `st.write_stream()` chat rendering,
+memory authorization handling, snippet display, timeout handling, clean errors,
+and absence of direct persistence or secret usage in Streamlit code.
 
 ## Static Review Checks
 
