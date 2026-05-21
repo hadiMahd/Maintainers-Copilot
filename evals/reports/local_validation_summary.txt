@@ -1,0 +1,837 @@
+MAINTAINER COPILOT LOCAL VALIDATION SUMMARY
+Run: 2026-05-21T21:52:19Z
+
+--- Dependency Install ---
+ + zipp==4.1.0
+PASS: dependency-install
+
+--- Lint (flake8) ---
+./app/api/dependencies/auth.py:6:1: F401 'jwt as _jwt' imported but unused
+./app/api/dependencies/auth.py:30:5: F811 redefinition of unused '_jwt' from line 6
+./app/api/routes/auth.py:6:1: F401 'fastapi.Depends' imported but unused
+./app/api/routes/auth.py:8:1: F401 'app.api.dependencies.auth.get_current_user' imported but unused
+./app/api/routes/auth.py:9:1: F401 'app.core.config.AppSettings' imported but unused
+./app/api/routes/auth.py:10:1: F401 'app.domain.auth.AuthContext' imported but unused
+./app/api/routes/auth.py:18:1: F401 'app.infra.password_hasher.PasswordHasher' imported but unused
+./app/api/routes/auth.py:19:1: F401 'app.infra.token_signer.TokenSigner' imported but unused
+./app/api/routes/auth.py:20:1: F401 'app.repositories.token_session_repository.TokenSessionRepository' imported but unused
+./app/api/routes/auth.py:21:1: F401 'app.repositories.user_repository.UserRepository' imported but unused
+./app/api/routes/auth.py:28:5: F811 redefinition of unused 'AppSettings' from line 9
+./app/api/routes/auth.py:29:5: F811 redefinition of unused 'PasswordHasher' from line 18
+./app/api/routes/auth.py:30:5: F811 redefinition of unused 'TokenSigner' from line 19
+./app/api/routes/auth.py:31:5: F811 redefinition of unused 'TokenSessionRepository' from line 20
+./app/api/routes/auth.py:32:5: F811 redefinition of unused 'UserRepository' from line 21
+./app/api/routes/auth.py:70:1: W391 blank line at end of file
+./app/api/routes/chat.py:129:101: E501 line too long (110 > 100 characters)
+./app/api/routes/chat.py:130:101: E501 line too long (101 > 100 characters)
+./app/api/routes/widget_public.py:9:1: F401 'fastapi.Depends' imported but unused
+./app/api/routes/widget_public.py:39:5: F401 'app.infra.llm_adapter.AzureChatLLMAdapter' imported but unused
+./app/api/routes/widget_public.py:64:9: E306 expected 1 blank line before a nested definition, found 0
+./app/api/routes/widget_public.py:67:101: E501 line too long (178 > 100 characters)
+./app/domain/__init__.py:48:2: W292 no newline at end of file
+./app/domain/classifier.py:154:101: E501 line too long (107 > 100 characters)
+./app/domain/widget_config.py:6:1: F401 'typing.Optional' imported but unused
+./app/infra/__init__.py:10:2: W292 no newline at end of file
+./app/infra/conversation_state_adapter.py:29:101: E501 line too long (101 > 100 characters)
+./app/infra/database.py:6:101: E501 line too long (101 > 100 characters)
+./app/infra/llm/__init__.py:13:2: W292 no newline at end of file
+./app/infra/mlflow/__init__.py:19:2: W292 no newline at end of file
+./app/infra/mlflow/tracking.py:135:20: W292 no newline at end of file
+./app/infra/model_server_tools.py:80:101: E501 line too long (103 > 100 characters)
+./app/infra/model_server_tools.py:154:101: E501 line too long (103 > 100 characters)
+./app/infra/orm_models.py:4:101: E501 line too long (110 > 100 characters)
+./app/infra/orm_models.py:5:1: F401 'sqlalchemy.orm.mapped_column' imported but unused
+./app/infra/orm_models.py:62:101: E501 line too long (103 > 100 characters)
+./app/infra/orm_models.py:126:101: E501 line too long (103 > 100 characters)
+./app/infra/prompt_registry.py:26:101: E501 line too long (104 > 100 characters)
+./app/infra/rag_tool_client.py:13:1: F401 'app.domain.rag.RetrievalQuery' imported but unused
+./app/infra/rag_tool_client.py:13:1: F401 'app.domain.rag.RetrievalResultSet' imported but unused
+./app/infra/rag_tool_client.py:73:9: F811 redefinition of unused 'RetrievalQuery' from line 13
+./app/infra/rag_tool_client.py:73:9: F811 redefinition of unused 'RetrievalResultSet' from line 13
+./app/infra/redaction.py:47:101: E501 line too long (111 > 100 characters)
+./app/infra/storage/__init__.py:17:2: W292 no newline at end of file
+./app/infra/token_signer.py:10:1: F401 'datetime' imported but unused
+./app/infra/widget_assets.py:5:1: F401 'os' imported but unused
+./app/repositories/rag_chunk_repository.py:11:1: F401 'app.domain.rag.RAGRetrievalError' imported but unused
+./app/repositories/rag_chunk_repository.py:23:101: E501 line too long (113 > 100 characters)
+./app/repositories/rag_chunk_repository.py:91:101: E501 line too long (105 > 100 characters)
+./app/repositories/rag_chunk_repository.py:94:101: E501 line too long (116 > 100 characters)
+./app/repositories/rag_embedding_repository.py:65:101: E501 line too long (101 > 100 characters)
+./app/services/__init__.py:21:2: W292 no newline at end of file
+./app/services/admin_invitation_service.py:18:1: F401 'app.domain.auth.AdminInvitationCreate' imported but unused
+./app/services/audit_service.py:73:9: F841 local variable 'log' is assigned to but never used
+./app/services/audit_service.py:102:9: F841 local variable 't' is assigned to but never used
+./app/services/auth_service.py:13:1: F401 'typing.AsyncContextManager' imported but unused
+./app/services/auth_service.py:16:1: F401 'sqlalchemy.ext.asyncio.AsyncSession' imported but unused
+./app/services/chatbot_graph_service.py:8:1: F401 'app.domain.chat_tools.LLMCompletion' imported but unused
+./app/services/chatbot_graph_service.py:205:101: E501 line too long (113 > 100 characters)
+./app/services/chatbot_service.py:69:101: E501 line too long (109 > 100 characters)
+./app/services/chatbot_service.py:83:101: E501 line too long (111 > 100 characters)
+./app/services/chatbot_service.py:129:9: F841 local variable 'exc' is assigned to but never used
+./app/services/chatbot_service.py:161:101: E501 line too long (110 > 100 characters)
+./app/services/chatbot_service.py:235:101: E501 line too long (112 > 100 characters)
+./app/services/classifier_evaluation.py:18:1: F401 'app.domain.classifier.APPROACH_NAMES' imported but unused
+./app/services/classifier_evaluation.py:47:101: E501 line too long (108 > 100 characters)
+./app/services/classifier_evaluation.py:147:14: W292 no newline at end of file
+./app/services/long_term_memory_service.py:128:13: F841 local variable 'exc' is assigned to but never used
+./app/services/memory_inspector_service.py:15:101: E501 line too long (103 > 100 characters)
+./app/services/rag_evaluation_service.py:9:1: F401 'pathlib.Path' imported but unused
+./app/services/rag_evaluation_service.py:12:1: F401 'app.domain.rag.GroundedAnswer' imported but unused
+./app/services/rag_evaluation_service.py:12:1: F401 'app.domain.rag.RetrievalQuery' imported but unused
+./app/services/rag_evaluation_service.py:24:1: F401 'app.infra.redaction.redact_eval_report' imported but unused
+./app/services/rag_evaluation_service.py:111:101: E501 line too long (105 > 100 characters)
+./app/services/rag_evaluation_service.py:123:9: F841 local variable 'rid' is assigned to but never used
+./app/services/rag_evaluation_service.py:152:101: E501 line too long (103 > 100 characters)
+./app/services/rag_evaluation_service.py:180:9: F841 local variable 'rid' is assigned to but never used
+./app/services/rag_evaluation_service.py:214:101: E501 line too long (103 > 100 characters)
+./app/services/rag_evaluation_service.py:273:101: E501 line too long (123 > 100 characters)
+./app/services/rag_evaluation_service.py:299:9: F841 local variable 'expected' is assigned to but never used
+./app/services/rag_generation_service.py:8:1: F401 'app.domain.rag.RetrievalQuery' imported but unused
+./app/services/rag_generation_service.py:15:1: F401 'app.infra.redaction.redact_rag_prompt' imported but unused
+./app/services/rag_index_service.py:5:1: F401 'json' imported but unused
+./app/services/rag_index_service.py:8:1: F401 'pathlib.Path' imported but unused
+./app/services/rag_index_service.py:11:1: F401 'app.infra.embedding_client.FakeEmbeddingClient' imported but unused
+./app/services/rag_ingestion_service.py:7:1: F401 'uuid' imported but unused
+./app/services/rag_retrieval_service.py:1:101: E501 line too long (159 > 100 characters)
+./app/services/rag_retrieval_service.py:6:1: F401 'math' imported but unused
+./app/services/rag_retrieval_service.py:15:1: F401 'app.infra.reranker_client.resolve_reranker' imported but unused
+./app/services/rag_retrieval_service.py:194:101: E501 line too long (107 > 100 characters)
+./app/services/rag_snapshot_service.py:6:1: F401 'uuid' imported but unused
+./app/services/widget_chat_service.py:9:1: F401 'app.domain.errors.WidgetSessionError' imported but unused
+./app/services/widget_config_service.py:17:101: E501 line too long (111 > 100 characters)
+./app/services/widget_embed_service.py:7:1: F401 'app.domain.errors.WidgetEmbedError' imported but unused
+./app/services/widget_session_service.py:10:1: F401 'app.domain.errors.WidgetSessionError' imported but unused
+./migrations/env.py:9:1: F401 'sqlalchemy.ext.asyncio.async_engine_from_config' imported but unused
+./model_server/api/classifier.py:29:101: E501 line too long (127 > 100 characters)
+./model_server/api/issue_analysis.py:6:1: F401 'fastapi.responses.JSONResponse' imported but unused
+./model_server/api/issue_analysis.py:41:101: E501 line too long (104 > 100 characters)
+./model_server/api/issue_analysis.py:56:101: E501 line too long (107 > 100 characters)
+./model_server/api/issue_analysis.py:99:101: E501 line too long (107 > 100 characters)
+./model_server/api/issue_analysis.py:157:1: W391 blank line at end of file
+./model_server/domain/__init__.py:15:2: W292 no newline at end of file
+./model_server/domain/classifier.py:42:100: W292 no newline at end of file
+./model_server/domain/issue_analysis.py:48:101: E501 line too long (102 > 100 characters)
+./model_server/infra/__init__.py:11:2: W292 no newline at end of file
+./model_server/infra/classifier_loader.py:153:101: E501 line too long (117 > 100 characters)
+./model_server/infra/classifier_loader.py:233:101: E501 line too long (101 > 100 characters)
+./model_server/main.py:11:1: F401 'fastapi.responses.JSONResponse' imported but unused
+./model_server/main.py:42:101: E501 line too long (107 > 100 characters)
+./model_server/services/__init__.py:5:32: W292 no newline at end of file
+./model_server/services/ner_service.py:7:1: F401 'model_server.domain.issue_analysis.EntityType' imported but unused
+./model_server/services/ner_service.py:7:1: F401 'model_server.domain.issue_analysis.SUPPORTED_ENTITY_TYPES' imported but unused
+./model_server/services/ner_service.py:16:1: F401 'model_server.infra.entity_ruler_pipeline.EntityExtractionResult' imported but unused
+./scripts/build_rag_index.py:17:1: F401 'pathlib.Path' imported but unused
+./scripts/build_rag_index.py:20:1: F401 'app.infra.embedding_client.LocalEmbeddingClient' imported but unused
+./scripts/build_rag_index.py:37:101: E501 line too long (110 > 100 characters)
+./scripts/build_rag_index.py:38:101: E501 line too long (102 > 100 characters)
+./scripts/ci/check_eval_thresholds.py:3:1: F401 'os' imported but unused
+./scripts/ci/check_eval_thresholds.py:4:1: F401 'subprocess' imported but unused
+./scripts/ci/check_eval_thresholds.py:5:1: F401 'sys' imported but unused
+./scripts/ci/check_redaction_leaks.py:20:1: F401 'scripts.ci.common.redact_output' imported but unused
+./scripts/ci/compare_previous_green_report.py:38:101: E501 line too long (104 > 100 characters)
+./scripts/ci/model_artifacts.py:5:1: F401 'typing.Optional' imported but unused
+./scripts/ci/model_artifacts.py:64:101: E501 line too long (109 > 100 characters)
+./scripts/ci/report_storage.py:57:101: E501 line too long (102 > 100 characters)
+./scripts/ci/report_storage.py:62:101: E501 line too long (102 > 100 characters)
+./scripts/ci/run_classifier_eval.py:60:101: E501 line too long (103 > 100 characters)
+./scripts/ci/run_rag_eval.py:12:1: F401 'os' imported but unused
+./scripts/ci/secret_scan.py:15:101: E501 line too long (106 > 100 characters)
+./scripts/ci/secret_scan.py:36:101: E501 line too long (130 > 100 characters)
+./scripts/ci/secret_scan.py:37:101: E501 line too long (135 > 100 characters)
+./scripts/ci/startup_checks.py:6:1: F401 'typing.Optional' imported but unused
+./scripts/ci/startup_checks.py:25:101: E501 line too long (121 > 100 characters)
+./scripts/ci/startup_checks.py:35:101: E501 line too long (111 > 100 characters)
+./scripts/ci/validate_stack_health.py:4:1: F401 'typing.Any' imported but unused
+./scripts/evaluate_classifiers.py:142:101: E501 line too long (105 > 100 characters)
+./scripts/generate_classical_predictions.py:5:1: F401 'pathlib.Path' imported but unused
+./scripts/generate_classical_predictions.py:22:5: F841 local variable 'labels' is assigned to but never used
+./scripts/generate_classical_predictions.py:66:37: W292 no newline at end of file
+./scripts/generate_report.py:6:1: F401 'sys' imported but unused
+./scripts/generate_test_jsonl.py:44:26: W292 no newline at end of file
+./scripts/ingest_docs.py:29:101: E501 line too long (109 > 100 characters)
+./scripts/ingest_docs.py:30:101: E501 line too long (106 > 100 characters)
+./scripts/ingest_resolved_issues.py:29:101: E501 line too long (109 > 100 characters)
+./scripts/ingest_resolved_issues.py:30:101: E501 line too long (106 > 100 characters)
+./scripts/ingest_resolved_issues.py:32:101: E501 line too long (113 > 100 characters)
+./scripts/measure_classifier_latency.py:32:101: E501 line too long (101 > 100 characters)
+./scripts/measure_classifier_latency.py:47:101: E501 line too long (102 > 100 characters)
+./scripts/measure_classifier_latency.py:51:101: E501 line too long (105 > 100 characters)
+./scripts/measure_classifier_latency.py:102:11: W292 no newline at end of file
+./scripts/run_llm_classifier_baseline.py:153:101: E501 line too long (116 > 100 characters)
+./scripts/seed_vault_from_env.py:108:101: E501 line too long (102 > 100 characters)
+./scripts/train_classical_classifier.py:11:1: F401 'hashlib' imported but unused
+./scripts/train_classical_classifier.py:20:1: F401 'app.services.classifier_evaluation.compute_dataset_hash' imported but unused
+./scripts/train_classical_classifier.py:20:1: F401 'app.services.classifier_evaluation.LABEL_ORDER' imported but unused
+./scripts/train_classical_classifier.py:148:101: E501 line too long (121 > 100 characters)
+./scripts/train_classical_classifier.py:153:33: W292 no newline at end of file
+./scripts/train_transformer_classifier.py:17:1: F401 'app.domain.classifier.LABEL_ORDER' imported but unused
+./scripts/train_transformer_classifier.py:116:101: E501 line too long (104 > 100 characters)
+./scripts/train_transformer_classifier.py:240:101: E501 line too long (102 > 100 characters)
+./scripts/validate_stack.py:48:56: F841 local variable 'response' is assigned to but never used
+./streamlit_app/app.py:19:1: E402 module level import not at top of file
+./streamlit_app/app.py:20:1: E402 module level import not at top of file
+./streamlit_app/app.py:28:1: E402 module level import not at top of file
+./streamlit_app/app.py:29:1: E402 module level import not at top of file
+./streamlit_app/app.py:30:1: F401 'streamlit_app.models.CurrentUserView' imported but unused
+./streamlit_app/app.py:30:1: E402 module level import not at top of file
+./streamlit_app/components/auth.py:12:1: F401 'streamlit_app.models.LoginCredentials' imported but unused
+./streamlit_app/config.py:28:101: E501 line too long (125 > 100 characters)
+./streamlit_app/models.py:4:1: F401 'typing.Literal' imported but unused
+./streamlit_app/pages/admin_widget_config.py:19:1: E402 module level import not at top of file
+./streamlit_app/pages/admin_widget_config.py:20:1: E402 module level import not at top of file
+./streamlit_app/pages/admin_widget_config.py:21:1: E402 module level import not at top of file
+./streamlit_app/pages/admin_widget_config.py:22:1: E402 module level import not at top of file
+./streamlit_app/pages/admin_widget_config.py:23:1: E402 module level import not at top of file
+./streamlit_app/pages/admin_widget_config.py:24:1: E402 module level import not at top of file
+./streamlit_app/pages/chat.py:20:1: E402 module level import not at top of file
+./streamlit_app/pages/chat.py:21:1: E402 module level import not at top of file
+./streamlit_app/pages/chat.py:22:1: E402 module level import not at top of file
+./streamlit_app/pages/chat.py:23:1: E402 module level import not at top of file
+./streamlit_app/pages/chat.py:24:1: F401 'streamlit_app.models.ChatEventView' imported but unused
+./streamlit_app/pages/chat.py:24:1: E402 module level import not at top of file
+./streamlit_app/pages/chat.py:48:101: E501 line too long (102 > 100 characters)
+./streamlit_app/pages/memory_inspector.py:20:1: E402 module level import not at top of file
+./streamlit_app/pages/memory_inspector.py:21:1: E402 module level import not at top of file
+./streamlit_app/pages/memory_inspector.py:22:1: E402 module level import not at top of file
+./streamlit_app/pages/memory_inspector.py:23:1: E402 module level import not at top of file
+./streamlit_app/pages/memory_inspector.py:24:1: E402 module level import not at top of file
+./tests/ci/test_classifier_eval_gate.py:4:1: F401 'tempfile' imported but unused
+./tests/ci/test_classifier_eval_gate.py:7:1: F401 'pytest' imported but unused
+./tests/ci/test_classifier_eval_gate.py:26:36: E741 ambiguous variable name 'l'
+./tests/ci/test_classifier_eval_gate.py:31:36: E741 ambiguous variable name 'l'
+./tests/ci/test_classifier_eval_gate.py:93:9: F401 'sys' imported but unused
+./tests/ci/test_classifier_eval_gate.py:95:9: F401 'unittest.mock.patch' imported but unused
+./tests/ci/test_eval_report_schema.py:3:1: F401 'json' imported but unused
+./tests/ci/test_eval_report_schema.py:7:1: F401 'pytest' imported but unused
+./tests/ci/test_eval_report_storage.py:3:1: F401 'json' imported but unused
+./tests/ci/test_eval_report_storage.py:9:1: F401 'scripts.ci.eval_report.write_report' imported but unused
+./tests/ci/test_eval_threshold_gate.py:140:9: F401 'yaml' imported but unused
+./tests/ci/test_makefile_targets.py:3:1: F401 'os' imported but unused
+./tests/ci/test_makefile_targets.py:4:1: F401 'subprocess' imported but unused
+./tests/ci/test_makefile_targets.py:5:1: F401 'tempfile' imported but unused
+./tests/ci/test_model_artifact_hash_gate.py:61:24: E401 multiple imports on one line
+./tests/ci/test_model_artifact_hash_gate.py:89:24: E401 multiple imports on one line
+./tests/ci/test_model_artifact_hash_gate.py:116:24: E401 multiple imports on one line
+./tests/ci/test_previous_green_report_diff.py:3:1: F401 'json' imported but unused
+./tests/ci/test_previous_green_report_diff.py:4:1: F401 'tempfile' imported but unused
+./tests/ci/test_previous_green_report_diff.py:7:1: F401 'pytest' imported but unused
+./tests/ci/test_previous_green_report_diff.py:9:1: F401 'scripts.ci.eval_report.write_report' imported but unused
+./tests/ci/test_previous_green_report_diff.py:10:1: F401 'scripts.ci.report_storage.load_report_local' imported but unused
+./tests/ci/test_previous_green_report_diff.py:10:101: E501 line too long (103 > 100 characters)
+./tests/ci/test_rag_eval_gate.py:6:1: F401 'pytest' imported but unused
+./tests/ci/test_rag_eval_gate.py:25:36: E741 ambiguous variable name 'l'
+./tests/ci/test_rag_eval_gate.py:30:36: E741 ambiguous variable name 'l'
+./tests/ci/test_rag_eval_gate.py:85:101: E501 line too long (101 > 100 characters)
+./tests/ci/test_readme_commands.py:3:1: F401 're' imported but unused
+./tests/ci/test_redaction_leak_gate.py:3:1: F401 'os' imported but unused
+./tests/ci/test_redaction_leak_gate.py:4:1: F401 'tempfile' imported but unused
+./tests/ci/test_redaction_leak_gate.py:7:1: F401 'pytest' imported but unused
+./tests/ci/test_runbook_failure_paths.py:3:1: F401 're' imported but unused
+./tests/ci/test_startup_failure_gates.py:3:1: F401 'tempfile' imported but unused
+./tests/ci/test_startup_failure_gates.py:6:1: F401 'pytest' imported but unused
+./tests/ci/test_static_secret_pattern_gate.py:3:1: F401 'json' imported but unused
+./tests/ci/test_static_secret_pattern_gate.py:80:101: E501 line too long (104 > 100 characters)
+./tests/ci/test_tracing_config_gate.py:3:1: F401 'os' imported but unused
+./tests/ci/test_validation_workflow_order.py:60:101: E501 line too long (140 > 100 characters)
+./tests/conftest.py:13:1: E402 module level import not at top of file
+./tests/conftest.py:14:1: E402 module level import not at top of file
+./tests/conftest.py:16:1: E402 module level import not at top of file
+./tests/conftest.py:17:1: E402 module level import not at top of file
+./tests/conftest.py:255:101: E501 line too long (102 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:82:9: F841 local variable 'mock_audit_svc' is assigned to but never used
+./tests/contract/test_auth_memory_api_contract.py:88:101: E501 line too long (109 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:98:9: F841 local variable 'mock_audit_svc' is assigned to but never used
+./tests/contract/test_auth_memory_api_contract.py:104:101: E501 line too long (112 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:108:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:119:9: F841 local variable 'mock_audit_svc' is assigned to but never used
+./tests/contract/test_auth_memory_api_contract.py:125:101: E501 line too long (107 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:135:9: F841 local variable 'mock_audit_svc' is assigned to but never used
+./tests/contract/test_auth_memory_api_contract.py:141:101: E501 line too long (101 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:152:9: F841 local variable 'mock_audit_svc' is assigned to but never used
+./tests/contract/test_auth_memory_api_contract.py:165:9: F841 local variable 'mock_audit_svc' is assigned to but never used
+./tests/contract/test_auth_memory_api_contract.py:201:9: F401 'unittest.mock.MagicMock' imported but unused
+./tests/contract/test_auth_memory_api_contract.py:212:101: E501 line too long (122 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:259:9: F401 'unittest.mock.MagicMock' imported but unused
+./tests/contract/test_auth_memory_api_contract.py:321:9: F401 'unittest.mock.MagicMock' imported but unused
+./tests/contract/test_auth_memory_api_contract.py:342:101: E501 line too long (164 > 100 characters)
+./tests/contract/test_auth_memory_api_contract.py:608:101: E501 line too long (101 > 100 characters)
+./tests/contract/test_classifier_endpoint_contract.py:63:101: E501 line too long (109 > 100 characters)
+./tests/contract/test_classifier_endpoint_contract.py:87:45: W292 no newline at end of file
+./tests/contract/test_internal_ui_backend_contract.py:146:21: E131 continuation line unaligned for hanging indent
+./tests/contract/test_internal_ui_backend_contract.py:181:101: E501 line too long (125 > 100 characters)
+./tests/contract/test_issue_analysis_endpoints.py:103:101: E501 line too long (101 > 100 characters)
+./tests/contract/test_rag_commands.py:5:1: F401 'json' imported but unused
+./tests/contract/test_rag_commands.py:6:1: F401 'sys' imported but unused
+./tests/contract/test_rag_commands.py:7:1: F401 'pathlib.Path' imported but unused
+./tests/contract/test_rag_commands.py:8:1: F401 'unittest.mock.patch' imported but unused
+./tests/contract/test_rag_commands.py:10:1: F401 'pytest' imported but unused
+./tests/contract/test_rag_commands.py:12:1: F401 'app.domain.rag.RAGChunk' imported but unused
+./tests/contract/test_rag_commands.py:21:101: E501 line too long (112 > 100 characters)
+./tests/contract/test_widget_api_contract.py:12:1: F401 'app.api.dependencies.authorization.require_admin' imported but unused
+./tests/contract/test_widget_api_contract.py:43:101: E501 line too long (132 > 100 characters)
+./tests/contract/test_widget_api_contract.py:44:101: E501 line too long (123 > 100 characters)
+./tests/contract/test_widget_api_contract.py:55:101: E501 line too long (146 > 100 characters)
+./tests/contract/test_widget_api_contract.py:90:101: E501 line too long (108 > 100 characters)
+./tests/contract/test_widget_api_contract.py:94:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:104:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:128:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:139:101: E501 line too long (102 > 100 characters)
+./tests/contract/test_widget_api_contract.py:141:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:153:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:165:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:176:101: E501 line too long (103 > 100 characters)
+./tests/contract/test_widget_api_contract.py:187:101: E501 line too long (103 > 100 characters)
+./tests/integration/test_admin_invitation_flow.py:8:1: F401 'app.domain.errors.InvitationError' imported but unused
+./tests/integration/test_admin_invitation_flow.py:100:101: E501 line too long (116 > 100 characters)
+./tests/integration/test_auth_lifecycle_vault_key.py:75:9: F401 'app.repositories.user_repository.UserRepository' imported but unused
+./tests/integration/test_auth_lifecycle_vault_key.py:76:9: F401 'app.repositories.token_session_repository.TokenSessionRepository' imported but unused
+./tests/integration/test_auth_lifecycle_vault_key.py:100:9: F401 'app.repositories.user_repository.UserRepository' imported but unused
+./tests/integration/test_chat_failed_tool_recovery.py:30:101: E501 line too long (101 > 100 characters)
+./tests/integration/test_chat_failed_tool_recovery.py:90:101: E501 line too long (101 > 100 characters)
+./tests/integration/test_chat_failed_tool_recovery.py:103:101: E501 line too long (123 > 100 characters)
+./tests/integration/test_chat_redis_state.py:27:101: E501 line too long (102 > 100 characters)
+./tests/integration/test_chat_redis_state.py:60:101: E501 line too long (127 > 100 characters)
+./tests/integration/test_chat_redis_state.py:71:101: E501 line too long (121 > 100 characters)
+./tests/integration/test_chat_redis_state.py:72:101: E501 line too long (125 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:8:101: E501 line too long (123 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:33:101: E501 line too long (102 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:72:101: E501 line too long (117 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:75:101: E501 line too long (131 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:113:101: E501 line too long (118 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:136:101: E501 line too long (101 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:138:101: E501 line too long (101 > 100 characters)
+./tests/integration/test_chat_successful_tool_call.py:244:101: E501 line too long (124 > 100 characters)
+./tests/integration/test_chat_trace_log_correlation.py:41:101: E501 line too long (101 > 100 characters)
+./tests/integration/test_chat_trace_log_correlation.py:85:101: E501 line too long (103 > 100 characters)
+./tests/integration/test_chat_trace_log_correlation.py:99:101: E501 line too long (101 > 100 characters)
+./tests/integration/test_cross_conversation_recall.py:45:101: E501 line too long (112 > 100 characters)
+./tests/integration/test_cross_conversation_recall.py:87:101: E501 line too long (109 > 100 characters)
+./tests/integration/test_cross_conversation_recall.py:118:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_rag_grounded_answers.py:9:1: F401 'asyncio' imported but unused
+./tests/integration/test_rag_grounded_answers.py:11:1: F401 'pytest' imported but unused
+./tests/integration/test_rag_grounded_answers.py:13:1: F401 'app.domain.rag.GroundedAnswer' imported but unused
+./tests/integration/test_rag_grounded_answers.py:13:1: F401 'app.domain.rag.RetrievalQuery' imported but unused
+./tests/integration/test_rag_grounded_answers.py:23:1: F401 'app.services.rag_retrieval_service.RAGRetrievalService' imported but unused
+./tests/integration/test_rag_grounded_answers.py:27:1: F401 'app.repositories.rag_chunk_repository.RAGChunkRepository' imported but unused
+./tests/integration/test_rag_grounded_answers.py:58:23: E128 continuation line under-indented for visual indent
+./tests/integration/test_rag_grounded_answers.py:94:9: F401 'time' imported but unused
+./tests/integration/test_rag_grounded_answers.py:181:30: E128 continuation line under-indented for visual indent
+./tests/integration/test_rag_grounded_answers.py:187:30: E128 continuation line under-indented for visual indent
+./tests/integration/test_rag_grounded_answers.py:213:1: W391 blank line at end of file
+./tests/integration/test_rag_index_scripts.py:1:101: E501 line too long (106 > 100 characters)
+./tests/integration/test_rag_index_scripts.py:7:1: F401 'os' imported but unused
+./tests/integration/test_rag_index_scripts.py:8:1: F401 'tempfile' imported but unused
+./tests/integration/test_rag_index_scripts.py:10:1: F401 'pytest' imported but unused
+./tests/integration/test_rag_index_scripts.py:22:101: E501 line too long (109 > 100 characters)
+./tests/integration/test_rag_index_scripts.py:42:101: E501 line too long (113 > 100 characters)
+./tests/integration/test_rag_pgvector_retrieval.py:1:101: E501 line too long (117 > 100 characters)
+./tests/integration/test_rag_pgvector_retrieval.py:5:1: F401 'pytest' imported but unused
+./tests/integration/test_rag_pgvector_retrieval.py:7:1: F401 'app.domain.rag.RetrievalQuery' imported but unused
+./tests/integration/test_rag_pgvector_retrieval.py:11:101: E501 line too long (103 > 100 characters)
+./tests/integration/test_stack_smoke_health.py:3:1: F401 'json' imported but unused
+./tests/integration/test_stack_smoke_health.py:5:1: F401 'subprocess' imported but unused
+./tests/integration/test_stack_smoke_health.py:6:1: F401 'time' imported but unused
+./tests/integration/test_stack_smoke_health.py:11:1: F401 'pytest' imported but unused
+./tests/integration/test_streamlit_backend_flow.py:9:1: F401 'unittest.mock.MagicMock' imported but unused
+./tests/integration/test_streamlit_backend_flow.py:115:21: E128 continuation line under-indented for visual indent
+./tests/integration/test_streamlit_backend_flow.py:177:101: E501 line too long (159 > 100 characters)
+./tests/integration/test_streamlit_backend_flow.py:295:101: E501 line too long (137 > 100 characters)
+./tests/integration/test_widget_admin_crud.py:44:101: E501 line too long (111 > 100 characters)
+./tests/integration/test_widget_admin_crud.py:47:101: E501 line too long (126 > 100 characters)
+./tests/integration/test_widget_admin_crud.py:98:101: E501 line too long (113 > 100 characters)
+./tests/integration/test_widget_admin_crud.py:104:5: F841 local variable 'orig_get_svc' is assigned to but never used
+./tests/integration/test_widget_admin_crud.py:105:5: F841 local variable 'orig_get_audit' is assigned to but never used
+./tests/integration/test_widget_admin_crud.py:120:101: E501 line too long (103 > 100 characters)
+./tests/integration/test_widget_allowed_origin.py:12:1: F401 'app.api.dependencies.auth.get_current_user' imported but unused
+./tests/integration/test_widget_allowed_origin.py:13:1: F401 'app.domain.auth.AuthContext' imported but unused
+./tests/integration/test_widget_allowed_origin.py:14:1: F401 'app.domain.widget_config.WidgetSessionToken' imported but unused
+./tests/integration/test_widget_allowed_origin.py:57:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_allowed_origin.py:85:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_allowed_origin.py:101:101: E501 line too long (103 > 100 characters)
+./tests/integration/test_widget_allowed_origin.py:121:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_blocked_origin.py:53:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_blocked_origin.py:75:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_blocked_origin.py:97:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_blocked_origin.py:117:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_chat_stream.py:84:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_chat_stream.py:121:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_chat_stream.py:163:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_chat_stream.py:173:28: E741 ambiguous variable name 'l'
+./tests/integration/test_widget_chat_stream.py:214:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_chat_stream.py:224:28: E741 ambiguous variable name 'l'
+./tests/integration/test_widget_chat_stream.py:258:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_frame_headers.py:54:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_frame_headers.py:70:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_frame_headers.py:77:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_frame_headers.py:101:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_frame_headers.py:122:101: E501 line too long (107 > 100 characters)
+./tests/integration/test_widget_frame_headers.py:144:101: E501 line too long (107 > 100 characters)
+./tests/test_config.py:3:1: F401 'os' imported but unused
+./tests/test_label_mapping.py:3:1: F401 'pytest' imported but unused
+./tests/test_label_mapping.py:51:101: E501 line too long (106 > 100 characters)
+./tests/test_no_secrets.py:78:13: F541 f-string is missing placeholders
+./tests/test_route_boundaries.py:6:1: F401 'pytest' imported but unused
+./tests/test_schemas.py:3:1: F401 'pytest' imported but unused
+./tests/unit/test_admin_invitation_service.py:35:9: F401 'app.repositories.audit_log_repository.AuditLogRepository' imported but unused
+./tests/unit/test_auth_service.py:4:1: F401 'unittest.mock.patch' imported but unused
+./tests/unit/test_auth_service.py:8:1: F401 'app.domain.auth.RefreshRequest' imported but unused
+./tests/unit/test_auth_service.py:8:1: F401 'app.domain.auth.UserRead' imported but unused
+./tests/unit/test_auth_service.py:9:1: F401 'app.domain.errors.TokenError' imported but unused
+./tests/unit/test_auth_service.py:125:9: F401 'app.infra.token_signer.TokenSigner' imported but unused
+./tests/unit/test_chat_limits.py:5:1: F401 'asyncio' imported but unused
+./tests/unit/test_chat_limits.py:34:101: E501 line too long (106 > 100 characters)
+./tests/unit/test_chat_limits.py:40:101: E501 line too long (107 > 100 characters)
+./tests/unit/test_chat_limits.py:94:101: E501 line too long (102 > 100 characters)
+./tests/unit/test_chat_limits.py:158:101: E501 line too long (103 > 100 characters)
+./tests/unit/test_chat_limits.py:159:101: E501 line too long (103 > 100 characters)
+./tests/unit/test_chatbot_graph.py:7:1: F401 'app.domain.chat.TraceRoot' imported but unused
+./tests/unit/test_chatbot_graph.py:35:101: E501 line too long (109 > 100 characters)
+./tests/unit/test_chatbot_graph.py:69:101: E501 line too long (102 > 100 characters)
+./tests/unit/test_classifier_metrics.py:4:1: F401 'tempfile' imported but unused
+./tests/unit/test_classifier_metrics.py:5:1: F401 'os' imported but unused
+./tests/unit/test_classifier_metrics.py:10:1: F401 'app.domain.classifier.EvaluationReport' imported but unused
+./tests/unit/test_classifier_metrics.py:138:101: E501 line too long (104 > 100 characters)
+./tests/unit/test_classifier_metrics.py:191:51: W292 no newline at end of file
+./tests/unit/test_classifier_redaction.py:3:1: F401 'pytest' imported but unused
+./tests/unit/test_classifier_redaction.py:85:48: W292 no newline at end of file
+./tests/unit/test_classifier_run_metadata.py:4:1: F401 'tempfile' imported but unused
+./tests/unit/test_classifier_run_metadata.py:7:1: F401 'pytest' imported but unused
+./tests/unit/test_classifier_run_metadata.py:9:1: F401 'app.domain.classifier.ArtifactManifest' imported but unused
+./tests/unit/test_classifier_run_metadata.py:10:1: F401 'app.infra.storage.classifier_artifacts.validate_artifact_hash' imported but unused
+./tests/unit/test_classifier_run_metadata.py:109:50: W292 no newline at end of file
+./tests/unit/test_classifier_schemas.py:145:101: E501 line too long (103 > 100 characters)
+./tests/unit/test_issue_analysis_redaction.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_issue_analysis_tracing.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_long_term_memory_recall.py:14:101: E501 line too long (116 > 100 characters)
+./tests/unit/test_long_term_memory_recall.py:57:101: E501 line too long (106 > 100 characters)
+./tests/unit/test_long_term_memory_recall.py:75:101: E501 line too long (106 > 100 characters)
+./tests/unit/test_memory_embedding_dimensions.py:7:101: E501 line too long (101 > 100 characters)
+./tests/unit/test_ner_service.py:13:1: F401 'model_server.domain.issue_analysis.EntityType' imported but unused
+./tests/unit/test_ner_service.py:13:1: F401 'model_server.domain.issue_analysis.ExtractedEntity' imported but unused
+./tests/unit/test_ner_service.py:13:1: F401 'model_server.domain.issue_analysis.SourceSpan' imported but unused
+./tests/unit/test_ner_service.py:19:1: F401 'model_server.infra.entity_ruler_pipeline.EntityExtractionResult' imported but unused
+./tests/unit/test_observability_coverage.py:52:101: E501 line too long (108 > 100 characters)
+./tests/unit/test_observability_coverage.py:95:101: E501 line too long (115 > 100 characters)
+./tests/unit/test_observability_coverage.py:99:101: E501 line too long (105 > 100 characters)
+./tests/unit/test_observability_coverage.py:149:101: E501 line too long (106 > 100 characters)
+./tests/unit/test_observability_coverage.py:181:101: E501 line too long (105 > 100 characters)
+./tests/unit/test_observability_coverage.py:222:101: E501 line too long (103 > 100 characters)
+./tests/unit/test_observability_coverage.py:228:101: E501 line too long (105 > 100 characters)
+./tests/unit/test_rag_chunking.py:1:101: E501 line too long (103 > 100 characters)
+./tests/unit/test_rag_chunking.py:7:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_chunking.py:16:101: E501 line too long (184 > 100 characters)
+./tests/unit/test_rag_chunking.py:26:101: E501 line too long (138 > 100 characters)
+./tests/unit/test_rag_chunking.py:29:101: E501 line too long (130 > 100 characters)
+./tests/unit/test_rag_chunking.py:33:101: E501 line too long (171 > 100 characters)
+./tests/unit/test_rag_generation_service.py:5:1: F401 'asyncio' imported but unused
+./tests/unit/test_rag_generation_service.py:9:1: F401 'app.domain.rag.GroundedAnswer' imported but unused
+./tests/unit/test_rag_generation_service.py:9:1: F401 'app.domain.rag.RetrievalQuery' imported but unused
+./tests/unit/test_rag_generation_service.py:16:1: F401 'app.infra.rag_generation_client.BaseGenerationClient' imported but unused
+./tests/unit/test_rag_generation_service.py:39:27: E128 continuation line under-indented for visual indent
+./tests/unit/test_rag_hybrid_scoring.py:5:1: F401 'math' imported but unused
+./tests/unit/test_rag_metadata_filtering.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_metadata_filtering.py:10:101: E501 line too long (135 > 100 characters)
+./tests/unit/test_rag_observability.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_observability.py:7:1: F401 'app.infra.redaction.redact_issue_analysis_metadata' imported but unused
+./tests/unit/test_rag_provider_resolution.py:7:1: F401 'app.infra.embedding_client.LocalEmbeddingClient' imported but unused
+./tests/unit/test_rag_query_transformation.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_redaction.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_reranking.py:1:101: E501 line too long (117 > 100 characters)
+./tests/unit/test_rag_reranking.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_reranking.py:17:27: E128 continuation line under-indented for visual indent
+./tests/unit/test_rag_reranking.py:143:101: E501 line too long (112 > 100 characters)
+./tests/unit/test_rag_snapshot_service.py:1:101: E501 line too long (107 > 100 characters)
+./tests/unit/test_rag_snapshot_service.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_rag_snapshot_service.py:39:101: E501 line too long (101 > 100 characters)
+./tests/unit/test_repository_boundaries.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_retrieved_chunk_snapshots.py:42:101: E501 line too long (127 > 100 characters)
+./tests/unit/test_streamlit_admin_guard.py:5:1: F401 'unittest.mock.MagicMock' imported but unused
+./tests/unit/test_streamlit_app_login_flow.py:52:101: E501 line too long (161 > 100 characters)
+./tests/unit/test_streamlit_backend_client.py:4:1: F401 'unittest.mock.patch' imported but unused
+./tests/unit/test_streamlit_backend_client.py:39:9: F841 local variable 'body' is assigned to but never used
+./tests/unit/test_streamlit_backend_client.py:66:101: E501 line too long (109 > 100 characters)
+./tests/unit/test_streamlit_backend_client.py:223:101: E501 line too long (117 > 100 characters)
+./tests/unit/test_streamlit_chat_streaming.py:5:1: F401 'unittest.mock.MagicMock' imported but unused
+./tests/unit/test_streamlit_chat_streaming.py:7:1: F401 'pytest' imported but unused
+./tests/unit/test_streamlit_chat_streaming.py:11:1: E402 module level import not at top of file
+./tests/unit/test_streamlit_error_display.py:5:1: F401 'unittest.mock.MagicMock' imported but unused
+./tests/unit/test_streamlit_error_display.py:7:1: F401 'pytest' imported but unused
+./tests/unit/test_streamlit_error_display.py:11:1: E402 module level import not at top of file
+./tests/unit/test_streamlit_error_display.py:12:1: E402 module level import not at top of file
+./tests/unit/test_streamlit_error_display.py:28:1: E302 expected 2 blank lines, found 1
+./tests/unit/test_streamlit_error_display.py:34:1: E302 expected 2 blank lines, found 1
+./tests/unit/test_streamlit_error_display.py:41:1: E302 expected 2 blank lines, found 1
+./tests/unit/test_streamlit_session_auth.py:11:1: E402 module level import not at top of file
+./tests/unit/test_streamlit_session_auth.py:12:1: E402 module level import not at top of file
+./tests/unit/test_summarization_adapter.py:5:1: F401 'asyncio' imported but unused
+./tests/unit/test_tool_execution_service.py:9:1: F401 'app.domain.chat_tools.SummarizeIssueOutput' imported but unused
+./tests/unit/test_transformer_config.py:179:48: W292 no newline at end of file
+./tests/unit/test_untrusted_rag_context.py:8:101: E501 line too long (123 > 100 characters)
+./tests/unit/test_untrusted_rag_context.py:43:101: E501 line too long (117 > 100 characters)
+./tests/unit/test_untrusted_rag_context.py:46:101: E501 line too long (133 > 100 characters)
+./tests/unit/test_untrusted_rag_context.py:56:101: E501 line too long (130 > 100 characters)
+./tests/unit/test_widget_bundle.py:80:101: E501 line too long (101 > 100 characters)
+./tests/unit/test_widget_config_audit.py:44:101: E501 line too long (108 > 100 characters)
+./tests/unit/test_widget_config_service.py:9:1: F401 'app.domain.widget_config.WidgetConfigRead' imported but unused
+./tests/unit/test_widget_config_service.py:38:101: E501 line too long (213 > 100 characters)
+./tests/unit/test_widget_config_service.py:64:101: E501 line too long (106 > 100 characters)
+./tests/unit/test_widget_no_streamlit.py:14:101: E501 line too long (128 > 100 characters)
+./tests/unit/test_widget_no_streamlit.py:19:101: E501 line too long (115 > 100 characters)
+./tests/unit/test_widget_no_streamlit.py:34:101: E501 line too long (112 > 100 characters)
+./tests/unit/test_widget_no_streamlit.py:62:28: F541 f-string is missing placeholders
+./tests/unit/test_widget_no_streamlit.py:86:101: E501 line too long (107 > 100 characters)
+./tests/unit/test_widget_no_streamlit.py:97:9: F541 f-string is missing placeholders
+./tests/unit/test_widget_origin_policy.py:3:1: F401 'pytest' imported but unused
+./tests/unit/test_widget_origin_policy.py:5:1: F401 'app.services.widget_embed_service.OriginDecision' imported but unused
+./tests/unit/test_widget_session_service.py:5:1: F401 'pytest' imported but unused
+./tests/unit/test_widget_session_service.py:7:1: F401 'app.domain.errors.WidgetSessionError' imported but unused
+FAIL: lint (check output above)
+
+--- Format Check (black) ---
+Skipping .ipynb files as Jupyter dependencies are not installed.
+You can fix this by running ``pip install "black[jupyter]"``
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/users.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/health.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/core/logging.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/dependencies/auth.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/admin.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/llm/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/auth.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/database.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/conversation_state_adapter.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/mlflow/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/chat.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/core/lifespan.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/widget_loader.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/chat.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/github_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/prompt_registry.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/memory_embedding_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/classifier.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/storage/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/mlflow/tracking.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/rag_judge_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/model_server_tools.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/widget_public.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/llm/classifier_baseline.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/memory_inspector_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/rag.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/vault_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/audit_log_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/rag_generation_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/rag_tool_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/orm_models.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/user_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/admin_invitation_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/chat_tools.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/token_session_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/memory_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/audit_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/memory_inspector_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/admin_invitation_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/classifier_evaluation.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_index_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/rag_chunk_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0001_baseline.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/widget_chat_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0005_phase11_long_term_memory_embedding_dim.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/repositories/widget_config_repository.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/auth_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/domain/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/infra/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0004_phase8_widget_configs.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/conversation_state_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/domain/classifier.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0006_phase9_widget_config_fields.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/services/__init__.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/api/classifier.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_retrieval_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_ingestion_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/api/issue_analysis.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_eval_thresholds.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0002_phase5_rag_tables.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/services/ner_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/main.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0003_phase6_auth_memory_audit.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/widget_config_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/build_rag_index.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/redaction.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/chatbot_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_model_artifacts.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_startup_failures.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/domain/issue_analysis.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_static_secret_patterns.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/store_eval_report.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_redaction_leaks.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/validate_docs.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/validate_tracing.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/model_artifacts.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/report_storage.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/startup_checks.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/docs_check.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/thresholds.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_evaluation_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/generate_classical_predictions.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/eval_report.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/generate_test_jsonl.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/fetch_issue_comments.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/infra/classifier_loader.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/fetch_issues.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/infra/entity_ruler_pipeline.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/run_classifier_eval.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/secret_scan.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/generate_report.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/infra/summarization_adapter.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ingest_docs.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ingest_resolved_issues.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/seed_admin.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/components/errors.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/measure_classifier_latency.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/split_dataset.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/config.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/preprocess_issues.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/train_classical_classifier.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/evaluate_classifiers.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_classifier_eval_gate.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/seed_vault_from_env.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_eval_report_storage.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/pages/chat.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/run_llm_classifier_baseline.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/app.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_model_artifact_hash_gate.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_previous_green_report_diff.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_classifier_endpoint_contract.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/pages/admin_widget_config.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_validation_workflow_order.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_rag_commands.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_admin_invitation_flow.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_rag_eval_gate.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_failed_tool_recovery.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_redis_state.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_issue_analysis_endpoints.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_chat_endpoint_contract.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_static_secret_pattern_gate.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/conftest.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/clients/backend_api.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_auth_lifecycle_vault_key.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_rag_service_contract.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_trace_log_correlation.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_cross_conversation_recall.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_widget_api_contract.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_stack_smoke_health.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_refresh_token_flow.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/train_transformer_classifier.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_rag_pgvector_retrieval.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_allowed_origin.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_rag_index_scripts.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_import_side_effects.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_successful_tool_call.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_internal_ui_backend_contract.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_schemas.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_health.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_config.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_admin_crud.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_blocked_origin.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_audit_action_names.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_model_server_route_boundaries.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_no_secrets.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_rag_grounded_answers.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_chat_stream.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_splits.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_frame_headers.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_classifier_redaction.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_admin_invitation_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_chatbot_graph.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_memory_embedding_dimensions.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_chat_limits.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_long_term_memory_recall.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_memory_inspector_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_classifier_run_metadata.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_auth_memory_api_contract.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_classifier_schemas.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_generation_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_retrieved_chunk_snapshots.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_classifier_metrics.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_auth_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_hybrid_scoring.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_error_display.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_metadata_filtering.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_no_direct_db_or_secrets.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_app_login_flow.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_chunking.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_reranking.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_observability_coverage.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_entity_ruler_pipeline.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_admin_guard.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_streamlit_backend_flow.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_provider_resolution.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_bundle.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_chat_streaming.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_untrusted_rag_context.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_transformer_config.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_session_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_no_streamlit.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_eval_metrics.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_config_audit.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_snapshot_service.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_backend_client.py
+would reformat /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_config_service.py
+
+Oh no! 💥 💔 💥
+189 files would be reformatted, 127 files would be left unchanged.
+FAIL: format-check (run 'uv run black .' to fix)
+
+--- Import Check (isort) ---
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/app.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/streamlit_app/pages/chat.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/api/issue_analysis.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/services/summarization_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/model_server/services/ner_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/build_rag_index.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/seed_vault_from_env.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/evaluate_rag.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/measure_classifier_latency.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/fetch_issue_comments.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/train_classical_classifier.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/fetch_issues.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/docs_check.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_model_artifacts.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_static_secret_patterns.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/run_classifier_eval.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/validate_docs.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/secret_scan.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_startup_failures.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/store_eval_report.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/check_eval_thresholds.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/validate_tracing.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/scripts/ci/thresholds.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_no_secrets.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_errors.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/conftest.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/test_schemas.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_auth_memory_api_contract.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_rag_commands.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_chat_endpoint_contract.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_widget_api_contract.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_internal_ui_backend_contract.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_rag_service_contract.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/contract/test_classifier_endpoint_contract.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_validation_workflow_order.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_eval_threshold_gate.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_static_secret_pattern_gate.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_model_artifact_hash_gate.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_classifier_eval_gate.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/ci/test_previous_green_report_diff.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_entity_ruler_pipeline.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_memory_embedding_dimensions.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_config_audit.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_reranking.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_long_term_memory_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_admin_invitation_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_summarization_adapter.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_chatbot_graph.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_observability.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_memory_inspector_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_config_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_eval_metrics.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_untrusted_rag_context.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_observability_coverage.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_ner_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_audit_action_names.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_error_display.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_llm_adapter.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_auth_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_no_direct_db_or_secrets.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_classifier_run_metadata.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_classifier_metrics.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_streamlit_session_auth.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_generation_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_redaction.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_widget_origin_policy.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_summarization_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/unit/test_rag_provider_resolution.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_trace_log_correlation.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_rag_pgvector_retrieval.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_allowed_origin.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_refresh_token_flow.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_rag_grounded_answers.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_blocked_origin.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_successful_tool_call.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_auth_lifecycle_vault_key.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_frame_headers.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_admin_crud.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_memory_audit_transaction.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_chat_redis_state.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_widget_chat_stream.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/tests/integration/test_stack_smoke_health.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/env.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0004_phase8_widget_configs.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0002_phase5_rag_tables.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0006_phase9_widget_config_fields.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0005_phase11_long_term_memory_embedding_dim.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/migrations/versions/0003_phase6_auth_memory_audit.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/core/middleware.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/core/application.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/core/lifespan.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/core/logging.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/dependencies/auth.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/widget_public.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/widget_loader.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/chat.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/memory_inspector.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/widget_configs.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/memory.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/api/routes/health.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/database.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/model_server_tools.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/orm_models.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/rag_judge_client.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/llm_adapter.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/tracing.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/rag_generation_client.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/mlflow/tracking.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/infra/llm/classifier_baseline.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/classifier_evaluation.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_snapshot_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/chatbot_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_ingestion_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/short_term_memory_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/memory_inspector_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/long_term_memory_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/rag_retrieval_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/services/widget_config_service.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/chat_tools.py Imports are incorrectly sorted and/or formatted.
+ERROR: /home/hadym/AIE-BOOTCAMP/Week7/project/maintainer-copilot/app/domain/chat.py Imports are incorrectly sorted and/or formatted.
+Skipped 4 files
+FAIL: import-check (run 'uv run isort .' to fix)
+
+--- Type Check (mypy) ---
+demo/host/main.py: error: Duplicate module named "main" (also at "./chatbot/main.py")
+demo/host/main.py: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules for more info
+demo/host/main.py: note: Common resolutions include:
+demo/host/main.py: note:     a) using `--exclude` to avoid checking one of them,
+demo/host/main.py: note:     b) adding `__init__.py` somewhere,
+demo/host/main.py: note:     c) using `--explicit-package-bases` or adjusting `MYPYPATH`
+Found 1 error in 1 file (errors prevented further checking)
+FAIL: type-check (check output above)
+
+--- Tests (pytest) ---
+=========================== short test summary info ============================
+FAILED tests/test_no_secrets.py::test_dataset_settings_token_not_logged - Mod...
+====== 1 failed, 1001 passed, 1 skipped, 81 warnings in 72.27s (0:01:12) =======
+
+PASS: tests
+
+--- Eval Thresholds ---
+PASS: Thresholds valid: classifier(accuracy=0.55, macro_f1=0.5), rag(hit@5=0.1, mrr@10=0.1, faithfulness=0.1, answer_relevancy=0.1)
+
+--- Docs Validation ---
+  docs_exist: PASS
+  readme_sections: PASS
+  docs_sections: PASS
+PASS: Docs validation: all required docs present
+
+SUMMARY: Quality gates pass. Eval thresholds valid. Docs complete.

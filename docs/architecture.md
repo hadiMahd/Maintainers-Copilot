@@ -224,3 +224,97 @@ POST /chat
 - Two routers share the `/memory` prefix: `memory.py` (POST /long-term, POST /long-term/recall) and `memory_inspector.py` (GET /long-term).
 - Widget config embed snippet is a placeholder string referencing `widget_config_id`; Phase 9 will replace with actual embed `<script>` generation.
 - Backend widget-config and memory-inspection endpoints are added only where Phase 6/7 did not already provide them.
+
+## Phase 10 Production Readiness Validation Architecture
+
+### Validation Workflow
+
+The project provides two equivalent validation paths:
+
+- **GitHub Actions**: `.github/workflows/ci.yml` — 20 jobs covering quality, eval, security, build, smoke, report, storage, and docs gates.
+- **Local**: `Makefile` — same gates via `make validate` and individual targets.
+
+Both paths call the same `scripts/ci/` commands and produce equivalent pass/fail results.
+
+### Runtime Service Map (full production-functional stack)
+
+```
+                   ┌─────────────┐
+                   │  GitHub CI  │
+                   └──────┬──────┘
+                          │ docker compose build + smoke
+    ┌─────────────────────┼─────────────────────────┐
+    │                     │                         │
+    ▼                     ▼                         ▼
+┌─────────┐    ┌──────────────┐    ┌──────────────┐
+│ postgres│    │    redis     │    │    minio     │
+│ pg16    │    │    7-alpine  │    │   latest     │
+│ :5432   │    │    :6379     │    │   :9000      │
+└────┬────┘    └──────┬───────┘    └──────┬───────┘
+     │                │                   │
+     └────────────────┼───────────────────┘
+                      │
+              ┌───────┴───────┐
+              │    vault      │
+              │    1.15       │
+              │    :8200      │
+              └───────┬───────┘
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+        ▼             ▼             ▼
+┌──────────────┐ ┌─────────┐ ┌────────────┐
+│ model_server │ │ backend │ │ streamlit  │
+│   :8001      │ │ :8000   │ │  :8501     │
+│  (health)    │ │(/health)│ │  (ui)      │
+└──────────────┘ └─────────┘ └────────────┘
+```
+
+### Validation Gate Order
+
+```text
+install → lint → format → import-check → type-check → tests
+  → threshold-validation → classifier-eval → rag-eval
+  → redaction-leak → static-secret-grep → model-artifacts
+  → startup-failures → tracing-config
+  → docker-build → stack-smoke
+  → eval-report → previous-green-diff → report-storage
+  → docs-validation
+```
+
+### Eval/Report Flow
+
+```text
+evals/eval_thresholds.yaml
+        │
+        ▼
+check_eval_thresholds.py ─── validates non-zero
+        │
+        ├── run_classifier_eval.py ─── evals/classification/golden.jsonl
+        │        │                              │
+        │        ▼                              ▼
+        │   classifier_result.json    (keyword classifier)
+        │
+        ├── run_rag_eval.py ─── evals/rag/golden.jsonl
+        │        │                      │
+        │        ▼                      ▼
+        │   rag_result.json     (FakeGenerationClient)
+        │
+        ▼
+build_eval_report.py ─── evals/reports/eval_report.json
+        │
+        ├── compare_previous_green_report.py ─── 2pp regression
+        │
+        └── store_eval_report.py ─── MinIO (local fallback)
+```
+
+### CI Script Ownership
+
+| Layer | Path | Responsibility |
+|---|---|---|
+| Orchestration | `Makefile`, `.github/workflows/ci.yml` | Gate ordering, job dependencies |
+| Shell Wrappers | `scripts/ci/run_*.sh`, `smoke_stack.sh` | Single-gate shell entry points |
+| Python Scripts | `scripts/ci/check_*.py`, `scripts/ci/run_*.py`, `scripts/ci/build_*.py`, `scripts/ci/compare_*.py`, `scripts/ci/store_*.py`, `scripts/ci/validate_*.py` | Gate logic with safe output |
+| Helpers | `scripts/ci/common.py`, `models.py`, `eval_report.py`, `thresholds.py`, `report_storage.py`, `secret_scan.py`, `model_artifacts.py`, `startup_checks.py`, `tracing_checks.py`, `docs_check.py` | Reusable CI modules |
+| Tests | `tests/ci/` | Gate behavior, threshold, schema, regression, security tests |
+| Fixtures | `tests/fixtures/ci/` | Fake secrets, model cards for negative testing |
