@@ -102,3 +102,21 @@ class AuditLog(Base):
     target_id = Column(String(36), nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     extra_data = Column(JSON(), nullable=True)
+
+
+class WidgetConfig(Base):
+    __tablename__ = "widget_configs"
+    __table_args__ = (
+        Index("ix_widget_configs_name", "name"),
+    )
+
+    id = Column(String(36), primary_key=True)
+    name = Column(String(120), nullable=False)
+    allowed_origins = Column(Text(), nullable=False)
+    theme = Column(String(30), nullable=False, server_default="default")
+    welcome_message = Column(String(500), nullable=True)
+    is_enabled = Column(Boolean(), nullable=False, server_default="true")
+    created_by_user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    updated_by_user_id = Column(String(36), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now())

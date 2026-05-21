@@ -185,3 +185,24 @@ class TracingFailedError(DomainError):
 
     error_code = "tracing_failed"
     status_code = 503
+
+
+class WidgetConfigNotFoundError(DomainError):
+    """Widget configuration not found."""
+
+    error_code = "widget_config_not_found"
+    status_code = 404
+
+
+class WidgetConfigError(DomainError):
+    """Widget configuration operation failure."""
+
+    error_code = "invalid_widget_config"
+    status_code = 422
+
+
+class MemoryInspectorError(DomainError):
+    """Memory inspection authorization or operation failure."""
+
+    error_code = "invalid_memory_scope"
+    status_code = 403
