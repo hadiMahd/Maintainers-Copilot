@@ -87,9 +87,9 @@ uv run pytest tests/unit/test_memory_inspector_service.py
 uv run pytest tests/unit/test_streamlit_session_auth.py
 uv run pytest tests/unit/test_streamlit_admin_guard.py
 uv run pytest tests/unit/test_streamlit_error_display.py
+uv run pytest tests/unit/test_streamlit_chat_streaming.py
 uv run pytest tests/unit/test_streamlit_no_direct_db_or_secrets.py
 uv run pytest tests/contract/test_internal_ui_backend_contract.py
-uv run pytest tests/contract/test_streamlit_backend_contract.py
 uv run pytest tests/integration/test_streamlit_backend_flow.py
 ```
 

@@ -197,3 +197,30 @@ POST /chat
 - The graph contains one primary LLM node plus support nodes only: `llm`, `execute_tools`, `finalize`.
 - Tool clients stay in `app/infra/`; service code depends on project-owned seams, not provider SDKs.
 - Short-term chat state reuses Redis infrastructure through a chat-specific adapter instead of direct route-level Redis access.
+
+## Phase 8 Streamlit Admin App Architecture
+
+### Layer Ownership
+
+| Layer | Path | Responsibility |
+|-------|------|----------------|
+| Presentation | `streamlit_app/` | Internal UI only: login, chat, widget config, memory inspector. All data access via `BackendAPIClient`. |
+| Backend Routes | `app/api/routes/widget_configs.py`, `memory_inspector.py` | Thin HTTP endpoints for widget CRUD and memory inspection listing. |
+| Backend Services | `app/services/widget_config_service.py`, `memory_inspector_service.py` | Widget config CRUD + snippet generation, authorized memory listing with scope gating. |
+| Backend Repositories | `app/repositories/widget_config_repository.py`, `memory_inspector_repository.py` | SQL-only persistence; no commit/rollback. |
+| Backend Domain | `app/domain/widget_config.py`, `memory_inspector.py` | Pydantic schemas matching the OpenAPI contract. |
+
+### Key Decisions
+
+- **Cookie-backed auth**: Auth token stored in browser cookie via `streamlit-cookies-manager`; survives page refresh. `st.session_state` holds only non-secret UI state.
+- **Admin guard**: `st.navigation()` builds role-based page list at runtime; admin pages excluded from navigation for regular users.
+- **SSE chat**: `st.write_stream()` receives events from `BackendAPIClient.chat_stream()` over `httpx` streaming client; full response never buffered.
+- **Backend API client**: Single `BackendAPIClient` in `streamlit_app/clients/backend_api.py` with explicit timeouts (30s REST, 70s SSE); all errors mapped to `UIErrorMessage`.
+- **No direct DB access**: Streamlit code imports zero `sqlalchemy`, `redis`, `hvac`, `minio`, `Repository`, or ORM modules.
+
+### Phase 8 Boundary Notes
+
+- Streamlit is an internal UI client only; it does not import `app/repositories/`, `app/infra/orm_models`, `app/infra/database`, `app/infra/redis`, `app/infra/vault`, or `app/infra/llm_adapter`.
+- Two routers share the `/memory` prefix: `memory.py` (POST /long-term, POST /long-term/recall) and `memory_inspector.py` (GET /long-term).
+- Widget config embed snippet is a placeholder string referencing `widget_config_id`; Phase 9 will replace with actual embed `<script>` generation.
+- Backend widget-config and memory-inspection endpoints are added only where Phase 6/7 did not already provide them.

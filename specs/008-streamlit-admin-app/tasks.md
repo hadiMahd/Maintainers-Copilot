@@ -154,7 +154,7 @@
 - [X] T040 [P] [US4] Unit test: verify clean error display for each error category (timeout, auth failure, validation, backend unavailable, unknown) in tests/unit/test_streamlit_error_display.py (AppTest with mocked backend responses)
 - [X] T041 [P] [US4] Static check test: verify no sqlalchemy, asyncpg, psycopg, redis, hvac, minio, Repository, Session imports from streamlit_app/ in tests/unit/test_streamlit_no_direct_db_or_secrets.py
 - [X] T042 [P] [US4] Static check test: verify no hardcoded secrets (password=, token=, secret=, api_key=, PRIVATE KEY) in streamlit_app/ in tests/unit/test_streamlit_no_direct_db_or_secrets.py
-- [ ] T043 [P] [US4] Integration test: full login → chat → widget config → memory inspector flow with mocked backend in tests/integration/test_streamlit_backend_flow.py (AppTest)
+- [X] T043 [P] [US4] Integration test: full login → chat → widget config → memory inspector flow with mocked backend in tests/integration/test_streamlit_backend_flow.py (AppTest)
 
 ### Implementation for User Story 4
 
@@ -169,13 +169,13 @@
 
 **Purpose**: Documentation updates, ignore files, quickstart validation, full regression.
 
-- [ ] T046 [P] Update docs/architecture.md with streamlit_app/ layer description and Phase 8 backend additions
-- [ ] T047 [P] Update docs/decisions.md with Phase 8 Streamlit decisions (cookie-backed auth, st.navigation admin guard, SSE streaming, httpx timeouts)
-- [ ] T048 [P] Update docs/security.md with Streamlit security boundaries (no direct DB, no secrets, cookie token lifecycle, redaction rules)
-- [ ] T049 [P] Update docs/runbook.md with Streamlit startup commands and troubleshooting (backend URL config, cookie clearing, admin guard behavior)
-- [ ] T050 [P] Update .gitignore and .dockerignore with streamlit_app/ patterns (streamlit secrets, cache, node_modules from widget)
-- [ ] T051 Validate quickstart.md: run each command (streamlit run, backend endpoint curl, login test, chat test, admin guard test, memory inspector test, static checks)
-- [ ] T052 Run full test suite regression (pytest, ruff, mypy) and fix any failures
+- [X] T046 [P] Update docs/architecture.md with streamlit_app/ layer description and Phase 8 backend additions
+- [X] T047 [P] Update docs/decisions.md with Phase 8 Streamlit decisions (cookie-backed auth, st.navigation admin guard, SSE streaming, httpx timeouts)
+- [X] T048 [P] Update docs/security.md with Streamlit security boundaries (no direct DB, no secrets, cookie token lifecycle, redaction rules)
+- [X] T049 [P] Update docs/runbook.md with Streamlit startup commands and troubleshooting (backend URL config, cookie clearing, admin guard behavior)
+- [X] T050 [P] Update .gitignore and .dockerignore with streamlit_app/ patterns (streamlit secrets, cache, node_modules from widget)
+- [X] T051 Validate quickstart.md: run each command (streamlit run, backend endpoint curl, login test, chat test, admin guard test, memory inspector test, static checks)
+- [X] T052 Run full test suite regression (pytest, ruff, mypy) and fix any failures
 
 ---
 

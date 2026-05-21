@@ -140,3 +140,68 @@ If the model server returns 503 with `classifier_model_unavailable`:
 - Verify `model_card.json` exists in the artifact directory
 - Check artifact hash matches model card `artifact_sha256`
 - Verify the model was loaded during startup (check startup logs)
+
+## Phase 8 Streamlit Admin App
+
+### Start Streamlit
+
+```bash
+MAINTAINER_COPILOT_UI_BASE_URL=http://localhost:8000 streamlit run streamlit_app/app.py
+```
+
+The backend URL must be running and accessible. The FastAPI backend must have the Phase 8 widget-config and memory-inspection routes registered (they are wired in `app/api/routes/__init__.py`).
+
+### Verify Backend Endpoints
+
+```bash
+# Widget config list (requires admin token)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/admin/widget-configs/
+
+# Create widget config
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Test","allowed_origins":["http://localhost"]}' \
+  http://localhost:8000/admin/widget-configs/
+
+# Embed snippet
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/admin/widget-configs/{config_id}/embed-snippet
+
+# Memory inspection
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/memory/long-term?limit=5"
+```
+
+### Verify Cookie Auth Lifecycle
+
+- Log in through the Streamlit login page with valid backend credentials.
+- Refresh the browser: session should restore without re-login.
+- Click "Log out": cookie is cleared, login page appears.
+- Send an expired/invalid token: UI returns to login page.
+
+### Verify Admin Guard
+
+- Log in as a regular user: "Widget Config" tab should not appear in the sidebar.
+- Log in as an admin: "Widget Config" tab should appear.
+- Manual URL navigation to an admin page by a regular user is blocked by `st.navigation()` role exclusion.
+
+### Verify Chat
+
+- Open the Chat page after login.
+- Send a message: response streams in via SSE with `st.write_stream()`.
+- The full response is never buffered before display.
+
+### Verify Memory Inspector
+
+- Open the Memory page after login.
+- As a regular user: sees only own memory records (scope `own`).
+- As an admin: sees all records (scope `admin`), with owner displayed.
+
+### Streamlit Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| "Unable to reach the backend" on login | `MAINTAINER_COPILOT_UI_BASE_URL` is set and backend is running |
+| Login succeeds but page redirects to login | Cookie not being stored; check browser cookie settings |
+| Admin tabs not visible | Verify `GET /users/me` returns `role: "admin"` |
+| Chat stuck on "pending" | Backend SSE endpoint timing out; check `sse_timeout_seconds` |
+| Widget config save fails with 403 | User is not admin; verify role in `st.session_state` |

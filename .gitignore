@@ -84,3 +84,6 @@ PROJECT_BRIEF.md
 dump/
 node_modules/
 coverage/
+
+# Streamlit
+.streamlit/secrets.toml

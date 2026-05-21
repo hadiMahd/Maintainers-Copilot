@@ -408,3 +408,52 @@ Runners-up and rationale:
 **Rationale**:
 - Preserves testability without external credentials.
 - Keeps Phase 7 logs and traces joinable.
+
+## Phase 8 Streamlit Admin App Decisions
+
+### Cookie-Backed Auth via streamlit-cookies-manager
+
+**Decision**: Store the access token in a browser cookie using `streamlit-cookies-manager`. Restore from cookie on page refresh. Clear on explicit logout and on backend `401`. Limit `st.session_state` to non-secret UI/user state.
+
+**Alternatives considered**:
+- `st.session_state` only: rejected because state is lost on refresh.
+- Local file storage: rejected because it creates persistent secret material outside the backend.
+- Query parameters: rejected because URLs leak through history, logs, and screenshots.
+
+### Admin Guard via Runtime st.navigation()
+
+**Decision**: Use programmatic `st.navigation()` to build a role-based page list at runtime. Admin-only pages (`admin_widget_config`) are excluded from the page list for regular users, and no admin backend API calls are made for non-admin sessions.
+
+**Alternatives considered**:
+- Page-level `if role != admin: st.stop()`: rejected because the page entry is still visible in the sidebar.
+- Hardcoded admin email allowlist: rejected because it bypasses backend authorization and drifts from backend roles.
+
+### SSE Chat Streaming via httpx + st.write_stream()
+
+**Decision**: The chat page uses `BackendAPIClient.chat_stream()` (httpx streaming client) and renders events via `st.write_stream()`. The full chat response is never buffered before display.
+
+**Alternatives considered**:
+- Polling: rejected because it adds latency and server load.
+- Buffering full response before display: rejected because it defeats streaming UX.
+
+### Typed Timeout Settings (30s REST, 70s SSE)
+
+**Decision**: All backend calls use explicit `httpx.Timeout` values loaded from typed `StreamlitSettings` (30s REST, 70s SSE). Timeouts are not hardcoded in the client methods.
+
+**Alternatives considered**:
+- Default httpx timeouts: rejected because chat SSE needs a longer timeout than REST calls.
+- Per-call timeout overrides: rejected because it scatters configuration across the codebase.
+
+### Backend Widget Config and Memory Inspector Endpoints
+
+**Decision**: Add minimal FastAPI routes, services, and repositories for widget configuration CRUD, embed snippet generation, and authorized memory inspection listing. These are added only where Phase 6/7 did not already provide them.
+
+**Alternatives considered**:
+- Direct database access from Streamlit: rejected because it violates architecture boundaries and bypasses backend authorization.
+- Deferring to Phase 9: rejected because Phase 8 acceptance requires admin widget configuration and memory inspection through backend API calls.
+
+### Embed Snippet Placeholder
+
+**Decision**: The `WidgetConfigService.generate_embed_snippet()` returns a placeholder HTML snippet referencing the `widget_config_id`. Phase 9 will replace this with the actual embed `<script>` generation.
+
+**Rationale**: The widget loader lives in Phase 9; Phase 8 needs only enough backend support to display a generated snippet in the admin UI.

@@ -82,3 +82,35 @@ Classifier-related entries:
 - `*.bin`
 - `*.joblib`
 - `mlruns/`
+
+## Phase 8 Streamlit Security Boundaries
+
+### No Direct Persistence
+
+The `streamlit_app/` package MUST NOT import `sqlalchemy`, `asyncpg`, `redis`, `hvac`, `minio`, ORM models, repository classes, or database sessions. All data access goes through `BackendAPIClient` calling the same FastAPI backend that the widget will use. Static tests in `tests/unit/test_streamlit_no_direct_db_or_secrets.py` enforce this at CI time.
+
+### No Hardcoded Secrets
+
+`streamlit_app/` MUST NOT contain real API keys, passwords, tokens, JWT signing keys, or privileged credentials. The backend base URL is non-secret configuration loaded from `MAINTAINER_COPILOT_UI_BASE_URL`. Static tests verify no string literals matching secret patterns appear in Streamlit code.
+
+### Cookie Token Lifecycle
+
+- **Store**: Auth token written to browser cookie (`mc_access_token`) via `streamlit-cookies-manager` on successful login.
+- **Restore**: Token read from cookie on page refresh; validated via `GET /users/me`.
+- **Clear on logout**: Cookie and `st.session_state` cleared on explicit logout.
+- **Clear on auth failure**: Backend `401` invalidates the session, clears cookie and state, and returns the user to the login page.
+- **Scope**: Token is sent only as an `Authorization: Bearer` header; never displayed in UI, written to logs, or included in error messages.
+
+### Streamlit Redaction Rules
+
+- Raw chat messages, memory contents, tokens, embed snippets, and backend error traces MUST NOT be written to Streamlit logs or displayed in raw form.
+- `display_error()` renders only `UIErrorMessage.message` with mapped severity; stack traces and raw payloads are never shown.
+- Memory inspector displays only `redacted_content` from backend responses; unredacted content is never reconstructed or stored.
+
+### UI Error Boundaries
+
+- `401`: Clears auth state and returns to login page.
+- `403`: Shows a clean access-denied message; no admin API calls are retried.
+- Timeouts: Show a retryable warning; UI does not hang.
+- Backend validation errors: Show field-level feedback via `display_error()`.
+- Server errors (5xx): Show a generic retryable message without stack traces.
