@@ -65,7 +65,7 @@
 **Fields**:
 
 - `widget_id`: public widget identifier.
-- `script_src`: backend URL for `/widget.js`.
+- `script_src`: backend URL for `/widget/loader.js`.
 - `snippet`: one script tag with `data-widget-id`.
 - `generated_at`: generation timestamp.
 
@@ -86,7 +86,8 @@
 - `greeting`: greeting text.
 - `position`: widget placement.
 - `enabled_tools`: public enabled tool list.
-- `chat_endpoint`: endpoint for widget chat.
+- `session_endpoint`: endpoint for widget-scoped anonymous session issuance.
+- `chat_stream_endpoint`: endpoint for widget streamed chat.
 - `asset_base_url`: base URL for widget assets if needed.
 
 **Validation rules**:
@@ -95,6 +96,25 @@
 - Excludes creator, admin-only metadata, internal database IDs when not needed,
   auth details, and sensitive backend settings.
 - Uses no-store or short-lived cache semantics because configuration may change.
+
+## Widget Anonymous Session Token
+
+**Purpose**: Short-lived token issued by the backend for one enabled widget and
+one approved host origin, used by the embedded widget chat flow.
+
+**Fields**:
+
+- `widget_id`: public widget identifier.
+- `origin`: approved host origin.
+- `token`: backend-issued anonymous session token.
+- `expires_at`: token expiry timestamp.
+- `stream_url`: SSE URL that includes the token as a query parameter.
+
+**Validation rules**:
+
+- Issued only for enabled widgets and approved host origins.
+- Not logged raw.
+- Invalid or expired tokens block widget chat cleanly.
 
 ## Origin Decision
 
@@ -146,11 +166,13 @@ origin.
 - `widget_id`: public widget identifier.
 - `origin`: allowed host origin.
 - `messages`: transient client-side display messages.
+- `session_token`: widget-scoped anonymous session token.
 - `stream_state`: idle, connecting, streaming, completed, interrupted, or error.
 
 **Validation rules**:
 
-- Chat starts only after widget config and origin are accepted.
+- Chat starts only after widget config is accepted and the widget receives a
+  valid anonymous session token for the approved origin.
 - Chat endpoint reuses backend chat services and does not create separate
   chatbot logic.
 - Interrupted streams leave a visible partial or retryable state.
@@ -196,8 +218,8 @@ origin.
 
 **Fields**:
 
-- `loader_raw_bytes`: raw `/widget.js` size.
-- `loader_gzip_bytes`: gzip `/widget.js` size.
+- `loader_raw_bytes`: raw `/widget/loader.js` size.
+- `loader_gzip_bytes`: gzip `/widget/loader.js` size.
 - `bundle_raw_bytes`: raw initial widget bundle size.
 - `bundle_gzip_bytes`: gzip initial widget bundle size.
 - `standalone_initial_js`: whether the build emitted one standalone initial

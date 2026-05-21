@@ -136,10 +136,10 @@ paths:
           $ref: "#/components/responses/WidgetNotFound"
         "409":
           $ref: "#/components/responses/WidgetDisabled"
-  /public/widgets/{widget_id}/chat:
+  /public/widgets/{widget_id}/session:
     post:
-      summary: Send public widget chat message
-      operationId: chatWithWidget
+      summary: Issue widget-scoped anonymous session token
+      operationId: issueWidgetSession
       parameters:
         - $ref: "#/components/parameters/WidgetId"
       requestBody:
@@ -147,7 +147,47 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WidgetChatRequest"
+              $ref: "#/components/schemas/WidgetSessionRequest"
+      responses:
+        "201":
+          description: Widget-scoped anonymous session token issued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetSessionToken"
+        "403":
+          $ref: "#/components/responses/OriginBlocked"
+        "404":
+          $ref: "#/components/responses/WidgetNotFound"
+        "409":
+          $ref: "#/components/responses/WidgetDisabled"
+  /public/widgets/{widget_id}/chat/stream:
+    get:
+      summary: Stream public widget chat response
+      operationId: streamWidgetChat
+      parameters:
+        - $ref: "#/components/parameters/WidgetId"
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: conversation_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: message
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: origin
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Streaming widget chat response.
@@ -169,12 +209,12 @@ paths:
         "409":
           $ref: "#/components/responses/WidgetDisabled"
         "422":
-          description: Invalid chat input.
+          description: Invalid chat input or invalid widget session token.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /widget.js:
+  /widget/loader.js:
     get:
       summary: Serve widget loader script
       operationId: getWidgetLoader
@@ -371,7 +411,8 @@ components:
           format: date-time
     PublicWidgetConfig:
       type: object
-      required: [widget_id, theme, greeting, position, enabled_tools, chat_endpoint]
+      required:
+        [widget_id, theme, greeting, position, enabled_tools, session_endpoint, chat_stream_endpoint]
       properties:
         widget_id:
           type: string
@@ -385,25 +426,33 @@ components:
           type: array
           items:
             type: string
-        chat_endpoint:
+        session_endpoint:
+          type: string
+        chat_stream_endpoint:
           type: string
         asset_base_url:
           type: string
-    WidgetChatRequest:
+    WidgetSessionRequest:
       type: object
-      required: [conversation_id, message, origin]
+      required: [origin]
       properties:
-        conversation_id:
-          type: string
-          minLength: 1
-        message:
-          type: string
-          minLength: 1
         origin:
           type: string
-        stream:
-          type: boolean
-          default: true
+    WidgetSessionToken:
+      type: object
+      required: [widget_id, token, conversation_id, expires_at, stream_url]
+      properties:
+        widget_id:
+          type: string
+        token:
+          type: string
+        conversation_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        stream_url:
+          type: string
     WidgetChatStreamEvent:
       type: object
       required: [event_type, sequence]

@@ -27,10 +27,10 @@ the lowest-risk path for size, build simplicity, and reviewer clarity.
 - CSS-in-JS library: rejected because it increases runtime or build complexity
   for a small embeddable widget.
 
-## Decision: Serve `/widget.js` from the FastAPI backend
+## Decision: Serve `GET /widget/loader.js` from the FastAPI backend
 
-**Rationale**: The loader must be available at `/widget.js` and must read the
-host page's `data-widget-id`. Serving it from the backend keeps snippet
+**Rationale**: The loader must be available at `GET /widget/loader.js` and must
+read the host page's `data-widget-id`. Serving it from the backend keeps snippet
 generation and loader URL construction aligned with widget configuration and the
 same API surface used by Streamlit.
 
@@ -54,10 +54,25 @@ impact. MinIO can remain an infrastructure option if later needed.
 
 - MinIO-hosted widget bundle: deferred because it adds upload, signing, and
   cache-invalidation work beyond the first complete embedded path.
-- Bundle widget code into `/widget.js`: rejected because the loader should stay
+- Bundle widget code into `/widget/loader.js`: rejected because the loader should stay
   tiny and the React app should use a separately cacheable bundle.
 - Allow unconstrained Vite chunk splitting: rejected because the project brief
   asks for a single bundled widget JavaScript file.
+
+## Decision: Use a widget-scoped anonymous session issuance endpoint before opening the SSE stream
+
+**Rationale**: The spec requires widget-scoped anonymous session tokens, origin
+validation before issuance, and native `EventSource` streaming with the token on
+the SSE URL. A small token-issuance step keeps origin authorization on the
+backend and avoids exposing internal user authentication to public widget
+visitors.
+
+**Alternatives considered**:
+
+- Reuse the internal authenticated `/chat` endpoint: rejected because public
+  widget visitors do not have internal JWTs.
+- Skip token issuance and rely only on widget ID and origin at stream time:
+  rejected because the spec requires a widget-scoped anonymous session token.
 
 ## Decision: Use iframe isolation for the widget surface
 
@@ -118,7 +133,8 @@ service. This avoids teaching the widget about internal auth or Streamlit.
 
 **Rationale**: The phase requires bundle size to be measured and documented. The
 implementation should produce a clear report with raw and gzip sizes for
-`/widget.js` and the initial widget bundle so reviewers can evaluate embed cost.
+`/widget/loader.js` and the initial widget bundle so reviewers can evaluate
+embed cost.
 
 **Alternatives considered**:
 
