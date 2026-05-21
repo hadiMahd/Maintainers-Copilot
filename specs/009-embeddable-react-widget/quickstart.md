@@ -82,14 +82,16 @@ messages only from the expected iframe origin and window.
 ```bash
 uv run pytest tests/unit/test_widget_config_service.py
 uv run pytest tests/unit/test_widget_config_audit.py
-uv run pytest tests/unit/test_widget_embed_service.py
 uv run pytest tests/unit/test_widget_origin_policy.py
-uv run pytest tests/unit/test_widget_snippet.py
+uv run pytest tests/unit/test_widget_session_service.py
+uv run pytest tests/unit/test_widget_no_streamlit.py
+uv run pytest tests/unit/test_widget_bundle.py
 uv run pytest tests/contract/test_widget_api_contract.py
 uv run pytest tests/integration/test_widget_allowed_origin.py
 uv run pytest tests/integration/test_widget_blocked_origin.py
 uv run pytest tests/integration/test_widget_frame_headers.py
 uv run pytest tests/integration/test_widget_chat_stream.py
+uv run pytest tests/integration/test_widget_admin_crud.py
 
 cd widget
 npm test

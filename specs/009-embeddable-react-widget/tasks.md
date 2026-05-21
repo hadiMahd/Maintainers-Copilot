@@ -170,18 +170,18 @@ Streamlit coupling.
 
 ### Tests for User Story 4 (REQUIRED) ⚠️
 
-- [ ] T055 [P] [US4] Static check: no `streamlit` or `streamlit_app` references in `widget/`, `demo/host/`, `app/api/routes/widget_public.py`, `app/api/routes/widget_loader.py` in `tests/unit/test_widget_no_streamlit.py`
-- [ ] T056 [P] [US4] Build validation: one standalone initial widget JS bundle, loader < 5 KB gzip, bundle ≤ 150 KB gzip in `tests/unit/test_widget_bundle.py`
-- [ ] T057 [P] [US4] Static check: `postMessage` usage limited to resize channel in `widget/` and `demo/host/` in `tests/unit/test_widget_no_streamlit.py`
+- [X] T055 [P] [US4] Static check: no `streamlit` or `streamlit_app` references in `widget/`, `demo/host/`, `app/api/routes/widget_public.py`, `app/api/routes/widget_loader.py` in `tests/unit/test_widget_no_streamlit.py`
+- [X] T056 [P] [US4] Build validation: one standalone initial widget JS bundle, loader < 5 KB gzip, bundle ≤ 150 KB gzip in `tests/unit/test_widget_bundle.py`
+- [X] T057 [P] [US4] Static check: `postMessage` usage limited to resize channel in `widget/` and `demo/host/` in `tests/unit/test_widget_no_streamlit.py`
 
 ### Implementation for User Story 4
 
-- [ ] T058 [US4] Add `npm run size` script in `widget/package.json` — measures raw and gzip sizes of loader.js and initial bundle, outputs `docs/widget-bundle-report.md` (depends on T018)
-- [ ] T059 [US4] Configure Vite `vite.config.ts` for one standalone initial JS bundle — `manualChunks`, `rollupOptions.output` (depends on T001)
-- [ ] T060 [US4] Generate `docs/widget-bundle-report.md` after build with measured sizes and any exception rationale
-- [ ] T061 [US4] Update `docs/runbook.md` with widget startup, demo host verification, and troubleshooting
-- [ ] T062 [US4] Update `docs/decisions.md` with Phase 9 decisions (loader serving, iframe isolation, bundle strategy, origin enforcement)
-- [ ] T063 [US4] Update `docs/security.md` with Phase 9 widget security boundaries (origin allowlisting, CSP frame-ancestors, anonymous session tokens, no Streamlit coupling)
+- [X] T058 [US4] Add `npm run size` script in `widget/package.json` — measures raw and gzip sizes of loader.js and initial bundle, outputs `docs/widget-bundle-report.md` (depends on T018)
+- [X] T059 [US4] Configure Vite `vite.config.ts` for one standalone initial JS bundle — `manualChunks`, `rollupOptions.output` (depends on T001)
+- [X] T060 [US4] Generate `docs/widget-bundle-report.md` after build with measured sizes and any exception rationale
+- [X] T061 [US4] Update `docs/runbook.md` with widget startup, demo host verification, and troubleshooting
+- [X] T062 [US4] Update `docs/decisions.md` with Phase 9 decisions (loader serving, iframe isolation, bundle strategy, origin enforcement)
+- [X] T063 [US4] Update `docs/security.md` with Phase 9 widget security boundaries (origin allowlisting, CSP frame-ancestors, anonymous session tokens, no Streamlit coupling)
 
 **Checkpoint**: All user stories are independently functional. Bundle size is
 documented. Security boundaries are verified and documented.
@@ -192,10 +192,10 @@ documented. Security boundaries are verified and documented.
 
 **Purpose**: Improvements that affect multiple user stories.
 
-- [ ] T064 [P] Validate `specs/009-embeddable-react-widget/quickstart.md` test list against actual test files
-- [ ] T065 [P] Add `.gitignore` and `.dockerignore` entries for `widget/node_modules/`, `widget/dist/`
-- [ ] T066 Run full regression test suite — all existing Phase 1–8 tests must pass
-- [ ] T067 [P] Update `docker-compose.yml` to include widget build context and optional demo host serving convenience once the required runnable host-origin setup from US2 is in place
+- [X] T064 [P] Validate `specs/009-embeddable-react-widget/quickstart.md` test list against actual test files
+- [X] T065 [P] Add `.gitignore` and `.dockerignore` entries for `widget/node_modules/`, `widget/dist/`
+- [X] T066 Run full regression test suite — all existing Phase 1–8 tests must pass
+- [X] T067 [P] Update `docker-compose.yml` to include widget build context and optional demo host serving convenience once the required runnable host-origin setup from US2 is in place
 
 ---
 

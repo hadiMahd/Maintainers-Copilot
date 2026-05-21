@@ -13,19 +13,19 @@ const mockConfig = {
 }
 
 beforeEach(() => {
-  ;(window as Record<string, unknown>).__WIDGET_ID__ = 'wid-1'
-  ;(window as Record<string, unknown>).__ORIGIN__ = 'https://example.com'
+  ;(window as unknown as Record<string, unknown>).__WIDGET_ID__ = 'wid-1'
+  ;(window as unknown as Record<string, unknown>).__ORIGIN__ = 'https://example.com'
 })
 
 afterEach(() => {
-  delete (window as Record<string, unknown>).__WIDGET_ID__
-  delete (window as Record<string, unknown>).__ORIGIN__
+  delete (window as unknown as Record<string, unknown>).__WIDGET_ID__
+  delete (window as unknown as Record<string, unknown>).__ORIGIN__
   cleanup()
 })
 
 describe('App', () => {
   it('renders collapsed bubble on load', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => mockConfig,
     } as Response)
@@ -38,7 +38,7 @@ describe('App', () => {
   })
 
   it('renders expanded panel when bubble is clicked', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => mockConfig,
     } as Response)
@@ -58,7 +58,7 @@ describe('App', () => {
   })
 
   it('applies dark theme class', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => mockConfig,
     } as Response)
@@ -72,7 +72,7 @@ describe('App', () => {
   })
 
   it('shows error state when config fetch fails', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: false,
       status: 403,
     } as Response)
@@ -85,7 +85,7 @@ describe('App', () => {
   })
 
   it('shows blocked state when origin is not allowed', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: false,
       status: 403,
     } as Response)

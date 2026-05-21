@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
-import { postResize, setupResizeListener, ResizeMessage } from '../messages'
+import { postResize, setupResizeListener } from '../messages'
 
 describe('postResize', () => {
   it('sends resize message to parent with correct type', () => {
@@ -10,7 +10,6 @@ describe('postResize', () => {
     postResize(mockParent, 500, 380, '*')
 
     expect(postMessage).toHaveBeenCalledTimes(1)
-    const msg = postResize.mock ? postMessage.mock.calls[0][0] : postMessage.mock?.calls?.[0]?.[0]
     expect(postMessage).toHaveBeenCalledWith(
       { type: 'maintainer-copilot-widget:resize', height: 500, width: 380 },
       '*',

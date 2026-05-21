@@ -6,9 +6,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     rollupOptions: {
+      input: {
+        main: 'index.html',
+        loader: 'src/loader.ts',
+      },
       output: {
-        manualChunks: undefined,
-        entryFileNames: 'assets/widget-[hash].js',
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'loader') {
+            return 'assets/loader.js'
+          }
+          return 'assets/widget-[hash].js'
+        },
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },

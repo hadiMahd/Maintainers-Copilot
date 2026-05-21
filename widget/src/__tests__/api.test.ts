@@ -20,11 +20,11 @@ describe('fetchConfig', () => {
       enabled_tools: [],
     }
 
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => mockConfig,
       headers: { get: () => 'req-1' },
-    } as Response)
+    } as unknown as Response)
 
     const config = await fetchConfig('https://api.example.com', 'wid-1', 'https://example.com')
 
@@ -32,16 +32,16 @@ describe('fetchConfig', () => {
     expect(config.greeting).toBe('Hello!')
     expect(config.position).toBe('bottom-right')
 
-    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    const fetchCall = (window.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
     expect(fetchCall[0]).toContain('/public/widgets/wid-1/config')
     expect(fetchCall[0]).not.toContain('message=')
   })
 
   it('throws on 403 response', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: false,
       status: 403,
-    } as Response)
+    } as unknown as Response)
 
     await expect(fetchConfig('https://api.example.com', 'wid-1', 'https://evil.com')).rejects.toThrow()
   })
@@ -49,17 +49,17 @@ describe('fetchConfig', () => {
 
 describe('issueSession', () => {
   it('posts to session endpoint with Origin header', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ token: 'abc123', expires_at: '2026-01-01T00:00:00Z', widget_id: 'wid-1' }),
-    } as Response)
+    } as unknown as Response)
 
     const result = await issueSession('https://api.example.com', 'wid-1', 'https://example.com')
 
     expect(result.token).toBe('abc123')
     expect(result.widget_id).toBe('wid-1')
 
-    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    const fetchCall = (window.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
     expect(fetchCall[0]).toContain('/public/widgets/wid-1/session')
     expect(fetchCall[1]?.method).toBe('POST')
   })
@@ -67,10 +67,10 @@ describe('issueSession', () => {
 
 describe('submitMessage', () => {
   it('posts message to messages endpoint without message in URL', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+    vi.spyOn(window, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ conversation_id: 'conv-1' }),
-    } as Response)
+    } as unknown as Response)
 
     const result = await submitMessage(
       'https://api.example.com',
@@ -81,7 +81,7 @@ describe('submitMessage', () => {
 
     expect(result.conversation_id).toBe('conv-1')
 
-    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    const fetchCall = (window.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
     const url = fetchCall[0] as string
     expect(url).not.toContain('Hello')
     expect(url).not.toContain('world')

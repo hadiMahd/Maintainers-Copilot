@@ -69,3 +69,7 @@ coverage/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Widget
+widget/node_modules/
+widget/dist/

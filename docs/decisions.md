@@ -457,3 +457,72 @@ Runners-up and rationale:
 **Decision**: The `WidgetConfigService.generate_embed_snippet()` returns a placeholder HTML snippet referencing the `widget_config_id`. Phase 9 will replace this with the actual embed `<script>` generation.
 
 **Rationale**: The widget loader lives in Phase 9; Phase 8 needs only enough backend support to display a generated snippet in the admin UI.
+
+## Phase 9 Embeddable Widget Decisions
+
+### Loader Serving Strategy
+
+**Decision**: The widget loader (`loader.js`) is served by the FastAPI backend at `GET /widget/loader.js` with `Cache-Control: no-cache` headers. The loader is a vanilla TypeScript file built by Vite as a separate entry point.
+
+**Rationale**:
+- Single origin for all widget assets simplifies CORS and CSP.
+- Backend can inject dynamic configuration or feature flags in the future.
+- Loader is tiny (< 5 KB gzip) so caching is less critical than correctness.
+
+**Alternatives Rejected**:
+- CDN-hosted loader: rejected because it adds an external dependency and complicates origin enforcement.
+- Inline loader in the snippet: rejected because it prevents cache sharing across widget instances.
+
+### Iframe Isolation
+
+**Decision**: The widget runs inside an iframe served at `GET /widget/frame/{widget_id}`. The iframe shell sets `window.__WIDGET_ID__` and `window.__ORIGIN__` for the React app to read.
+
+**Rationale**:
+- Iframe provides CSS and JS isolation from the host page.
+- CSP `frame-ancestors` header enforces origin allowlisting at the HTTP level.
+- Bootstrap values avoid query-string exposure of widget IDs.
+
+**Alternatives Rejected**:
+- Shadow DOM only: rejected because CSS leakage and JS scope conflicts are harder to guarantee.
+- Web Components: rejected because React integration is simpler with iframe + postMessage.
+
+### Bundle Strategy
+
+**Decision**: Vite builds two entry points — `loader` (vanilla TS, no React) and `main` (React app). The loader is named `assets/loader.js`; the React bundle is `assets/widget-[hash].js`. CSS is bundled with the React app.
+
+**Rationale**:
+- Loader must be tiny and framework-free for fast host-page injection.
+- React bundle can be larger since it's loaded inside the iframe.
+- Single build command (`npm run build`) produces both.
+
+**Bundle Targets**:
+- Loader: < 5 KB gzip
+- Initial widget bundle: ≤ 150 KB gzip
+- One standalone initial JS bundle (no code-split chunks)
+
+### Origin Enforcement
+
+**Decision**: Observed request `Origin` header is authoritative. `Referer` is used as fallback. Client-declared origin (e.g., in request body) is advisory only. All public widget endpoints fail closed if approved origin cannot be established.
+
+**Rationale**:
+- `Origin` header is set by the browser and cannot be spoofed by JavaScript.
+- Fail-closed prevents accidental data leakage to unapproved hosts.
+- Consistent enforcement across config, session, frame, and chat endpoints.
+
+### Chat Message Separation from SSE URL
+
+**Decision**: Raw user message content is submitted via `POST /public/widgets/{widget_id}/chat/messages` and stored server-side in a pending message map. The `GET /chat/stream` EventSource URL contains only `token` and `conversation_id` — never raw message content.
+
+**Rationale**:
+- SSE URLs appear in browser history, proxy logs, and server access logs.
+- Raw message content in URLs violates privacy and security requirements.
+- Server-side pending map ensures message-to-stream correlation without URL exposure.
+
+### postMessage Channel Restriction
+
+**Decision**: The widget uses `postMessage` exclusively for the resize channel (`maintainer-copilot-widget:resize`). No other message types are sent or accepted.
+
+**Rationale**:
+- Minimizes attack surface for cross-origin message injection.
+- Resize is the only legitimate host↔widget communication needed.
+- Static tests enforce this constraint in CI.

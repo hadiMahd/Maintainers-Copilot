@@ -105,6 +105,7 @@ class TestWidgetConfigList:
                     id="cfg-1", name="Test Widget",
                     allowed_origins=["https://example.com"], theme="default",
                     is_enabled=True,
+                    widget_id="wid-1", position="bottom-right", enabled_tools=[],
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc),
                 )
@@ -142,6 +143,7 @@ class TestWidgetConfigCreate:
                 id="cfg-new", name="New Widget",
                 allowed_origins=["http://localhost"], theme="dark",
                 welcome_message="Hello", is_enabled=True,
+                    widget_id="wid-1", position="bottom-right", enabled_tools=[],
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )

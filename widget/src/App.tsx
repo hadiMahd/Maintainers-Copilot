@@ -13,11 +13,11 @@ interface ChatMessage {
 }
 
 function getWidgetId(): string | undefined {
-  return (typeof window !== 'undefined' ? (window as Record<string, unknown>).__WIDGET_ID__ : undefined) as string | undefined;
+  return (typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__WIDGET_ID__ : undefined) as string | undefined;
 }
 
 function getOrigin(): string | undefined {
-  return (typeof window !== 'undefined' ? (window as Record<string, unknown>).__ORIGIN__ : undefined) as string | undefined;
+  return (typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__ORIGIN__ : undefined) as string | undefined;
 }
 
 function resolveBaseUrl(): string {

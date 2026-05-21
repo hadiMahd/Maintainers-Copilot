@@ -21,21 +21,18 @@
   /**
    * Find the loader script element that loaded this file.
    */
-  function findLoaderScript() {
+  function findLoaderScript(): HTMLScriptElement | null {
     var scripts = document.querySelectorAll("script[" + SCRIPT_ATTR + "]");
     for (var i = 0; i < scripts.length; i++) {
-      var src = scripts[i].src || "";
+      var src = (scripts[i] as HTMLScriptElement).src || "";
       if (src.indexOf("loader.js") !== -1) {
-        return scripts[i];
+        return scripts[i] as HTMLScriptElement;
       }
     }
     return null;
   }
 
-  /**
-   * Resolve the base URL from the loader script src.
-   */
-  function resolveBaseUrl(scriptSrc) {
+  function resolveBaseUrl(scriptSrc: string): string {
     var idx = scriptSrc.indexOf("/widget/loader.js");
     if (idx !== -1) {
       return scriptSrc.substring(0, idx);
@@ -43,13 +40,10 @@
     return "";
   }
 
-  /**
-   * Create and inject the widget iframe.
-   */
-  function injectIframe(baseUrl, widgetId) {
+  function injectIframe(baseUrl: string, widgetId: string): HTMLIFrameElement | null {
     var existing = document.getElementById(IFRAME_ID);
     if (existing) {
-      return;
+      return null;
     }
 
     var iframe = document.createElement("iframe");
@@ -70,7 +64,7 @@
    * Handle resize messages from the iframe.
    * Only accepts messages with the expected event type and origin.
    */
-  function setupMessageListener(iframe) {
+  function setupMessageListener(iframe: HTMLIFrameElement): void {
     window.addEventListener("message", function (event) {
       if (!event.data || typeof event.data !== "object") {
         return;
@@ -113,7 +107,7 @@
       return;
     }
 
-    var baseUrl = resolveBaseUrl(script.src || "");
+    var baseUrl = resolveBaseUrl(script.src);
     var iframe = injectIframe(baseUrl, widgetId);
     if (iframe) {
       setupMessageListener(iframe);
