@@ -74,6 +74,20 @@ visitors.
 - Skip token issuance and rely only on widget ID and origin at stream time:
   rejected because the spec requires a widget-scoped anonymous session token.
 
+## Decision: Submit widget chat messages separately and keep raw text out of the SSE URL
+
+**Rationale**: The phase requires native `EventSource`, but raw chat text in a
+GET query string would leak into URLs, caches, and logs. A two-step flow keeps
+the streaming transport on `EventSource` while preserving redaction and clean
+telemetry boundaries.
+
+**Alternatives considered**:
+
+- Put `message` directly on the SSE URL: rejected because chat text is
+  security-relevant and should not be exposed in URLs.
+- Switch to `fetch()` streaming instead of `EventSource`: rejected because the
+  spec explicitly chose native `EventSource`.
+
 ## Decision: Use iframe isolation for the widget surface
 
 **Rationale**: The constitution and phase require iframe isolation. The iframe
@@ -104,9 +118,10 @@ reduces the attack surface and keeps host integration easy to audit.
 
 **Rationale**: Allowed origins are per widget, so global CORS middleware alone
 cannot make the full decision. Backend services should resolve the widget
-configuration, validate the observed or declared host origin, shape public
-config, and set frame-related headers such as `Content-Security-Policy:
-frame-ancestors`.
+configuration, validate the observed request origin or referrer first, treat any
+client-declared origin only as advisory input, fail closed when no approved
+origin can be established, shape public config, and set frame-related headers
+such as `Content-Security-Policy: frame-ancestors`.
 
 **Alternatives considered**:
 

@@ -87,6 +87,7 @@
 - `position`: widget placement.
 - `enabled_tools`: public enabled tool list.
 - `session_endpoint`: endpoint for widget-scoped anonymous session issuance.
+- `message_submit_endpoint`: endpoint for widget chat message submission.
 - `chat_stream_endpoint`: endpoint for widget streamed chat.
 - `asset_base_url`: base URL for widget assets if needed.
 
@@ -107,14 +108,35 @@ one approved host origin, used by the embedded widget chat flow.
 - `widget_id`: public widget identifier.
 - `origin`: approved host origin.
 - `token`: backend-issued anonymous session token.
+- `conversation_id`: conversation identifier reserved for the widget session.
 - `expires_at`: token expiry timestamp.
-- `stream_url`: SSE URL that includes the token as a query parameter.
 
 **Validation rules**:
 
 - Issued only for enabled widgets and approved host origins.
 - Not logged raw.
 - Invalid or expired tokens block widget chat cleanly.
+
+## Widget Chat Submission
+
+**Purpose**: Accepted user message ready to be consumed by the widget SSE stream.
+
+**Fields**:
+
+- `widget_id`: public widget identifier.
+- `conversation_id`: widget conversation identifier.
+- `stream_id`: opaque identifier for the pending streamed response.
+- `message_submit_endpoint`: POST endpoint used to submit the raw user message.
+- `stream_url`: SSE URL that includes the widget session token and `stream_id`
+  but not the raw user message.
+
+**Validation rules**:
+
+- Raw message content is submitted in the POST body and never appears on the SSE
+  URL.
+- `stream_id` is opaque and safe to expose to the widget.
+- Submission is rejected cleanly when the widget token is invalid, expired, or
+  scoped to a different widget.
 
 ## Origin Decision
 
@@ -123,7 +145,9 @@ one approved host origin, used by the embedded widget chat flow.
 **Fields**:
 
 - `widget_id`: public widget identifier.
-- `requested_origin`: origin observed or declared for the host page.
+- `observed_origin`: origin established from request metadata such as
+  `Origin` or `Referer` when available.
+- `declared_origin`: optional origin declared by the loader or widget request.
 - `allowed`: boolean decision.
 - `reason`: stable reason such as `allowed`, `unknown_widget`, `disabled`, or
   `origin_not_allowed`.
@@ -132,6 +156,11 @@ one approved host origin, used by the embedded widget chat flow.
 **Validation rules**:
 
 - Decision is made by backend services, not the loader alone.
+- `observed_origin` is authoritative when present. `declared_origin` is advisory
+  only and is used for cross-checking or diagnostics, not as the sole trust
+  basis.
+- Requests fail closed when the backend cannot establish an approved origin from
+  request metadata.
 - Blocked decisions produce clean public errors without revealing admin config
   internals.
 - Origin values are safe-normalized before comparison.
@@ -143,8 +172,8 @@ one approved host origin, used by the embedded widget chat flow.
 **Fields**:
 
 - `widget_id`: public widget identifier.
-- `parent_origin`: host origin passed by the loader and checked by backend.
-- `request_headers`: safe subset used for origin/referrer checks where
+- `parent_origin`: optional host origin declared by the loader.
+- `request_headers`: safe subset used for authoritative origin/referrer checks where
   available.
 
 **Validation rules**:
@@ -167,14 +196,15 @@ origin.
 - `origin`: allowed host origin.
 - `messages`: transient client-side display messages.
 - `session_token`: widget-scoped anonymous session token.
+- `stream_id`: opaque identifier for the pending streamed response.
 - `stream_state`: idle, connecting, streaming, completed, interrupted, or error.
 
 **Validation rules**:
 
 - Chat starts only after widget config is accepted and the widget receives a
   valid anonymous session token for the approved origin.
-- Chat endpoint reuses backend chat services and does not create separate
-  chatbot logic.
+- Chat submission and chat stream endpoints reuse backend chat services and do
+  not create separate chatbot logic.
 - Interrupted streams leave a visible partial or retryable state.
 
 ## Widget Message Event
@@ -186,8 +216,10 @@ origin.
 - `event_type`: message delta, warning, error, or done.
 - `sequence`: event order.
 - `content`: display content when present.
-- `request_id`: backend request identifier when safe.
-- `trace_id`: backend trace identifier when safe.
+- `request_id`: backend request identifier when safe, carried in stream events
+  for browser-visible correlation.
+- `trace_id`: backend trace identifier when safe, carried in stream events for
+  browser-visible correlation.
 
 **Validation rules**:
 

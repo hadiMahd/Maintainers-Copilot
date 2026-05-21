@@ -47,14 +47,14 @@ paths:
           $ref: "#/components/responses/AdminRequired"
         "422":
           $ref: "#/components/responses/InvalidWidgetConfig"
-  /admin/widget-configs/{widget_id}:
+  /admin/widget-configs/{config_id}:
     patch:
       summary: Update widget configuration
       operationId: updateWidgetConfig
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/WidgetId"
+        - $ref: "#/components/parameters/ConfigId"
       requestBody:
         required: true
         content:
@@ -80,7 +80,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/WidgetId"
+        - $ref: "#/components/parameters/ConfigId"
       responses:
         "204":
           description: Widget configuration deleted or disabled and audited.
@@ -88,14 +88,14 @@ paths:
           $ref: "#/components/responses/AdminRequired"
         "404":
           $ref: "#/components/responses/WidgetNotFound"
-  /admin/widget-configs/{widget_id}/embed-snippet:
+  /admin/widget-configs/{config_id}/embed-snippet:
     get:
       summary: Get one-script widget embed snippet
       operationId: getWidgetEmbedSnippet
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/WidgetId"
+        - $ref: "#/components/parameters/ConfigId"
       responses:
         "200":
           description: Widget embed snippet.
@@ -118,7 +118,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Host origin declared by the loader or iframe.
+          description: Optional host origin declared by the loader or iframe. The backend validates observed request origin or referrer first and treats this value as advisory only.
       responses:
         "200":
           description: Public runtime widget configuration.
@@ -161,6 +161,31 @@ paths:
           $ref: "#/components/responses/WidgetNotFound"
         "409":
           $ref: "#/components/responses/WidgetDisabled"
+  /public/widgets/{widget_id}/chat/messages:
+    post:
+      summary: Submit widget chat message
+      operationId: submitWidgetChatMessage
+      parameters:
+        - $ref: "#/components/parameters/WidgetId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WidgetChatSubmitRequest"
+      responses:
+        "202":
+          description: Widget chat message accepted for streaming.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetChatAccepted"
+        "403":
+          $ref: "#/components/responses/OriginBlocked"
+        "404":
+          $ref: "#/components/responses/WidgetNotFound"
+        "409":
+          $ref: "#/components/responses/WidgetDisabled"
   /public/widgets/{widget_id}/chat/stream:
     get:
       summary: Stream public widget chat response
@@ -177,15 +202,9 @@ paths:
           required: true
           schema:
             type: string
-        - name: message
+        - name: stream_id
           in: query
           required: true
-          schema:
-            type: string
-            minLength: 1
-        - name: origin
-          in: query
-          required: false
           schema:
             type: string
       responses:
@@ -240,6 +259,7 @@ paths:
           required: false
           schema:
             type: string
+          description: Optional host origin declared by the loader. The backend validates observed request origin or referrer first and treats this value as advisory only.
       responses:
         "200":
           description: Widget iframe shell.
@@ -267,6 +287,13 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
+    ConfigId:
+      name: config_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
     WidgetId:
       name: widget_id
       in: path
@@ -412,7 +439,7 @@ components:
     PublicWidgetConfig:
       type: object
       required:
-        [widget_id, theme, greeting, position, enabled_tools, session_endpoint, chat_stream_endpoint]
+        [widget_id, theme, greeting, position, enabled_tools, session_endpoint, message_submit_endpoint, chat_stream_endpoint]
       properties:
         widget_id:
           type: string
@@ -428,6 +455,8 @@ components:
             type: string
         session_endpoint:
           type: string
+        message_submit_endpoint:
+          type: string
         chat_stream_endpoint:
           type: string
         asset_base_url:
@@ -438,9 +467,10 @@ components:
       properties:
         origin:
           type: string
+          description: Client-declared host origin for cross-checking. The backend must not trust this as the sole authorization signal.
     WidgetSessionToken:
       type: object
-      required: [widget_id, token, conversation_id, expires_at, stream_url]
+      required: [widget_id, token, conversation_id, expires_at]
       properties:
         widget_id:
           type: string
@@ -451,6 +481,28 @@ components:
         expires_at:
           type: string
           format: date-time
+    WidgetChatSubmitRequest:
+      type: object
+      required: [token, conversation_id, message]
+      properties:
+        token:
+          type: string
+        conversation_id:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+    WidgetChatAccepted:
+      type: object
+      required: [widget_id, conversation_id, stream_id, stream_url]
+      properties:
+        widget_id:
+          type: string
+        conversation_id:
+          type: string
+        stream_id:
+          type: string
         stream_url:
           type: string
     WidgetChatStreamEvent:
@@ -464,6 +516,8 @@ components:
           type: integer
           minimum: 0
         content:
+          type: string
+        request_id:
           type: string
         trace_id:
           type: string

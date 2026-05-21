@@ -52,18 +52,18 @@ rows with reserved widget audit action names.
 
 ## Run Allowed Host Demo
 
-Open `demo/host/allowed.html` from an allowed origin and include the generated
-script snippet.
+Serve `demo/host/allowed.html` from an allowed local origin and include the
+generated script snippet.
 
 Expected result: the loader injects an iframe, the iframe loads public config,
 requests a widget-scoped anonymous session token for the allowed host origin,
-the collapsed bubble appears, the expanded panel shows the configured greeting
-and theme, and streamed chat messages render progressively over native
-`EventSource`.
+the widget submits raw user messages outside the SSE URL, the collapsed bubble
+appears, the expanded panel shows the configured greeting and theme, and
+streamed chat messages render progressively over native `EventSource`.
 
 ## Verify Blocked Origin
 
-Open `demo/host/blocked.html` from an origin not present in the widget
+Serve `demo/host/blocked.html` from an origin not present in the widget
 configuration, or run the documented blocked-origin test case.
 
 Expected result: public config or session issuance is blocked, chat does not

@@ -28,7 +28,7 @@ constitution, PLAN.md, the feature specification, or the implementation plan.
 package.json, tsconfig, and Vite config for one standalone initial bundle.
 
 - [ ] T001 Create `widget/` directory structure: `src/`, `src/__tests__/`, `index.html`, `package.json`, `vite.config.ts`, `tsconfig.json`
-- [ ] T002 [P] Create `demo/host/` directory with `allowed.html`, `blocked.html`, `README.md`
+- [ ] T002 [P] Create `demo/host/` directory with `allowed.html`, `blocked.html`, `README.md`, and local serving/origin setup notes or helper files for distinct allowed and blocked origins
 - [ ] T003 [P] Create `docs/widget-bundle-report.md` placeholder and `docs/widget-embed.md` placeholder
 
 ---
@@ -41,20 +41,20 @@ Phase 8 already provides admin widget CRUD (`widget_configs.py`, `WidgetConfigSe
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 [P] [Foundational] Add `widget_id` (UUID4), `greeting`, `position`, `enabled_tools` fields to `WidgetConfig` ORM model in `app/infra/orm_models.py`
-- [ ] T005 [P] [Foundational] Add `PublicWidgetConfigRead`, `WidgetSessionToken`, `WidgetConfigDelete` schemas to `app/domain/widget_config.py`
-- [ ] T006 [Foundational] Create Alembic migration for new widget config fields in `migrations/versions/`
+- [ ] T004 [P] [Foundational] Add `widget_id` (UUID4), `greeting`, `position`, `enabled_tools` fields to `WidgetConfig` ORM model in `app/infra/orm_models.py` (`greeting` must align with the existing `welcome_message` column via alias or rename in T006)
+- [ ] T005 [P] [Foundational] Add `PublicWidgetConfigRead`, `WidgetSessionToken`, `WidgetChatAccepted`, and `WidgetConfigDelete` schemas to `app/domain/widget_config.py`
+- [ ] T006 [Foundational] Create Alembic migration for new widget config fields in `migrations/versions/`, including the `greeting`/`welcome_message` alignment strategy chosen in T004
 - [ ] T007 [P] [Foundational] Add `WidgetEmbedError` and `WidgetSessionError` to `app/domain/errors.py`
-- [ ] T008 [P] [Foundational] Add `WidgetEmbedService` in `app/services/widget_embed_service.py` — origin validation, public config shaping, CSP frame-ancestors header generation
-- [ ] T009 [P] [Foundational] Add `WidgetSessionService` in `app/services/widget_session_service.py` — anonymous session token issuance with widget ID + origin validation, token expiry
+- [ ] T008 [P] [Foundational] Add `WidgetEmbedService` in `app/services/widget_embed_service.py` — origin validation with observed origin/referrer as authoritative, client-declared origin only advisory, public config shaping, CSP frame-ancestors header generation
+- [ ] T009 [P] [Foundational] Add `WidgetSessionService` in `app/services/widget_session_service.py` — anonymous session token issuance with widget ID + observed origin/referrer-first validation, advisory origin cross-check, token expiry
 - [ ] T010 [Foundational] Add `WidgetChatService` in `app/services/widget_chat_service.py` — widget-scoped chat flow reusing Phase 7 `ChatbotService`, validates widget session token before dispatch
 - [ ] T011 [P] [Foundational] Add `WidgetAssets` infra in `app/infra/widget_assets.py` — static asset serving from build output with cache headers
-- [ ] T012 [Foundational] Extend `WidgetConfigService` in `app/services/widget_config_service.py` — add `delete_config()` with audit row, fix snippet to use `widget_id` and `data-widget-id` attribute
+- [ ] T012 [Foundational] Extend `WidgetConfigService` in `app/services/widget_config_service.py` — generate UUID4 `widget_id` on create, persist/read/update Phase 9 fields, add `delete_config()` with audit row, fix snippet to use `widget_id` and `data-widget-id` attribute, and keep `greeting` aligned with the ORM column name
 - [ ] T013 [Foundational] Wire widget audit integration — widget config create/update/delete create audit rows with `widget_config.create`, `widget_config.update`, `widget_config.delete` actions in `app/services/widget_config_service.py`
 - [ ] T014 [Foundational] Add `GET /widget/loader.js`, `GET /widget/frame/{widget_id}`, `GET /widget/assets/{path}` routes in `app/api/routes/widget_loader.py`
-- [ ] T015 [Foundational] Add `GET /widget/config/{widget_id}`, `POST /widget/session`, `POST /widget/chat` routes in `app/api/routes/widget_public.py`
-- [ ] T016 [Foundational] Add `DELETE /admin/widget-configs/{config_id}` route to `app/api/routes/widget_configs.py`
-- [ ] T017 [Foundational] Wire `widget_public_router` and `widget_loader_router` in `app/api/routes/__init__.py`
+- [ ] T015 [Foundational] Add `GET /public/widgets/{widget_id}/config`, `POST /public/widgets/{widget_id}/session`, `POST /public/widgets/{widget_id}/chat/messages`, and `GET /public/widgets/{widget_id}/chat/stream` routes in `app/api/routes/widget_public.py`
+- [ ] T016 [Foundational] Keep admin widget routes aligned on internal `config_id`, including `DELETE /admin/widget-configs/{config_id}` and matching snippet/admin CRUD route parameters in `app/api/routes/widget_configs.py`
+- [ ] T017 [Foundational] Wire `widget_public_router` and `widget_loader_router` in `app/api/routes/__init__.py`, confirming request_id/trace_id middleware and structured logging cover all `/widget/*` and `/public/widgets/*` routes
 - [ ] T018 [Foundational] Add `npm test` (Vitest) and `npm run build` and `npm run size` scripts to `widget/package.json`
 
 **Checkpoint**: Foundation ready — backend widget endpoints, services, domain models,
@@ -76,14 +76,14 @@ rows are created. Verify regular user cannot create/edit.
 
 - [ ] T019 [P] [US1] Unit test for `WidgetConfigService.delete_config()` with audit in `tests/unit/test_widget_config_service.py`
 - [ ] T020 [P] [US1] Unit test for widget config audit row creation on create/update/delete in `tests/unit/test_widget_config_audit.py`
-- [ ] T021 [P] [US1] Contract test for admin widget CRUD endpoints in `tests/contract/test_widget_api_contract.py`
+- [ ] T021 [P] [US1] Contract test for admin widget CRUD endpoints in `tests/contract/test_widget_api_contract.py`, including `config_id` admin route consistency and compatibility with the existing Phase 8 Streamlit widget-config API shape
 - [ ] T022 [P] [US1] Integration test for admin create → view → update → delete → audit in `tests/integration/test_widget_admin_crud.py`
 - [ ] T023 [P] [US1] Authorization test: regular user denied widget config create/edit/delete in `tests/integration/test_widget_admin_crud.py`
 
 ### Implementation for User Story 1
 
 - [ ] T024 [US1] Implement `delete_config()` in `app/services/widget_config_service.py` with audit row and transaction (depends on T005, T013)
-- [ ] T025 [US1] Fix `generate_embed_snippet()` to use `widget_id` and `<script src="{base}/widget/loader.js" data-widget-id="{widget_id}">` format (depends on T004)
+- [ ] T025 [US1] Fix `generate_embed_snippet()` to use `widget_id` and `<script src="{base}/widget/loader.js" data-widget-id="{widget_id}">` format, and confirm the `greeting` field name aligns with the ORM column choice from T004/T006 (depends on T004)
 - [ ] T026 [US1] Add `DELETE /admin/widget-configs/{config_id}` route in `app/api/routes/widget_configs.py` (depends on T016)
 - [ ] T027 [US1] Wire audit service calls in create/update/delete workflows (depends on T013)
 - [ ] T028 [US1] Add redaction test: audit metadata must not contain secrets or raw config payloads in `tests/unit/test_widget_config_audit.py`
@@ -107,20 +107,20 @@ is blocked with a clean error.
 
 - [ ] T029 [P] [US2] Unit test for `WidgetEmbedService.origin_allowed()` in `tests/unit/test_widget_origin_policy.py`
 - [ ] T030 [P] [US2] Unit test for `WidgetSessionService.issue_token()` in `tests/unit/test_widget_session_service.py`
-- [ ] T031 [P] [US2] Contract test for public config read, session issuance, and loader delivery in `tests/contract/test_widget_api_contract.py`
+- [ ] T031 [P] [US2] Contract test for public config read, session issuance, message submission, loader delivery, fail-closed origin enforcement, request_id/trace_id-safe error mapping, and widget public API compatibility with the internal app backend surface in `tests/contract/test_widget_api_contract.py`
 - [ ] T032 [P] [US2] Integration test for allowed-origin embed flow in `tests/integration/test_widget_allowed_origin.py`
 - [ ] T033 [P] [US2] Integration test for blocked-origin embed flow in `tests/integration/test_widget_blocked_origin.py`
 - [ ] T034 [P] [US2] Integration test for frame response headers (CSP frame-ancestors) in `tests/integration/test_widget_frame_headers.py`
 
 ### Implementation for User Story 2
 
-- [ ] T035 [P] [US2] Create `loader.ts` — vanilla JS that reads `data-widget-id`, injects iframe, listens for resize messages in `widget/src/loader.ts`
+- [ ] T035 [P] [US2] Create `loader.ts` — vanilla JS that reads `data-widget-id`, injects iframe, listens for resize messages, and does not require query-string widget IDs in `widget/src/loader.ts`
 - [ ] T036 [US2] Implement `GET /widget/loader.js` route in `app/api/routes/widget_loader.py` — serves built loader.js with `Cache-Control` and `Content-Type` headers (depends on T014)
-- [ ] T037 [US2] Implement `GET /widget/frame/{widget_id}` route — validates widget enabled + origin, serves iframe HTML with CSP frame-ancestors header (depends on T014, T008)
-- [ ] T038 [US2] Implement `GET /widget/config/{widget_id}` public config endpoint — returns `PublicWidgetConfigRead` with origin validation, no-store cache (depends on T008, T015)
-- [ ] T039 [US2] Implement `POST /widget/session` anonymous session token endpoint — validates widget enabled + origin, issues scoped token (depends on T009, T015)
-- [ ] T040 [US2] Create `demo/host/allowed.html` — demo page with one script tag embedding an allowed widget (depends on T035)
-- [ ] T041 [US2] Create `demo/host/blocked.html` — demo page from unallowed origin demonstrating blocked embed (depends on T035)
+- [ ] T037 [US2] Implement `GET /widget/frame/{widget_id}` route — validates widget enabled plus approved observed origin/referrer, cross-checks any declared origin, and serves iframe HTML with CSP frame-ancestors header (depends on T014, T008)
+- [ ] T038 [US2] Implement `GET /public/widgets/{widget_id}/config` public config endpoint — returns `PublicWidgetConfigRead` with observed-origin-first validation, advisory origin cross-check, and no-store cache (depends on T008, T015)
+- [ ] T039 [US2] Implement `POST /public/widgets/{widget_id}/session` anonymous session token endpoint — validates widget enabled plus approved observed origin/referrer, cross-checks any declared origin, and issues scoped token (depends on T009, T015)
+- [ ] T040 [US2] Create `demo/host/allowed.html` plus runnable allowed-origin host setup so the demo can be served from a distinct approved local origin (depends on T035)
+- [ ] T041 [US2] Create `demo/host/blocked.html` plus runnable blocked-origin host setup so the demo can be served from a distinct unapproved local origin (depends on T035)
 - [ ] T042 [US2] Implement `GET /widget/assets/{path}` static asset serving with immutable cache headers for hashed assets (depends on T011, T014)
 
 **Checkpoint**: Allowed host pages can embed the widget. Blocked origins are
@@ -142,16 +142,16 @@ message, and verify streamed response content appears progressively.
 - [ ] T043 [P] [US3] Vitest test for widget `App.tsx` component render (bubble + panel) in `widget/src/__tests__/App.test.tsx`
 - [ ] T044 [P] [US3] Vitest test for widget `api.ts` SSE streaming with `EventSource` in `widget/src/__tests__/api.test.ts`
 - [ ] T045 [P] [US3] Vitest test for resize message channel in `widget/src/__tests__/messages.test.ts`
-- [ ] T046 [P] [US3] Integration test for widget chat stream over `EventSource` in `tests/integration/test_widget_chat_stream.py`
+- [ ] T046 [P] [US3] Integration test for widget chat submission plus `EventSource` stream in `tests/integration/test_widget_chat_stream.py`, including compatibility with the Phase 7 chat SSE event shape reused by the widget, proof that raw chat text is not placed on the SSE URL, and browser-visible `request_id`/`trace_id` correlation on stream events when safe
 
 ### Implementation for User Story 3
 
 - [ ] T047 [P] [US3] Create `widget/src/styles.css` — vanilla CSS for collapsed bubble, expanded panel, message list, input form, theme variants
-- [ ] T048 [P] [US3] Create `widget/src/api.ts` — typed backend API client: public config read, session token request, `EventSource` SSE chat stream
+- [ ] T048 [P] [US3] Create `widget/src/api.ts` — typed backend API client: public config read, session token request, POST message submission, and `EventSource` SSE chat stream without raw message content on the stream URL, preserving `request_id`/`trace_id` when present in stream events
 - [ ] T049 [P] [US3] Create `widget/src/messages.ts` — `postMessage` resize channel with origin validation, bounded dimensions
-- [ ] T050 [US3] Create `widget/src/App.tsx` — React widget with collapsed bubble state, expanded panel state, greeting display, theme application, message list, input form, streaming renderer
+- [ ] T050 [US3] Create `widget/src/App.tsx` — React widget with collapsed bubble state, expanded panel state, greeting display, theme application, configured position, enabled-tool indicators, message list, input form, and streaming renderer
 - [ ] T051 [US3] Create `widget/src/main.tsx` — React entry point, reads bootstrap values from iframe shell, mounts `App.tsx`
-- [ ] T052 [US3] Implement `POST /widget/chat` SSE endpoint — validates widget session token, reuses Phase 7 `ChatbotService`, streams events (depends on T010, T015)
+- [ ] T052 [US3] Implement `POST /public/widgets/{widget_id}/chat/messages` and `GET /public/widgets/{widget_id}/chat/stream` — validates widget session token, submits raw user messages outside the SSE URL, reuses Phase 7 `ChatbotService`, and streams events with browser-visible `request_id`/`trace_id` when safe (depends on T010, T015)
 - [ ] T053 [US3] Handle stream interruption in widget — visible partial state, retry option (depends on T050, T048)
 - [ ] T054 [US3] Handle widget errors, disabled states, blocked origins with clean user-facing states (no stack traces) in `widget/src/App.tsx`
 
@@ -196,7 +196,7 @@ documented. Security boundaries are verified and documented.
 - [ ] T064 [P] Validate `specs/009-embeddable-react-widget/quickstart.md` test list against actual test files
 - [ ] T065 [P] Add `.gitignore` and `.dockerignore` entries for `widget/node_modules/`, `widget/dist/`
 - [ ] T066 Run full regression test suite — all existing Phase 1–8 tests must pass
-- [ ] T067 [P] Update `docker-compose.yml` to include widget build context and demo host serving if needed
+- [ ] T067 [P] Update `docker-compose.yml` to include widget build context and optional demo host serving convenience once the required runnable host-origin setup from US2 is in place
 
 ---
 

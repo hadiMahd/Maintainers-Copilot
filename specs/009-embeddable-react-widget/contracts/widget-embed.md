@@ -34,6 +34,8 @@
 
 - Frame route validates widget ID, enabled status, and host origin before
   serving the widget shell.
+- Backend trusts observed request origin or referrer first and treats any
+  loader-declared origin only as advisory input.
 - Frame response sets `Content-Security-Policy` with `frame-ancestors` derived
   from the widget configuration's allowed origins.
 - Frame shell loads one standalone initial widget JavaScript bundle from the
@@ -49,14 +51,21 @@
 - Widget reads public config before showing the expanded chat panel.
 - Widget requests a widget-scoped anonymous session token before opening the
   chat stream.
+- Widget submits raw user messages through a separate POST endpoint before
+  opening the `EventSource` stream.
 - Widget starts in collapsed bubble state.
 - Widget supports expanded panel state with greeting, theme, position, and
   enabled tool indicators.
-- Widget sends chat messages through the widget public streamed chat endpoint.
+- Widget sends chat messages through the widget public message-submission
+  endpoint, then consumes the response over the widget public streamed chat
+  endpoint.
 - Widget renders streamed chat events progressively.
+- Stream events may carry `request_id` and `trace_id` when safe so browser
+  debugging can correlate the public chat flow.
 - Widget handles stream interruption with a clean retryable state.
 - Widget does not reference Streamlit routes, Streamlit state, or Streamlit
   assets.
+- Raw user message content never appears in the SSE URL.
 
 ## Resize Message Contract
 
