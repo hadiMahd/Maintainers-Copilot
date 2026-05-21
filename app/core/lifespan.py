@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from pydantic import SecretStr
 import structlog
 
 from app.core.config import AppSettings
@@ -14,11 +15,42 @@ from app.infra.conversation_state_adapter import ConversationStateAdapter
 from app.infra.llm_adapter import AzureChatLLMAdapter, FakeLLMAdapter
 from app.infra.model_server_tools import HTTPModelServerTools
 from app.infra.prompt_registry import PromptRegistry
-from app.infra.rag_tool_client import FakeRAGToolClient
+from app.infra.rag_tool_client import FakeRAGToolClient, RAGToolClient
+from app.infra.rag_generation_client import resolve_generation_client
 from app.infra.minio_client import create_minio_client
 from app.infra.redis_client import create_redis_client
 from app.infra.tracing import FakeTraceAdapter, LangSmithTraceAdapter
-from app.infra.vault_client import fetch_secrets, init_vault_client, resolve_jwt_key
+from app.infra.vault_client import (
+    fetch_secrets,
+    init_vault_client,
+    resolve_classifier_secrets,
+    resolve_jwt_key,
+)
+
+
+def _apply_optional_provider_settings(settings: AppSettings, resolved: dict) -> None:
+    """Apply optional Vault-resolved provider settings to the live AppSettings."""
+    settings.azure_openai_endpoint = resolved.get("azure_openai_endpoint")
+    azure_api_key = resolved.get("azure_openai_api_key")
+    settings.azure_openai_api_key = (
+        SecretStr(str(azure_api_key)) if azure_api_key else None
+    )
+    settings.azure_openai_model = resolved.get("azure_openai_model")
+    settings.azure_openai_embedding_model = resolved.get("azure_openai_embedding_model")
+    langchain_api_key = resolved.get("langchain_api_key")
+    settings.langchain_api_key = (
+        SecretStr(str(langchain_api_key)) if langchain_api_key else None
+    )
+    settings.langsmith_endpoint = resolved.get("langchain_endpoint")
+    settings.langsmith_project = resolved.get("langchain_project")
+
+
+def _build_rag_tool_client(db_session_factory) -> RAGToolClient:
+    generation_client = resolve_generation_client()
+    return RAGToolClient(
+        session_factory=db_session_factory,
+        generation_client=generation_client,
+    )
 
 
 @asynccontextmanager
@@ -42,6 +74,10 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     settings.minio_endpoint = secrets.get("minio_endpoint")
     settings.minio_access_key = secrets.get("minio_access_key")
     settings.minio_secret_key = secrets.get("minio_secret_key")
+    _apply_optional_provider_settings(
+        settings,
+        resolve_classifier_secrets(vault_client, settings),
+    )
 
     # Resolve JWT signing keys from Vault
     try:
@@ -75,7 +111,11 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     app.state.chat_model_server_tools = HTTPModelServerTools(
         base_url=settings.chat_model_server_base_url,
     )
-    app.state.chat_rag_tool_client = FakeRAGToolClient()
+    app.state.chat_rag_tool_client = (
+        FakeRAGToolClient()
+        if settings.environment == "test"
+        else _build_rag_tool_client(db_session_factory)
+    )
     app.state.chat_trace_adapter = (
         LangSmithTraceAdapter.from_settings(settings)
         if settings.chat_tracing_backend == "langsmith"

@@ -9,7 +9,7 @@
 - Phase 8 backend support for widget configuration and memory inspection is
   implemented or represented by a contract-compatible fake for UI tests.
 - Backend base URL is configured as non-secret local configuration, such as
-  `MAINTAINER_COPILOT_API_BASE_URL=http://localhost:8000`.
+  `MAINTAINER_COPILOT_UI_BASE_URL=http://localhost:8000`.
 
 ## Run The Internal UI
 
@@ -17,6 +17,12 @@ Start the FastAPI backend, then run:
 
 ```bash
 streamlit run streamlit_app/app.py
+```
+
+Or run the Streamlit UI in Docker Compose:
+
+```bash
+docker compose --profile ui up -d streamlit
 ```
 
 Expected result: the Streamlit app opens to the login page and does not attempt

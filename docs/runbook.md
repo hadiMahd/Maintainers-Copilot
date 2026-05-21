@@ -15,6 +15,28 @@ docker compose up -d migrations backend
 docker compose down -v
 ```
 
+## Start pgAdmin
+
+```bash
+docker compose --profile dbadmin up -d pgadmin
+```
+
+Open `http://localhost:5050`.
+
+Login with:
+
+- email: `PGADMIN_DEFAULT_EMAIL` from `.env` or default `admin@example.com`
+- password: `PGADMIN_DEFAULT_PASSWORD` from `.env` or default `admin`
+
+Preconfigured server:
+
+- name: `maintainer-postgres`
+- host: `postgres`
+- port: `5432`
+- database: `maintainer`
+- username: `maintainer`
+- password: `POSTGRES_PASSWORD` from `.env`
+
 ## Run Tests
 
 ```bash
@@ -150,6 +172,15 @@ MAINTAINER_COPILOT_UI_BASE_URL=http://localhost:8000 streamlit run streamlit_app
 ```
 
 The backend URL must be running and accessible. The FastAPI backend must have the Phase 8 widget-config and memory-inspection routes registered (they are wired in `app/api/routes/__init__.py`).
+
+To run the UI inside Docker Compose instead:
+
+```bash
+docker compose --profile ui up -d streamlit
+```
+
+This publishes the UI at `http://localhost:8501` and points it at the backend
+service with `MAINTAINER_COPILOT_UI_BASE_URL=http://backend:8000`.
 
 ### Verify Backend Endpoints
 

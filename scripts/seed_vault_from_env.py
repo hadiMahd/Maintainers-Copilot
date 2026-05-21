@@ -18,6 +18,8 @@ import urllib.error
 import urllib.request
 
 import hvac
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 REQUIRED_ENV_VARS = (
@@ -74,6 +76,30 @@ def require_seed_values(env_vars: dict[str, str]) -> None:
         raise RuntimeError(f"Missing required seed values in env/bootstrap input: {names}")
 
 
+def resolve_jwt_keypair(env_vars: dict[str, str]) -> tuple[str, str]:
+    """Resolve an RS256 keypair from env, or generate one for local/dev bootstrap."""
+    private_key = env_vars.get("JWT_PRIVATE_KEY")
+    public_key = env_vars.get("JWT_PUBLIC_KEY")
+    if private_key and public_key:
+        return private_key, public_key
+
+    generated_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    private_pem = generated_private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
+    public_pem = (
+        generated_private_key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode("utf-8")
+    )
+    return private_pem, public_pem
+
+
 def seed_vault(env_path: str = ".env", *, timeout_seconds: float = 30.0) -> None:
     """Seed Vault dev mode with secrets from .env."""
     env_vars = load_env_file(env_path)
@@ -87,6 +113,8 @@ def seed_vault(env_path: str = ".env", *, timeout_seconds: float = 30.0) -> None
     client = hvac.Client(url=vault_addr, token=vault_token)
     if not client.is_authenticated():
         raise RuntimeError(f"Could not authenticate to Vault at {vault_addr}")
+
+    jwt_private_key, jwt_public_key = resolve_jwt_keypair(env_vars)
 
     # Enable KV v2 if not already enabled
     try:
@@ -107,6 +135,15 @@ def seed_vault(env_path: str = ".env", *, timeout_seconds: float = 30.0) -> None
         },
     )
     print("Seeded secret/maintainer-copilot/app")
+
+    client.secrets.kv.v2.create_or_update_secret(
+        path="maintainer-copilot/jwt",
+        secret={
+            "private_key": jwt_private_key,
+            "public_key": jwt_public_key,
+        },
+    )
+    print("Seeded secret/maintainer-copilot/jwt")
 
     # Seed Azure OpenAI secrets
     client.secrets.kv.v2.create_or_update_secret(

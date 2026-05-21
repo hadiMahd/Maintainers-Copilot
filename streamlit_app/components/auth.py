@@ -28,6 +28,7 @@ def init_auth_state() -> None:
         "is_authenticated": False,
         "current_user": None,
         "role": "user",
+        "auth_token": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -40,30 +41,36 @@ def store_token(cookies: CookieManager, token: str) -> None:
     cookies.save()
 
 
-def get_token() -> str | None:
+def get_token(cookies: CookieManager | None = None) -> str | None:
     """Retrieve the access token from the cookie."""
-    cookies = get_cookie_manager()
+    cookies = cookies or get_cookie_manager()
     return cookies.get(TOKEN_COOKIE)
 
 
-def clear_auth() -> None:
+def clear_auth(cookies: CookieManager | None = None) -> None:
     """Clear cookie and session state on logout or auth failure."""
-    cookies = get_cookie_manager()
-    if TOKEN_COOKIE in cookies:
-        del cookies[TOKEN_COOKIE]
-        cookies.save()
+    if cookies is not None:
+        if TOKEN_COOKIE in cookies:
+            del cookies[TOKEN_COOKIE]
+            cookies.save()
     st.session_state.is_authenticated = False
     st.session_state.current_user = None
     st.session_state.role = "user"
+    st.session_state.auth_token = None
 
 
-def set_authenticated(user: CurrentUserView, token: str) -> None:
+def set_authenticated(
+    user: CurrentUserView,
+    token: str,
+    cookies: CookieManager | None = None,
+) -> None:
     """Populate session state and cookie after successful login."""
-    cookies = get_cookie_manager()
+    cookies = cookies or get_cookie_manager()
     store_token(cookies, token)
     st.session_state.is_authenticated = True
     st.session_state.current_user = user
     st.session_state.role = user.role
+    st.session_state.auth_token = token
 
 
 def login_form(on_submit: callable) -> None:
@@ -79,17 +86,20 @@ def login_form(on_submit: callable) -> None:
         on_submit(email, password)
 
 
-def restore_session(on_validate_token: callable) -> bool:
+def restore_session(
+    on_validate_token: callable,
+    cookies: CookieManager | None = None,
+) -> bool:
     """Attempt to restore a session from the cookie on page load.
 
     Returns True if the session was successfully restored.
     """
-    token = get_token()
+    token = get_token(cookies)
     if not token:
         return False
     try:
         on_validate_token(token)
         return True
     except Exception:
-        clear_auth()
+        clear_auth(cookies)
         return False

@@ -25,7 +25,10 @@ htmlcov/
 # Data and artifacts
 data/raw/
 data/processed/
-artifacts/
+artifacts/*
+!artifacts/classifiers/
+!artifacts/classifiers/classical/
+!artifacts/classifiers/classical/pandas_logreg/
 
 # Evaluation outputs (keep static Phase 5 inputs in the image)
 evals/*

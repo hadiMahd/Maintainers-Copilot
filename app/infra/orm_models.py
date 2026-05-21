@@ -4,6 +4,8 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, JSON, String, Text, func
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 
+from app.infra.memory_embedding_client import DEFAULT_MEMORY_EMBEDDING_DIM
+
 
 class Base(DeclarativeBase):
     pass
@@ -81,7 +83,7 @@ class LongTermMemory(Base):
     memory_type = Column(String(16), nullable=False, server_default="semantic")
     redacted_content = Column(Text(), nullable=False)
     content_hash = Column(String(64), nullable=False)
-    embedding = Column(Vector(384), nullable=True)
+    embedding = Column(Vector(DEFAULT_MEMORY_EMBEDDING_DIM), nullable=True)
     source = Column(String(64), nullable=True)
     created_by_user_id = Column(String(36), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

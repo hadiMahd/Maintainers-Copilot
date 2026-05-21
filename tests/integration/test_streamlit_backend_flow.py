@@ -260,7 +260,7 @@ def test_chat_stream_error_event_yields_error_event(settings):
     """Non-200 SSE response yields a single error ChatEventView."""
 
     def handler(request):
-        return httpx.Response(503, json={"message": "Service unavailable"})
+        return httpx.Response(422, json={"error_code": "invalid_chat_input", "message": "Conversation ID and message must be non-empty"})
 
     c, token_store, _ = _build_test_client(handler)
     token_store["token"] = "t"
@@ -268,6 +268,7 @@ def test_chat_stream_error_event_yields_error_event(settings):
     assert len(events) == 1
     assert events[0].event_type == "error"
     assert events[0].error is not None
+    assert events[0].error.message == "Conversation ID and message must be non-empty"
 
 
 def test_inspect_memory_empty_result(settings):

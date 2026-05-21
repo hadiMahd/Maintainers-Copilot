@@ -18,8 +18,8 @@ if str(streamlit_app_dir) not in sys.path:
 
 from streamlit_app.clients.backend_api import BackendAPIClient, BackendAPIError
 from streamlit_app.components.auth import (
+    get_cookie_manager,
     clear_auth,
-    get_token,
     init_auth_state,
     login_form,
     restore_session,
@@ -39,16 +39,16 @@ def get_settings() -> StreamlitSettings:
     return settings
 
 
-def _build_client() -> BackendAPIClient:
+def _build_client(token_provider=None, on_auth_invalid=None) -> BackendAPIClient:
     return BackendAPIClient(
         settings=get_settings(),
-        token_provider=get_token,
-        on_auth_invalid=clear_auth,
+        token_provider=token_provider or (lambda: st.session_state.get("auth_token")),
+        on_auth_invalid=on_auth_invalid or clear_auth,
     )
 
 
-def _login_callback(email: str, password: str) -> None:
-    client = _build_client()
+def _login_callback(email: str, password: str, cookies) -> None:
+    client = _build_client(on_auth_invalid=lambda: clear_auth(cookies))
     try:
         data = client.login(email, password)
     except BackendAPIError as exc:
@@ -63,8 +63,12 @@ def _login_callback(email: str, password: str) -> None:
         st.error("Login succeeded but no token was returned.")
         return
 
+    profile_client = _build_client(
+        token_provider=lambda: token,
+        on_auth_invalid=lambda: clear_auth(cookies),
+    )
     try:
-        user = client.get_current_user()
+        user = profile_client.get_current_user()
     except BackendAPIError as exc:
         display_error(exc.ui_error)
         return
@@ -72,23 +76,23 @@ def _login_callback(email: str, password: str) -> None:
         st.error("Unable to fetch user profile.")
         return
 
-    set_authenticated(user, token)
+    set_authenticated(user, token, cookies)
     st.rerun()
 
 
-def _validate_and_restore(token: str) -> None:
+def _validate_and_restore(token: str, cookies) -> None:
     client = BackendAPIClient(
         settings=get_settings(),
         token_provider=lambda: token,
-        on_auth_invalid=clear_auth,
+        on_auth_invalid=lambda: clear_auth(cookies),
     )
     try:
         user = client.get_current_user()
     except (BackendAPIError, Exception):
-        clear_auth()
+        clear_auth(cookies)
         raise
     if not st.session_state.get("is_authenticated"):
-        set_authenticated(user, token)
+        set_authenticated(user, token, cookies)
 
 
 def _get_page_roots() -> list[st.Page]:
@@ -108,23 +112,24 @@ def _get_page_roots() -> list[st.Page]:
     return pages
 
 
-def _show_logout_button() -> None:
+def _show_logout_button(cookies) -> None:
     cols = st.columns([1, 1, 1, 1, 1])
     with cols[4]:
         if st.button("Log out"):
-            clear_auth()
+            clear_auth(cookies)
             st.rerun()
 
 
 def main() -> None:
     init_auth_state()
+    cookies = get_cookie_manager()
 
     if not st.session_state.is_authenticated:
-        if not restore_session(_validate_and_restore):
-            login_form(_login_callback)
+        if not restore_session(lambda token: _validate_and_restore(token, cookies), cookies):
+            login_form(lambda email, password: _login_callback(email, password, cookies))
             return
 
-    _show_logout_button()
+    _show_logout_button(cookies)
     pages = _get_page_roots()
     pg = st.navigation(pages)
     pg.run()

@@ -130,6 +130,7 @@ class BackendAPIClient:
                 if response.status_code != 200:
                     body = None
                     try:
+                        response.read()
                         body = response.json()
                     except Exception:
                         pass

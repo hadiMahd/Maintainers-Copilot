@@ -14,7 +14,7 @@ from app.infra.embedding_client import (
 from app.infra.rag_generation_client import (
     BaseGenerationClient,
     FakeGenerationClient,
-    AzureGenerationStub,
+    AzureGenerationClient,
     resolve_generation_client,
 )
 from app.infra.rag_judge_client import (
@@ -101,11 +101,13 @@ class TestGenerationClientResolution:
         assert not answer.insufficient_evidence
         assert len(answer.supporting_chunk_ids) > 0
 
-    def test_azure_stub_raises_not_implemented(self):
-        import asyncio
-        stub = AzureGenerationStub()
-        with pytest.raises(NotImplementedError):
-            asyncio.run(stub.generate("test", []))
+    def test_azure_client_sets_provider_backend(self):
+        client = AzureGenerationClient(
+            endpoint="https://example.openai.azure.com/",
+            api_key="test-key",
+            deployment_name="gpt-4",
+        )
+        assert client.provider_backend == "azure_openai"
 
     def test_resolve_generation_returns_fake(self):
         client = resolve_generation_client()

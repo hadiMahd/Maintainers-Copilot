@@ -18,7 +18,7 @@ if str(streamlit_app_dir) not in sys.path:
     sys.path.insert(0, str(streamlit_app_dir))
 
 from streamlit_app.clients.backend_api import BackendAPIClient, BackendAPIError
-from streamlit_app.components.auth import clear_auth, get_token, init_auth_state
+from streamlit_app.components.auth import clear_auth, init_auth_state
 from streamlit_app.components.errors import display_error
 from streamlit_app.config import StreamlitSettings
 from streamlit_app.models import MemoryInspectionQuery
@@ -40,7 +40,7 @@ def get_settings() -> StreamlitSettings:
 settings = get_settings()
 client = BackendAPIClient(
     settings=settings,
-    token_provider=get_token,
+    token_provider=lambda: st.session_state.get("auth_token"),
     on_auth_invalid=clear_auth,
 )
 

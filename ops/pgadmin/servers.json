@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "maintainer-postgres",
+      "Group": "Local Stack",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "maintainer",
+      "Username": "maintainer",
+      "SSLMode": "prefer"
+    }
+  }
+}

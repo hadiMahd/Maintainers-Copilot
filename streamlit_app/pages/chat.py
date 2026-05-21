@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import uuid
 
 import streamlit as st
 
@@ -17,10 +18,10 @@ if str(streamlit_app_dir) not in sys.path:
     sys.path.insert(0, str(streamlit_app_dir))
 
 from streamlit_app.clients.backend_api import BackendAPIClient, BackendAPIError
-from streamlit_app.components.auth import clear_auth, get_token, init_auth_state
+from streamlit_app.components.auth import clear_auth, init_auth_state
 from streamlit_app.components.errors import display_error
 from streamlit_app.config import StreamlitSettings
-from streamlit_app.models import ChatEventView
+from streamlit_app.models import ChatEventView, UIErrorMessage
 
 init_auth_state()
 
@@ -39,7 +40,7 @@ def get_settings() -> StreamlitSettings:
 settings = get_settings()
 client = BackendAPIClient(
     settings=settings,
-    token_provider=get_token,
+    token_provider=lambda: st.session_state.get("auth_token"),
     on_auth_invalid=clear_auth,
 )
 
@@ -50,6 +51,8 @@ if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 if "chat_pending" not in st.session_state:
     st.session_state.chat_pending = False
+if "conversation_id" not in st.session_state or not st.session_state.conversation_id:
+    st.session_state.conversation_id = uuid.uuid4().hex
 
 for msg in st.session_state.chat_messages:
     with st.chat_message(msg["role"]):
@@ -76,33 +79,55 @@ if prompt := st.chat_input("Type your message...", disabled=st.session_state.cha
         st.session_state.chat_pending = False
         st.stop()
 
-    full_response = ""
-    trace_id = None
+    full_response_parts: list[str] = []
+    trace_id_holder = {"value": None}
+    error_holder = {"value": None}
+    warning_messages: list[str] = []
+    tool_status_messages: list[str] = []
 
     def event_generator():
-        nonlocal full_response, trace_id
         for event in stream:
             if event.trace_id:
-                trace_id = event.trace_id
+                trace_id_holder["value"] = event.trace_id
             if event.event_type == "error":
-                yield event
+                error_holder["value"] = event.error or UIErrorMessage(
+                    code="backend_error",
+                    message=event.content or "Backend request failed",
+                )
                 return
-            if event.event_type in ("message_delta", "done"):
-                full_response += event.content
-            yield event
+            if event.event_type == "warning" and event.content:
+                warning_messages.append(event.content)
+                continue
+            if event.event_type == "tool_status" and event.content:
+                tool_status_messages.append(event.content)
+                continue
+            if event.event_type == "message_delta" and event.content:
+                full_response_parts.append(event.content)
+                yield event.content
+                continue
+            if event.event_type == "done":
+                return
 
     with st.chat_message("assistant"):
         try:
             st.write_stream(event_generator())
         except Exception:
+            full_response = "".join(full_response_parts)
             if full_response:
                 st.markdown(full_response)
             else:
                 st.error("Chat response interrupted.")
+        for tool_status in tool_status_messages:
+            st.caption(tool_status)
+        for warning in warning_messages:
+            st.warning(warning)
+        if error_holder["value"] is not None:
+            display_error(error_holder["value"])
 
+    full_response = "".join(full_response_parts)
     if full_response:
         st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
-    if trace_id:
-        st.caption(f"Trace: {trace_id}")
+    if trace_id_holder["value"]:
+        st.caption(f"Trace: {trace_id_holder['value']}")
 
     st.session_state.chat_pending = False

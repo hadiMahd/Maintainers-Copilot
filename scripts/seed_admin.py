@@ -19,7 +19,7 @@ import sys
 from app.core.config import AppSettings
 from app.domain.errors import ConfigError
 from app.infra.database import create_engine, create_session_factory
-from app.infra.vault_client import init_vault_client, resolve_jwt_key
+from app.infra.vault_client import fetch_secrets, init_vault_client, resolve_jwt_key
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,6 +47,14 @@ async def main() -> None:
     except ConfigError:
         print("ERROR: Vault JWT signing key unavailable. Cannot bootstrap admin.", file=sys.stderr)
         sys.exit(1)
+
+    if not settings.database_url:
+        secrets = fetch_secrets(
+            vault_client,
+            settings.vault_secret_mount,
+            settings.vault_secret_path,
+        )
+        settings.database_url = secrets.get("database_url")
 
     if not settings.database_url:
         print("ERROR: database_url not configured.", file=sys.stderr)
