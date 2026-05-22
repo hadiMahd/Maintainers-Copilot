@@ -45,6 +45,7 @@ llm = [
 ]
 ner = []
 rag = [
+    "ragas>=0.4.3",
     "sentence-transformers>=3.0.0",
 ]
 

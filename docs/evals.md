@@ -100,7 +100,8 @@ Two modes compared on the same golden set:
 
 - **CI judge**: `TokenOverlapJudge` with `judge_id` = `token-overlap-f1-v1` (frozen, deterministic, zero-dependency)
 - **Method**: Unigram F1 token-overlap between candidate and reference answers
-- **Optional RAGAS**: `NonCIJudgeStub` — config seam, raises `NotImplementedError` when no real RAGAS provider is available
+- **Optional RAGAS**: `RagasJudgeClient` runs with real Azure OpenAI evals when `USE_RAGAS_EVALS=1`
+- **RAGAS metrics**: context precision, context recall, context entity recall, noise sensitivity, faithfulness, response relevancy
 - **Disagreement notes**: 5 hand-labeled examples with explicit disagreement annotations recorded in the eval report
 
 ### Threshold Gate
@@ -193,10 +194,15 @@ generation and embedding settings from Vault, uses hybrid sparse+dense
 retrieval with reranking and query transformation, and fails if Azure generation
 is not configured.
 
+Set `USE_RAGAS_EVALS=1` together with `USE_REAL_AZURE_EVALS=1` to add RAGAS
+judge metrics to `evals/reports/rag_result.json` and the combined
+`eval_report.json`. These are recorded under `rag.ragas`; the existing manual
+metrics remain the threshold-gated CI values.
+
 Real RAG eval command:
 
 ```bash
-USE_REAL_AZURE_EVALS=1 uv run python scripts/ci/run_rag_eval.py
+USE_REAL_AZURE_EVALS=1 USE_RAGAS_EVALS=1 uv run python scripts/ci/run_rag_eval.py
 ```
 
 ### Combined Eval Report
@@ -209,6 +215,7 @@ Required report fields:
 - `run_id`, `timestamp`
 - `classifier`: `accuracy`, `macro_f1`, `per_class_f1`, `threshold`, `passed`, `failures`
 - `rag`: `hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`, `threshold`, `passed`, `failures`
+- `rag.ragas` when enabled: `context_precision`, `context_recall`, `context_entity_recall`, `noise_sensitivity`, `faithfulness`, `response_relevancy`, `failures`
 - `storage`: `bucket`, `key`
 - `passed` (boolean — overall gating result)
 

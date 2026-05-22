@@ -154,6 +154,42 @@ class TestEvalReportSchema:
         assert "threshold" in rag
         assert "passed" in rag
 
+    def test_rag_report_can_include_ragas_metrics(self):
+        report = build_report(
+            rag_metrics={
+                "hit_at_5": 0.30,
+                "mrr_at_10": 0.25,
+                "faithfulness": 0.80,
+                "answer_relevancy": 0.75,
+                "threshold": 0.10,
+                "passed": True,
+                "failures": [],
+                "ragas": {
+                    "enabled": True,
+                    "context_precision": 0.70,
+                    "context_recall": 0.60,
+                    "context_entity_recall": 0.50,
+                    "noise_sensitivity": 0.10,
+                    "faithfulness": 0.85,
+                    "response_relevancy": 0.80,
+                    "sample_count": 5,
+                    "context_top_k": 1,
+                    "failures": [],
+                },
+            },
+        )
+
+        ragas = report["rag"]["ragas"]
+        assert ragas["enabled"] is True
+        assert ragas["context_precision"] == 0.70
+        assert ragas["context_recall"] == 0.60
+        assert ragas["context_entity_recall"] == 0.50
+        assert ragas["noise_sensitivity"] == 0.10
+        assert ragas["faithfulness"] == 0.85
+        assert ragas["response_relevancy"] == 0.80
+        assert ragas["sample_count"] == 5
+        assert ragas["context_top_k"] == 1
+
     def test_all_numeric_metrics_in_range(self):
         report = build_report(
             classifier_metrics={

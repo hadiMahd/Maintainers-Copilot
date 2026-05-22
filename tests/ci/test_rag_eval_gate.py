@@ -44,6 +44,12 @@ class TestRAGEvalGate:
         assert "answer_relevancy" in result
         assert 0.0 <= result["hit_at_5"] <= 1.0
         assert 0.0 <= result["mrr_at_10"] <= 1.0
+        assert "ragas" not in result
+
+    def test_ragas_real_eval_flag_is_documented_in_runner(self):
+        content = Path("scripts/ci/run_rag_eval.py").read_text()
+        assert "USE_RAGAS_EVALS" in content
+        assert "resolve_ragas_judge" in content
 
     def test_check_rag_thresholds_pass(self):
         data = {
@@ -97,3 +103,30 @@ class TestRAGEvalGate:
         result = mod.evaluate_rag("evals/rag/golden.jsonl")
         passed, failures = mod.check_rag_gate(result)
         assert isinstance(passed, bool)
+
+    def test_rag_gate_keeps_manual_metrics_as_gate_when_ragas_present(self):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("run_rag_eval", "scripts/ci/run_rag_eval.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        passed, failures = mod.check_rag_gate(
+            {
+                "hit_at_5": 1.0,
+                "mrr_at_10": 1.0,
+                "faithfulness": 1.0,
+                "answer_relevancy": 1.0,
+                "ragas": {
+                    "enabled": True,
+                    "context_precision": None,
+                    "context_recall": None,
+                    "context_entity_recall": None,
+                    "noise_sensitivity": None,
+                    "faithfulness": None,
+                    "response_relevancy": None,
+                    "failures": ["judge unavailable"],
+                },
+            }
+        )
+        assert passed, failures

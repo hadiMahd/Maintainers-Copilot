@@ -1,0 +1,13 @@
+{
+  "dataset_id": "golden",
+  "accuracy": 0.68,
+  "macro_f1": 0.5969973009446694,
+  "per_class_f1": {
+    "bug": 0.631578947368421,
+    "docs": 0.0,
+    "feature": 0.8333333333333334,
+    "question": 0.9230769230769231
+  },
+  "passed": true,
+  "failures": []
+}

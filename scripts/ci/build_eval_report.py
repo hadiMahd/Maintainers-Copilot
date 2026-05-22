@@ -39,6 +39,8 @@ if __name__ == "__main__":
             "passed": rag_raw.get("passed", True),
             "failures": rag_raw.get("failures", []),
         }
+        if isinstance(rag_raw.get("ragas"), dict):
+            rag_metrics["ragas"] = rag_raw["ragas"]
 
     threshold_data = load_thresholds()
 

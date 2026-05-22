@@ -102,6 +102,11 @@
       "minimum": 0,
       "maximum": 1
     },
+    "nullable_metric": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
     "thresholds": {
       "type": "object",
       "required": [
@@ -241,6 +246,51 @@
           "type": ["object", "null"],
           "additionalProperties": {
             "type": "number"
+          }
+        },
+        "ragas": {
+          "$ref": "#/$defs/ragas_result"
+        }
+      }
+    },
+    "ragas_result": {
+      "type": "object",
+      "required": ["enabled", "failures"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "context_precision": {
+          "$ref": "#/$defs/nullable_metric"
+        },
+        "context_recall": {
+          "$ref": "#/$defs/nullable_metric"
+        },
+        "context_entity_recall": {
+          "$ref": "#/$defs/nullable_metric"
+        },
+        "noise_sensitivity": {
+          "$ref": "#/$defs/nullable_metric"
+        },
+        "faithfulness": {
+          "$ref": "#/$defs/nullable_metric"
+        },
+        "response_relevancy": {
+          "$ref": "#/$defs/nullable_metric"
+        },
+        "sample_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "context_top_k": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }

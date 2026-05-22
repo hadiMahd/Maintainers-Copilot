@@ -237,10 +237,10 @@ Runners-up and rationale:
 - **Disagreement notes**: 5 hand-labeled examples with disagreement annotations recorded in the report.
 - **Metrics**: hit@5, MRR@10, faithfulness, answer relevancy, retrieval latency (p50/p95), generation latency (p50/p95).
 - **Judge**: `TokenOverlapJudge` — frozen unigram-F1 scorer, zero-dependency, deterministic, records stable `judge_id` = `token-overlap-f1-v1`.
-- **Optional RAGAS**: `NonCIJudgeStub` — config seam for RAGAS-style metrics, raises `NotImplementedError` in this pass.
+- **Optional RAGAS**: `RagasJudgeClient` — enabled for real Azure evals with `USE_RAGAS_EVALS=1`, records context precision, context recall, context entity recall, noise sensitivity, faithfulness, and response relevancy under `rag.ragas`.
 - **Threshold gate**: Advanced must beat baseline on hit@5 and MRR@10. Gate bypassed with `--exploratory` flag.
 - **Report**: `evals/rag_eval_report.json` — redacted before persistence.
-- **Alternatives Rejected**: LLM judge (adds cost/non-determinism), no gate (constitution requires evals), single-mode evaluation (spec requires baseline comparison).
+- **Alternatives Rejected**: RAGAS as the default CI gate (adds paid API cost and judge variability), no gate (constitution requires evals), single-mode evaluation (spec requires baseline comparison).
 
 ### Duplicate Embedding Prevention
 
@@ -478,7 +478,7 @@ Runners-up and rationale:
 
 **Decision**: Adopt `specs/010-production-readiness/contracts/eval-report.schema.json` as the canonical eval report format. Every CI run produces `evals/reports/eval_report.json` matching this schema.
 
-Required fields: `run_id`, `timestamp`, `classifier` (with `accuracy`, `macro_f1`, `per_class_f1`, `threshold`), `rag` (with `hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`, `threshold`), `storage` (with `bucket`, `key`), and `passed` (boolean).
+Required fields: `run_id`, `timestamp`, `classifier` (with `accuracy`, `macro_f1`, `per_class_f1`, `threshold`), `rag` (with `hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`, `threshold`, and optional `ragas` metrics), `storage` (with `bucket`, `key`), and `passed` (boolean).
 
 All numeric metric fields are floats in [0, 1].
 

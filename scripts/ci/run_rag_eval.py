@@ -5,6 +5,9 @@ fast, and requires no paid API credentials.
 
 Set USE_REAL_AZURE_EVALS=1 to trigger Azure OpenAI generation (requires
 real credentials and Vault bootstrap).
+
+Set USE_RAGAS_EVALS=1 with real Azure evals to add RAGAS metrics. The
+manual metrics remain the threshold-gated values.
 """
 
 import asyncio
@@ -87,6 +90,7 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
         mrrs: list[float] = []
         faithfulness: list[float] = []
         relevancy: list[float] = []
+        ragas_samples: list[dict[str, Any]] = []
 
         try:
             for ex in examples:
@@ -119,10 +123,20 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
                 context = " ".join(r.chunk.content for r in retrieved.results)
                 faithfulness.append(judge.score_faithfulness(answer.answer, ex.get("answer", "")))
                 relevancy.append(judge.score_answer_relevancy(answer.answer, question, context))
+                ragas_samples.append(
+                    {
+                        "user_input": question,
+                        "response": answer.answer,
+                        "reference": ex.get("answer", ""),
+                        "retrieved_contexts": [
+                            r.chunk.content for r in retrieved.results[: _ragas_context_top_k()]
+                        ],
+                    }
+                )
         finally:
             await engine.dispose()
 
-        return {
+        result: dict[str, Any] = {
             "dataset_id": Path(golden_path).stem,
             "hit_at_5": _avg(hits),
             "mrr_at_10": _avg(mrrs),
@@ -131,6 +145,16 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
             "provider_backend": generation_client.provider_backend,
             "embedding_model": embedding_client.model_name,
         }
+        if _ragas_enabled():
+            from app.infra.rag_judge_client import resolve_ragas_judge
+
+            ragas_eval_samples = _limit_ragas_samples(ragas_samples)
+            ragas_result = await resolve_ragas_judge(settings).score_batch(ragas_eval_samples)
+            ragas_report = ragas_result.to_report_dict()
+            ragas_report["sample_count"] = len(ragas_eval_samples)
+            ragas_report["context_top_k"] = _ragas_context_top_k()
+            result["ragas"] = ragas_report
+        return result
 
     return asyncio.run(_run())
 
@@ -162,6 +186,21 @@ def _avg(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _ragas_enabled() -> bool:
+    return os.environ.get("USE_RAGAS_EVALS") == "1"
+
+
+def _ragas_context_top_k() -> int:
+    return max(1, int(os.environ.get("RAGAS_CONTEXT_TOP_K", "3")))
+
+
+def _limit_ragas_samples(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    limit = os.environ.get("RAGAS_SAMPLE_LIMIT")
+    if not limit:
+        return samples
+    return samples[: max(1, int(limit))]
+
+
 def check_rag_gate(result: dict[str, Any]) -> tuple[bool, list[str]]:
     """Check RAG results against thresholds."""
     from scripts.ci.thresholds import check_threshold, get_rag_threshold, load_thresholds
@@ -183,6 +222,26 @@ def check_rag_gate(result: dict[str, Any]) -> tuple[bool, list[str]]:
     return len(failures) == 0, failures
 
 
+def _print_ragas_metrics(result: dict[str, Any]) -> None:
+    ragas = result.get("ragas")
+    if not isinstance(ragas, dict) or not ragas.get("enabled"):
+        return
+    print("  RAGAS:")
+    for label, key in [
+        ("Context Precision", "context_precision"),
+        ("Context Recall", "context_recall"),
+        ("Context Entity Recall", "context_entity_recall"),
+        ("Noise Sensitivity", "noise_sensitivity"),
+        ("Faithfulness", "faithfulness"),
+        ("Response Relevancy", "response_relevancy"),
+    ]:
+        value = ragas.get(key)
+        if isinstance(value, (int, float)):
+            print(f"    {label}: {value:.4f}")
+    if ragas.get("failures"):
+        print(f"    Failures: {len(ragas['failures'])}")
+
+
 if __name__ == "__main__":
     golden_path = "evals/rag/golden.jsonl"
 
@@ -197,6 +256,7 @@ if __name__ == "__main__":
     print(f"  MRR@10:   {result['mrr_at_10']:.4f}")
     print(f"  Faithfulness: {result['faithfulness']:.4f}")
     print(f"  Answer Relevancy: {result['answer_relevancy']:.4f}")
+    _print_ragas_metrics(result)
 
     passed, failures = check_rag_gate(result)
     if not passed:

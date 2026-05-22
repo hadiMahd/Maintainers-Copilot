@@ -6,7 +6,9 @@ import pytest
 
 from app.infra.rag_judge_client import (
     _DEFAULT_JUDGE_ID,
+    RagasMetricResult,
     TokenOverlapJudge,
+    _average_metric,
     compute_unigram_f1,
 )
 
@@ -71,6 +73,39 @@ class TestUnigramF1:
     def test_partial_overlap(self):
         score = compute_unigram_f1("hello world foo", "hello world bar")
         assert 0.0 < score < 1.0
+
+
+class TestRagasMetricResult:
+    def test_report_dict_contains_requested_ragas_metrics(self):
+        result = RagasMetricResult(
+            context_precision=0.9,
+            context_recall=0.8,
+            context_entity_recall=0.7,
+            noise_sensitivity=0.1,
+            faithfulness=0.95,
+            response_relevancy=0.85,
+        )
+
+        report = result.to_report_dict()
+
+        assert report["enabled"] is True
+        assert report["context_precision"] == 0.9
+        assert report["context_recall"] == 0.8
+        assert report["context_entity_recall"] == 0.7
+        assert report["noise_sensitivity"] == 0.1
+        assert report["faithfulness"] == 0.95
+        assert report["response_relevancy"] == 0.85
+        assert report["failures"] == []
+
+    def test_average_metric_ignores_missing_and_nan_scores(self):
+        rows = [
+            {"context_precision": 1.0},
+            {"context_precision": None},
+            {"context_precision": float("nan")},
+            {"context_precision": 0.5},
+        ]
+
+        assert _average_metric(rows, "context_precision") == pytest.approx(0.75)
 
 
 class TestHitAt5:
