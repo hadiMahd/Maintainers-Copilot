@@ -107,6 +107,16 @@ class TestGitHubActionsWorkflow:
         has_uv = any("uv" in str(s) for s in steps)
         assert has_uv, "install should use uv"
 
+    def test_install_smoke_import_uses_existing_domain_export(self):
+        job = self.wf["jobs"]["install"]
+        steps = job.get("steps", [])
+        install_commands = [str(step.get("run", "")) for step in steps if isinstance(step, dict)]
+        smoke_commands = [cmd for cmd in install_commands if "python -c" in cmd]
+
+        assert smoke_commands, "install should include a Python import smoke check"
+        assert all("from app.domain import settings" not in cmd for cmd in smoke_commands)
+        assert any("from app.domain import DomainError" in cmd for cmd in smoke_commands)
+
     def test_test_job_uses_pytest(self):
         job = self.wf["jobs"]["tests"]
         steps = job.get("steps", [])

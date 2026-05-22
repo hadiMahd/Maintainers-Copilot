@@ -19,7 +19,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --all-extras --dev
-      - run: uv run python -c "from app.domain import settings; print('install OK')"
+      - run: uv run python -c "from app.domain import DomainError; print('install OK')"
 
   lint:
     needs: install
