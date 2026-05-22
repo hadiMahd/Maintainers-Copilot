@@ -31,7 +31,7 @@ class TestClassifierEvalGate:
             assert "text" in item
             assert "label" in item
             assert "id" in item
-            assert item["label"] in ("bug", "feature", "documentation")
+            assert item["label"] in ("bug", "feature", "docs", "question")
 
     def test_run_classifier_eval_with_golden_set(self):
         import importlib.util

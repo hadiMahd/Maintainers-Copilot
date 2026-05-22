@@ -77,7 +77,7 @@ def _get_memory_tool_client(request: Request):
     service = LongTermMemoryService(
         memory_repo=MemoryRepository,
         audit_repo=AuditLogRepository,
-        embedding_client=resolve_memory_embedding_client(),
+        embedding_client=resolve_memory_embedding_client(request.app.state.settings),
         session_factory=session_factory,
     )
     return MemoryToolClient(service)

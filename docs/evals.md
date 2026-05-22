@@ -146,7 +146,7 @@ Phase 10 uses compact committed golden sets for CI validation, distinct from the
 
 | Set | Path | Items | Labels |
 |---|---|---|---|
-| Classifier golden | `evals/classification/golden.jsonl` | 15 | bug, feature, documentation |
+| Classifier golden | `evals/classification/golden.jsonl` | 25 | bug, feature, docs, question |
 | RAG golden | `evals/rag/golden.jsonl` | 10 | docs, issue |
 
 These compact sets are optimized for fast CI runs (< 15 minutes total).
@@ -186,8 +186,18 @@ Two CI-specific eval adapters run against the compact golden sets:
   compares against thresholds, and writes intermediate results to
   `evals/reports/rag_result.json`.
 
-Both adapters default to fake/local providers. Set `USE_REAL_AZURE_EVALS=1` to
-enable real Azure OpenAI evaluation (requires model artifacts and credentials).
+Both adapters default to fake/local providers for CI speed and zero paid
+credentials. Set `USE_REAL_AZURE_EVALS=1` to enable real Azure OpenAI RAG
+evaluation against the live Postgres RAG index. That path resolves Azure
+generation and embedding settings from Vault, uses hybrid sparse+dense
+retrieval with reranking and query transformation, and fails if Azure generation
+is not configured.
+
+Real RAG eval command:
+
+```bash
+USE_REAL_AZURE_EVALS=1 uv run python scripts/ci/run_rag_eval.py
+```
 
 ### Combined Eval Report
 

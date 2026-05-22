@@ -35,17 +35,28 @@ def _apply_optional_provider_settings(settings: AppSettings, resolved: dict) -> 
     settings.azure_openai_api_key = SecretStr(str(azure_api_key)) if azure_api_key else None
     settings.azure_openai_model = resolved.get("azure_openai_model")
     settings.azure_openai_embedding_model = resolved.get("azure_openai_embedding_model")
+    settings.rag_azure_generation_endpoint = settings.azure_openai_endpoint
+    settings.rag_azure_generation_api_key = str(azure_api_key) if azure_api_key else None
+    settings.rag_azure_generation_model = settings.azure_openai_model
+    settings.rag_azure_embedding_endpoint = settings.azure_openai_endpoint
+    settings.rag_azure_embedding_api_key = str(azure_api_key) if azure_api_key else None
+    if settings.rag_azure_embedding_endpoint and settings.rag_azure_embedding_api_key:
+        settings.rag_embedding_model = (
+            settings.azure_openai_embedding_model or "text-embedding-3-small"
+        )
+        settings.rag_embedding_dim = 1536
     langchain_api_key = resolved.get("langchain_api_key")
     settings.langchain_api_key = SecretStr(str(langchain_api_key)) if langchain_api_key else None
     settings.langsmith_endpoint = resolved.get("langchain_endpoint")
     settings.langsmith_project = resolved.get("langchain_project")
 
 
-def _build_rag_tool_client(db_session_factory) -> RAGToolClient:
-    generation_client = resolve_generation_client()
+def _build_rag_tool_client(db_session_factory, settings: AppSettings) -> RAGToolClient:
+    generation_client = resolve_generation_client(settings)
     return RAGToolClient(
         session_factory=db_session_factory,
         generation_client=generation_client,
+        settings=settings,
     )
 
 
@@ -110,7 +121,7 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     app.state.chat_rag_tool_client = (
         FakeRAGToolClient()
         if settings.environment == "test"
-        else _build_rag_tool_client(db_session_factory)
+        else _build_rag_tool_client(db_session_factory, settings)
     )
     app.state.chat_trace_adapter = (
         LangSmithTraceAdapter.from_settings(settings)

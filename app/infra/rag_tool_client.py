@@ -59,9 +59,11 @@ class RAGToolClient(BaseRAGToolClient):
         *,
         session_factory,
         generation_client,
+        settings,
     ) -> None:
         self._session_factory = session_factory
         self._generation_client = generation_client
+        self._settings = settings
 
     async def answer_project_question(
         self,
@@ -70,22 +72,32 @@ class RAGToolClient(BaseRAGToolClient):
         request_id: str | None = None,
         trace_id: str | None = None,
     ) -> RAGToolClientResponse:
+        from app.infra.embedding_client import resolve_embedding_client
+        from app.infra.reranker_client import resolve_reranker
         from app.repositories.rag_chunk_repository import RAGChunkRepository
         from app.services.rag_generation_service import RAGGenerationService
         from app.services.rag_retrieval_service import RAGRetrievalService
 
+        embedding_client = resolve_embedding_client(self._settings)
         query = RetrievalQuery(
             query=payload.question,
             metadata_filters=payload.metadata_filters,
-            retrieval_mode="sparse",
-            query_transformation_enabled=payload.query_transformation_enabled,
-            reranking_enabled=False,
+            retrieval_mode="hybrid",
+            embedding_model=embedding_client.model_name,
+            query_transformation_enabled=True,
+            reranking_enabled=True,
             top_k=5,
         )
         try:
             async with self._session_factory() as session:
                 repo = RAGChunkRepository(session)
-                retrieval_service = RAGRetrievalService(repo)
+                retrieval_service = RAGRetrievalService(
+                    repo,
+                    sparse_weight=self._settings.rag_hybrid_sparse_weight,
+                    dense_weight=self._settings.rag_hybrid_dense_weight,
+                    reranker=resolve_reranker(self._settings),
+                    embedding_client=embedding_client,
+                )
                 result_set: RetrievalResultSet = await retrieval_service.retrieve(
                     query,
                     request_id=request_id,

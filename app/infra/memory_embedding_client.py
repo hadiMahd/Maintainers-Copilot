@@ -103,16 +103,29 @@ class AzureMemoryEmbeddingClient:
             return await fallback.embed(text)
 
 
-def resolve_memory_embedding_client() -> MemoryEmbeddingClient | AzureMemoryEmbeddingClient:
+def resolve_memory_embedding_client(
+    settings: object | None = None,
+) -> MemoryEmbeddingClient | AzureMemoryEmbeddingClient:
     """Return the best available embedding client for memory operations."""
-    endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT") or os.environ.get(
-        "RAG_AZURE_EMBEDDING_ENDPOINT"
+    endpoint = (
+        getattr(settings, "rag_azure_embedding_endpoint", None)
+        or getattr(settings, "azure_openai_endpoint", None)
+        or os.environ.get("AZURE_OPENAI_ENDPOINT")
+        or os.environ.get("RAG_AZURE_EMBEDDING_ENDPOINT")
     )
-    api_key = os.environ.get("AZURE_OPENAI_API_KEY") or os.environ.get(
-        "RAG_AZURE_EMBEDDING_API_KEY"
+    api_key = (
+        getattr(settings, "rag_azure_embedding_api_key", None)
+        or _secret_value(getattr(settings, "azure_openai_api_key", None))
+        or os.environ.get("AZURE_OPENAI_API_KEY")
+        or os.environ.get("RAG_AZURE_EMBEDDING_API_KEY")
     )
     if endpoint and api_key:
-        model = os.environ.get("AZURE_EMBEDDING_MODEL", "text-embedding-3-small")
+        model = (
+            getattr(settings, "azure_openai_embedding_model", None)
+            or getattr(settings, "rag_embedding_model", None)
+            or os.environ.get("AZURE_EMBEDDING_MODEL")
+            or "text-embedding-3-small"
+        )
         logger.info(
             "Using Azure embeddings for semantic memory: model=%s",
             model,
@@ -124,3 +137,12 @@ def resolve_memory_embedding_client() -> MemoryEmbeddingClient | AzureMemoryEmbe
         )
     logger.info("Using deterministic embeddings for semantic memory (no Azure creds)")
     return MemoryEmbeddingClient()
+
+
+def _secret_value(value: object | None) -> str | None:
+    if value is None:
+        return None
+    getter = getattr(value, "get_secret_value", None)
+    if getter is not None:
+        return str(getter())
+    return str(value)

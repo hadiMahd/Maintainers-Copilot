@@ -2,12 +2,12 @@
 
 ## Loader Contract
 
-**Route**: `GET /widget/loader.js`
+**Route**: `GET /widget.js`
 
 **Host usage**:
 
 ```html
-<script src="https://backend.example.com/widget/loader.js" data-widget-id="PUBLIC_WIDGET_ID"></script>
+<script src="https://backend.example.com/widget.js" data-widget-id="PUBLIC_WIDGET_ID"></script>
 ```
 
 **Behavior**:

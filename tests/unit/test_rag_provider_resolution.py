@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.infra.embedding_client import (
-    AzureEmbeddingStub,
+    AzureEmbeddingClient,
     BaseEmbeddingClient,
     FakeEmbeddingClient,
     resolve_embedding_client,
@@ -56,15 +56,10 @@ class TestEmbeddingClientResolution:
         assert client.dim == 256
         assert len(client.encode(["test"])[0]) == 256
 
-    def test_azure_stub_has_correct_defaults(self):
-        stub = AzureEmbeddingStub()
-        assert stub.model_name == "text-embedding-3-small"
-        assert stub.dim == 1536
-
-    def test_azure_stub_raises_not_implemented(self):
-        stub = AzureEmbeddingStub()
-        with pytest.raises(NotImplementedError):
-            stub.encode(["test"])
+    def test_azure_client_has_correct_defaults(self):
+        client = AzureEmbeddingClient(endpoint="https://example.openai.azure.com", api_key="key")
+        assert client.model_name == "text-embedding-3-small"
+        assert client.dim == 1536
 
     def test_resolve_embedding_returns_fake_when_mock(self):
         from app.core.config import AppSettings

@@ -1,9 +1,9 @@
 # Project-specific
-PLAN.md
-AGENTS.md
-PHASE_TECH_STACK.md
-PROJECT_BRIEF.md
-/*.md
+/PLAN.md
+/AGENTS.md
+/PHASE_TECH_STACK.md
+/PROJECT_BRIEF.md
+/CLAUDE.md
 
 # Agent/tool directories
 .agents
@@ -68,17 +68,6 @@ mlruns/
 .DS_Store
 Thumbs.db
 *:Zone.Identifier
-/*.md
-
-.agents
-.codex
-.vscode
-
-
-AGENTS.md
-PHASE_TECH_STACK.md
-PROJECT_BRIEF.md
-
 
 .ruff_cache/
 dump/
@@ -91,3 +80,6 @@ coverage/
 # Widget
 widget/node_modules/
 widget/dist/
+
+# TypeScript
+*.tsbuildinfo

@@ -190,7 +190,7 @@ class TestEmbedSnippet:
         mock_svc.generate_embed_snippet = AsyncMock(
             return_value=EmbedSnippetRead(
                 widget_config_id="cfg-1",
-                snippet='<script data-mc-widget-config="cfg-1"></script>\n<script src="BASE_URL/widget/loader.js"></script>',
+                snippet='<script src="BASE_URL/widget.js" data-widget-id="wid-1"></script>',
                 generated_at=datetime.now(timezone.utc),
             )
         )
@@ -203,7 +203,7 @@ class TestEmbedSnippet:
         assert resp.status_code == 200
         data = resp.json()
         assert data["widget_config_id"] == "cfg-1"
-        assert "loader.js" in data["snippet"]
+        assert "/widget.js" in data["snippet"]
 
     async def test_embed_snippet_not_found_returns_404(self, client, monkeypatch):
         app = client._transport.app

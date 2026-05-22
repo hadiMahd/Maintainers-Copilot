@@ -41,12 +41,12 @@ def test_embed_snippet_not_mutated():
 
     snippet = EmbedSnippetView(
         widget_config_id="cfg-x",
-        snippet='<script src="widget/loader.js"></script>',
+        snippet='<script src="widget.js"></script>',
     )
     with patch("streamlit_app.components.snippets.st") as mock_st:
         display_embed_snippet(snippet)
         code_calls = [c for c in mock_st.code.call_args_list if c[0]]
         if code_calls:
             rendered = code_calls[0][0][0]
-            assert "loader.js" in rendered
+            assert "widget.js" in rendered
             assert "cfg-x" not in rendered  # config ID in snippet content, not mutated

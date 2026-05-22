@@ -2,6 +2,7 @@
 
 import json
 import os
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Optional
 
@@ -26,6 +27,29 @@ def load_report_local(path: Path) -> dict[str, Any]:
 
 def store_report(report: dict[str, Any], bucket: str, key: str) -> bool:
     """Store report. Uses MinIO when available, falls back to local."""
+    payload = json.dumps(report, indent=2).encode()
+    try:
+        from minio import Minio
+
+        endpoint = os.environ.get("MINIO_ENDPOINT", "localhost:9000")
+        access_key = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")
+        secret_key = os.environ.get("MINIO_SECRET_KEY", "minioadmin")
+        secure = os.environ.get("MINIO_SECURE", "false").lower() == "true"
+
+        client = Minio(endpoint, access_key=access_key, secret_key=secret_key, secure=secure)
+        if not client.bucket_exists(bucket):
+            client.make_bucket(bucket)
+        client.put_object(
+            bucket,
+            key,
+            BytesIO(payload),
+            length=len(payload),
+            content_type="application/json",
+        )
+        return True
+    except Exception:
+        pass
+
     local_path = Path(f"evals/reports/{key}")
     try:
         store_report_local(report, local_path)

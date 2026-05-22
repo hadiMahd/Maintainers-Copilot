@@ -42,7 +42,7 @@ def _get_widget_chat_service(request: Request):
     from app.services.conversation_state_service import ConversationStateService
     from app.services.widget_chat_service import WidgetChatService
 
-    settings = AppSettings()
+    settings = getattr(request.app.state, "settings", None) or AppSettings()
     adapter = getattr(request.app.state, "chat_conversation_state_adapter", None)
     if adapter is None:
         adapter = ConversationStateAdapter(request.app.state.redis)
@@ -57,32 +57,9 @@ def _get_widget_chat_service(request: Request):
         prompt_registry = PromptRegistry.from_settings(settings)
     tool_exec_svc = getattr(request.app.state, "chat_tool_execution_service", None)
     if tool_exec_svc is None:
-        from app.infra.memory_tool_client import FakeMemoryToolClient
-        from app.infra.model_server_tools import FakeModelServerTools
-        from app.infra.rag_tool_client import FakeRAGToolClient
-        from app.services.chat_rag_snapshot_coordinator import ChatRAGSnapshotCoordinator
-        from app.services.tool_execution_service import ToolExecutionService
+        from app.api.routes.chat import _get_tool_execution_service
 
-        class _FakeSnapshotSvc:
-            async def store_snapshot(self, **kw):
-                from app.domain.rag import SnapshotRecord
-
-                return SnapshotRecord(
-                    conversation_id=kw["conversation_id"],
-                    message_id=kw["message_id"],
-                    trace_id=kw.get("trace_id"),
-                    query=kw["query"],
-                    chunk_ids=[],
-                    scores=[],
-                )
-
-        tool_exec_svc = ToolExecutionService(
-            model_server_tools=FakeModelServerTools(),
-            rag_tool_client=FakeRAGToolClient(),
-            memory_tool_client=FakeMemoryToolClient(),
-            rag_snapshot_coordinator=ChatRAGSnapshotCoordinator(_FakeSnapshotSvc()),
-            per_tool_timeout_seconds=settings.chat_per_tool_timeout_seconds,
-        )
+        tool_exec_svc = _get_tool_execution_service(request)
     tracing_svc = ChatTracingService(
         getattr(request.app.state, "chat_trace_adapter", None) or FakeTraceAdapter()
     )

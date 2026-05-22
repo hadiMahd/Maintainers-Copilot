@@ -9,6 +9,7 @@ real credentials and Vault bootstrap).
 
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,106 @@ def evaluate_rag(golden_path: str) -> dict[str, Any]:
     }
 
 
+def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
+    """Run RAG eval against live Postgres retrieval and Azure generation."""
+    from app.core.config import AppSettings
+    from app.core.lifespan import _apply_optional_provider_settings
+    from app.domain.rag import RetrievalQuery
+    from app.infra.database import create_engine, create_session_factory
+    from app.infra.embedding_client import resolve_embedding_client
+    from app.infra.rag_generation_client import resolve_generation_client
+    from app.infra.rag_judge_client import resolve_judge
+    from app.infra.reranker_client import resolve_reranker
+    from app.infra.vault_client import init_vault_client, resolve_classifier_secrets
+    from app.repositories.rag_chunk_repository import RAGChunkRepository
+    from app.services.rag_generation_service import RAGGenerationService
+    from app.services.rag_retrieval_service import RAGRetrievalService
+    from scripts.build_rag_index import _resolve_database_url
+
+    settings = AppSettings()
+    _apply_optional_provider_settings(
+        settings,
+        resolve_classifier_secrets(init_vault_client(settings), settings),
+    )
+    embedding_client = resolve_embedding_client(settings)
+    generation_client = resolve_generation_client(settings)
+    if generation_client.provider_backend != "azure_openai":
+        raise RuntimeError(
+            "USE_REAL_AZURE_EVALS=1 requires Vault-resolved Azure generation settings"
+        )
+    judge = resolve_judge()
+
+    with open(golden_path) as f:
+        examples = [json.loads(line) for line in f if line.strip()]
+
+    async def _run() -> dict[str, Any]:
+        engine = create_engine(_resolve_database_url())
+        session_factory = create_session_factory(engine)
+        generation_service = RAGGenerationService(generation_client)
+        hits: list[float] = []
+        mrrs: list[float] = []
+        faithfulness: list[float] = []
+        relevancy: list[float] = []
+
+        try:
+            for ex in examples:
+                question = ex["question"]
+                expected = ex.get("expected_chunks", [])
+                async with session_factory() as session:
+                    retrieval_service = RAGRetrievalService(
+                        RAGChunkRepository(session),
+                        sparse_weight=settings.rag_hybrid_sparse_weight,
+                        dense_weight=settings.rag_hybrid_dense_weight,
+                        reranker=resolve_reranker(settings),
+                        embedding_client=embedding_client,
+                    )
+                    retrieved = await retrieval_service.retrieve(
+                        RetrievalQuery(
+                            query=question,
+                            retrieval_mode="hybrid",
+                            embedding_model=embedding_client.model_name,
+                            top_k=10,
+                            reranking_enabled=True,
+                            query_transformation_enabled=True,
+                        )
+                    )
+                hits.append(_hit_at_5(retrieved.results, expected))
+                mrrs.append(_mrr_at_10(retrieved.results, expected))
+                answer = await generation_service.generate(question=question, retrieved=retrieved)
+                context = " ".join(r.chunk.content for r in retrieved.results)
+                faithfulness.append(judge.score_faithfulness(answer.answer, ex.get("answer", "")))
+                relevancy.append(judge.score_answer_relevancy(answer.answer, question, context))
+        finally:
+            await engine.dispose()
+
+        return {
+            "dataset_id": Path(golden_path).stem,
+            "hit_at_5": _avg(hits),
+            "mrr_at_10": _avg(mrrs),
+            "faithfulness": _avg(faithfulness),
+            "answer_relevancy": _avg(relevancy),
+            "provider_backend": generation_client.provider_backend,
+            "embedding_model": embedding_client.model_name,
+        }
+
+    return asyncio.run(_run())
+
+
+def _hit_at_5(results: list[Any], expected_chunks: list[str]) -> float:
+    return 1.0 if any(r.chunk.chunk_id in expected_chunks for r in results[:5]) else 0.0
+
+
+def _mrr_at_10(results: list[Any], expected_chunks: list[str]) -> float:
+    for idx, result in enumerate(results[:10], start=1):
+        if result.chunk.chunk_id in expected_chunks:
+            return 1.0 / idx
+    return 0.0
+
+
+def _avg(values: list[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
 def check_rag_gate(result: dict[str, Any]) -> tuple[bool, list[str]]:
     """Check RAG results against thresholds."""
     from scripts.ci.thresholds import check_threshold, get_rag_threshold, load_thresholds
@@ -68,7 +169,11 @@ def check_rag_gate(result: dict[str, Any]) -> tuple[bool, list[str]]:
 if __name__ == "__main__":
     golden_path = "evals/rag/golden.jsonl"
 
-    result = evaluate_rag(golden_path)
+    if os.environ.get("USE_REAL_AZURE_EVALS") == "1":
+        golden_path = os.environ.get("RAG_EVAL_GOLDEN_PATH", "evals/rag_golden_set.jsonl")
+        result = evaluate_real_rag(golden_path)
+    else:
+        result = evaluate_rag(golden_path)
 
     print(f"RAG eval on {result['dataset_id']}:")
     print(f"  Hit@5:    {result['hit_at_5']:.4f}")

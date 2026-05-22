@@ -66,7 +66,7 @@ function App(): React.ReactElement {
 
   useEffect(() => {
     if (expanded && config) {
-      postResize(window.parent, 500, 380);
+      postResize(window.parent, 500, 380, '*', config.position);
     }
   }, [expanded, config]);
 

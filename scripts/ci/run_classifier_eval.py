@@ -34,7 +34,7 @@ KEYWORD_CLASSIFIER: dict[str, list[str]] = {
         "ci/cd",
         "ci pipeline",
     ],
-    "documentation": [
+    "docs": [
         "readme",
         "docstring",
         "license",
@@ -45,12 +45,21 @@ KEYWORD_CLASSIFIER: dict[str, list[str]] = {
         "clarify",
         "typo",
     ],
+    "question": [
+        "how ",
+        "why ",
+        "does ",
+        "is this",
+        "what ",
+        "?",
+        "expected",
+    ],
 }
 
 
 def _predict(text: str) -> str:
     text_lower = text.lower()
-    scores: dict[str, int] = {"bug": 0, "feature": 0, "documentation": 0}
+    scores: dict[str, int] = {"bug": 0, "feature": 0, "docs": 0, "question": 0}
     for label, keywords in KEYWORD_CLASSIFIER.items():
         for kw in keywords:
             if kw in text_lower:
@@ -111,7 +120,7 @@ def _run_real_eval(golden_path: str) -> dict[str, Any]:
     """Run the full classifier evaluation pipeline (requires model artifacts)."""
     from app.services.classifier_evaluation import compute_metrics
 
-    predictions_path = Path("artifacts/classifiers/classical/predictions.jsonl")
+    predictions_path = Path("artifacts/classifiers/classical/pandas_logreg/predictions.jsonl")
     if not predictions_path.exists():
         print("No classifier predictions found — falling back to keyword eval")
         return evaluate_classifier(golden_path)

@@ -1,7 +1,15 @@
-FROM python:3.11-slim
+FROM node:20-alpine AS build
 
-WORKDIR /app
+WORKDIR /widget
 
-COPY main.py .
+COPY package.json package-lock.json ./
+RUN npm ci
 
-CMD ["python", "main.py"]
+COPY . .
+RUN npm run build
+
+FROM nginx:1.27-alpine
+
+COPY --from=build /widget/dist/ /usr/share/nginx/html/
+
+EXPOSE 80

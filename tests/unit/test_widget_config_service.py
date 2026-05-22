@@ -110,7 +110,7 @@ async def test_generate_embed_snippet(mock_session_factory):
     svc = WidgetConfigService(repo_cls, factory)
     snippet = await svc.generate_embed_snippet("cfg-1")
     assert snippet.widget_config_id == "cfg-1"
-    assert "loader.js" in snippet.snippet
+    assert "/widget.js" in snippet.snippet
     assert "wid-1" in snippet.snippet
     assert "data-widget-id=" in snippet.snippet
 
@@ -174,7 +174,7 @@ async def test_embed_snippet_uses_widget_id_and_data_widget_id(mock_session_fact
     snippet = await svc.generate_embed_snippet("cfg-1")
     assert "data-widget-id=" in snippet.snippet
     assert "wid-1" in snippet.snippet
-    assert "loader.js" in snippet.snippet
+    assert "/widget.js" in snippet.snippet
     assert "data-mc-widget-config" not in snippet.snippet
 
 

@@ -21,6 +21,19 @@ from model_server.infra.summarization_adapter import (
 logger = logging.getLogger(__name__)
 
 
+def _resolve_provider_secrets_from_vault() -> dict:
+    """Resolve optional provider secrets from Vault for model-server adapters."""
+    try:
+        from app.core.config import AppSettings
+        from app.infra.vault_client import init_vault_client, resolve_classifier_secrets
+
+        settings = AppSettings()
+        return resolve_classifier_secrets(init_vault_client(settings), settings)
+    except Exception as exc:
+        logger.warning("Provider secrets unavailable from Vault: %s", exc)
+        return {}
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     artifact_dir = os.environ.get("CLASSIFIER_ARTIFACT_DIR", "artifacts/classifiers/classical")
@@ -31,9 +44,11 @@ async def lifespan(app: FastAPI):
         classifier_loader.load()
         logger.info("Classifier artifact loaded: version=%s", classifier_loader.model_version)
     except ArtifactLoadError as exc:
-        logger.warning("Classifier artifact could not be loaded: %s", exc.message)
+        logger.error("Classifier artifact could not be loaded: %s", exc.message)
+        raise
     except Exception as exc:
-        logger.warning("Unexpected error loading classifier artifact: %s", exc)
+        logger.error("Unexpected error loading classifier artifact: %s", exc)
+        raise
 
     ner_pipeline = EntityRulerPipeline()
     try:
@@ -45,10 +60,17 @@ async def lifespan(app: FastAPI):
         logger.warning("EntityRuler pipeline initialization failed: %s", exc)
         ner_pipeline._configured = False
 
-    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
-    azure_api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-    azure_model = os.environ.get("AZURE_OPENAI_MODEL")
-    langsmith_enabled = bool(os.environ.get("LANGCHAIN_API_KEY"))
+    provider_secrets = _resolve_provider_secrets_from_vault()
+    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT") or provider_secrets.get(
+        "azure_openai_endpoint"
+    )
+    azure_api_key = os.environ.get("AZURE_OPENAI_API_KEY") or provider_secrets.get(
+        "azure_openai_api_key"
+    )
+    azure_model = os.environ.get("AZURE_OPENAI_MODEL") or provider_secrets.get("azure_openai_model")
+    langsmith_enabled = bool(
+        os.environ.get("LANGCHAIN_API_KEY") or provider_secrets.get("langchain_api_key")
+    )
 
     if azure_endpoint and azure_api_key and azure_model:
         summarization_adapter = AzureOpenAISummarizationAdapter(

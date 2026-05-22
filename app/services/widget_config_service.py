@@ -178,7 +178,7 @@ class WidgetConfigService:
                 )
         snippet = (
             f"<!-- Maintainer Copilot Widget (id: {row.widget_id}) -->\n"
-            f'<script src="BASE_URL/widget/loader.js" data-widget-id="{row.widget_id}"></script>'
+            f'<script src="BASE_URL/widget.js" data-widget-id="{row.widget_id}"></script>'
         )
         return EmbedSnippetRead(
             widget_config_id=config_id,

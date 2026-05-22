@@ -65,7 +65,7 @@
 **Fields**:
 
 - `widget_id`: public widget identifier.
-- `script_src`: backend URL for `/widget/loader.js`.
+- `script_src`: backend URL for `/widget.js`.
 - `snippet`: one script tag with `data-widget-id`.
 - `generated_at`: generation timestamp.
 

@@ -47,12 +47,12 @@ class RAGEmbeddingRepository:
             await self._session.execute(
                 text(
                     "UPDATE rag_embeddings SET content_hash = :content_hash, "
-                    "vector = :vector, embedding_dim = :embedding_dim "
+                    "vector = CAST(:vector AS vector), embedding_dim = :embedding_dim "
                     "WHERE chunk_id = :chunk_id AND embedding_model = :embedding_model"
                 ),
                 {
                     "content_hash": embedding.content_hash,
-                    "vector": embedding.vector,
+                    "vector": _vector_literal(embedding.vector),
                     "embedding_dim": embedding.embedding_dim,
                     "chunk_id": embedding.chunk_id,
                     "embedding_model": embedding.embedding_model,
@@ -64,7 +64,7 @@ class RAGEmbeddingRepository:
                     "INSERT INTO rag_embeddings "
                     "(embedding_id, chunk_id, content_hash, embedding_model, embedding_dim, vector) "
                     "VALUES (:embedding_id, :chunk_id, :content_hash, :embedding_model, "
-                    ":embedding_dim, :vector)"
+                    ":embedding_dim, CAST(:vector AS vector))"
                 ),
                 {
                     "embedding_id": embedding.embedding_id,
@@ -72,7 +72,7 @@ class RAGEmbeddingRepository:
                     "content_hash": embedding.content_hash,
                     "embedding_model": embedding.embedding_model,
                     "embedding_dim": embedding.embedding_dim,
-                    "vector": embedding.vector,
+                    "vector": _vector_literal(embedding.vector),
                 },
             )
         return embedding
@@ -91,6 +91,10 @@ def _row_to_embedding(row) -> RAGEmbedding:
         vector=vec or [],
         created_at=row.get("created_at"),
     )
+
+
+def _vector_literal(vector: list[float]) -> str:
+    return "[" + ",".join(str(float(value)) for value in vector) + "]"
 
 
 __all__ = ["RAGEmbeddingRepository"]

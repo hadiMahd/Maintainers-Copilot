@@ -230,6 +230,13 @@ class ToolExecutionService:
                 snapshot_id=snapshot_ref.snapshot_id,
                 untrusted_context_used=True,
             )
+        if tool_name == "recall_memory":
+            return await self._memory_tool_client.recall_memory(
+                user_id,
+                conversation_id,
+                parsed_input,
+                request_id=request_id,
+            )
         if tool_name == "write_memory":
             self._write_memory_called = True
             return await self._memory_tool_client.write_memory(

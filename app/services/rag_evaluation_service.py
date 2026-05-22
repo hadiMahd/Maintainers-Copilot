@@ -321,7 +321,19 @@ class RAGEvaluationService:
 
 
 def _make_fixture_chunks_for_example(example: dict) -> list[RAGChunk]:
-    return [
+    expected_chunks = example.get("expected_chunks") or []
+    primary_chunk_id = expected_chunks[0] if expected_chunks else "fixture-primary"
+    primary = RAGChunk(
+        chunk_id=primary_chunk_id,
+        parent_id=f"{primary_chunk_id}-parent",
+        source_type=example.get("source_type", "docs"),
+        source_path="fixtures/rag/golden.jsonl",
+        title=example.get("question", "Golden fixture"),
+        content=f"{example.get('question', '')}. {example.get('answer', '')}".strip(),
+        content_hash=f"{primary_chunk_id}-hash",
+        token_count=20,
+    )
+    static_chunks = [
         RAGChunk(
             chunk_id="install-numpy",
             parent_id="doc-1",
@@ -373,6 +385,7 @@ def _make_fixture_chunks_for_example(example: dict) -> list[RAGChunk]:
             token_count=12,
         ),
     ]
+    return [primary, *[chunk for chunk in static_chunks if chunk.chunk_id != primary_chunk_id]]
 
 
 __all__ = ["RAGEvaluationService", "_percentile"]

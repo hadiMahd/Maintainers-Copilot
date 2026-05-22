@@ -201,7 +201,7 @@ def test_full_login_chat_widget_memory_flow(settings):
                 200,
                 json={
                     "widget_config_id": wid,
-                    "snippet": f'<!-- Maintainer Copilot Widget (id: wid-{wid}) -->\n<script src="BASE_URL/widget/loader.js" data-widget-id="wid-{wid}"></script>',
+                    "snippet": f'<!-- Maintainer Copilot Widget (id: wid-{wid}) -->\n<script src="BASE_URL/widget.js" data-widget-id="wid-{wid}"></script>',
                     "generated_at": "2026-01-01T00:00:00Z",
                 },
             )
@@ -294,7 +294,7 @@ def test_full_login_chat_widget_memory_flow(settings):
     # 8. Get embed snippet
     snippet = c.get_embed_snippet(cfg.id)
     assert "wid-" + cfg.id in snippet.snippet
-    assert "loader.js" in snippet.snippet
+    assert "/widget.js" in snippet.snippet
     assert "data-widget-id" in snippet.snippet
     assert "embed_snippet" in call_log
 

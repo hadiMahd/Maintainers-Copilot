@@ -62,7 +62,7 @@ def mock_widget_service():
         return_value=MagicMock(
             model_dump=lambda mode=None: {
                 "widget_config_id": "cfg-1",
-                "snippet": '<!-- Maintainer Copilot Widget (id: wid-1) -->\n<script src="BASE_URL/widget/loader.js" data-widget-id="wid-1"></script>',
+                "snippet": '<!-- Maintainer Copilot Widget (id: wid-1) -->\n<script src="BASE_URL/widget.js" data-widget-id="wid-1"></script>',
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             },
         )
@@ -182,7 +182,7 @@ async def test_embed_snippet_uses_widget_id(mock_widget_service, mock_audit_serv
         data = resp.json()
         assert "data-widget-id=" in data["snippet"]
         assert "wid-1" in data["snippet"]
-        assert "loader.js" in data["snippet"]
+        assert "/widget.js" in data["snippet"]
 
 
 @pytest.mark.asyncio

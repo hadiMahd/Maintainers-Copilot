@@ -4,10 +4,12 @@
 
 ```bash
 cp .env.example .env
-docker compose up -d vault postgres redis minio
-uv run python scripts/seed_vault_from_env.py .env
-docker compose up -d migrations backend
+docker compose up -d
 ```
+
+`vault_seed` is a one-shot Compose service that seeds Vault from the local
+environment before `backend` and `model_server` start. For manual bootstrap, run
+`uv run python scripts/seed_vault_from_env.py .env`.
 
 ## Stop Stack
 
@@ -129,7 +131,7 @@ Expected: `data/processed/rag_doc_sources.jsonl`, `rag_issue_answer_sources.json
 ## Build RAG Index
 
 ```bash
-uv run python scripts/build_rag_index.py
+uv run python scripts/build_rag_index.py --persist-db
 ```
 
 For testing without real embeddings:
@@ -137,7 +139,10 @@ For testing without real embeddings:
 uv run python scripts/build_rag_index.py --fake
 ```
 
-Expected: `artifacts/rag/embedding_comparison.json` created with both embedding candidates recorded.
+Expected: `artifacts/rag/embedding_comparison.json` created and chunks,
+sparse rows, and embeddings persisted into Postgres. With Azure embedding
+secrets in Vault, this uses `text-embedding-3-small`; otherwise it uses the
+local embedding client.
 
 ## Evaluate RAG Pipeline
 
@@ -146,6 +151,12 @@ uv run python scripts/evaluate_rag.py --exploratory
 ```
 
 Expected: `evals/rag_eval_report.json` created with baseline-vs-advanced comparison, judge_id, embedding comparison, and disagreement notes.
+
+Real CI RAG eval against the live index:
+
+```bash
+USE_REAL_AZURE_EVALS=1 uv run python scripts/ci/run_rag_eval.py
+```
 
 ## Measure Classifier Latency
 
@@ -179,8 +190,10 @@ To run the UI inside Docker Compose instead:
 docker compose --profile ui up -d streamlit
 ```
 
-This publishes the UI at `http://localhost:8501` and points it at the backend
-service with `MAINTAINER_COPILOT_UI_BASE_URL=http://backend:8000`.
+The default `chatbot` service publishes Streamlit at `http://localhost:8501`.
+The optional `streamlit` profile publishes at `http://localhost:8502` to avoid
+a port clash. Both point at the backend service with
+`MAINTAINER_COPILOT_UI_BASE_URL=http://backend:8000`.
 
 ### Verify Backend Endpoints
 
@@ -253,10 +266,12 @@ Expected: `dist/assets/loader.js` (< 5 KB gzip) and `dist/assets/widget-*.js` (â
 ### Start Widget Demo Hosts
 
 ```bash
-docker compose --profile skeletal up -d demo_host
+docker compose up -d demo_host
 ```
 
-The demo host serves `demo/host/allowed/index.html` and `demo/host/blocked/index.html` for origin allowlist testing.
+The demo host publishes the same host app on `http://localhost:8080` and
+`http://localhost:8081`; allow only `http://localhost:8080` in the widget config
+to demo the blocked-origin path on port 8081.
 
 ### Verify Widget Embed
 

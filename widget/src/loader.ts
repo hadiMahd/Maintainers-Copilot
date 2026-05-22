@@ -2,7 +2,7 @@
  * Maintainer Copilot Widget Loader
  *
  * Usage:
- *   <script src="https://your-server/widget/loader.js" data-widget-id="wid-xxx"></script>
+ *   <script src="https://your-server/widget.js" data-widget-id="wid-xxx"></script>
  *
  * This loader:
  * 1. Reads the `data-widget-id` attribute from its own <script> tag
@@ -25,7 +25,7 @@
     var scripts = document.querySelectorAll("script[" + SCRIPT_ATTR + "]");
     for (var i = 0; i < scripts.length; i++) {
       var src = (scripts[i] as HTMLScriptElement).src || "";
-      if (src.indexOf("loader.js") !== -1) {
+      if (src.indexOf("/widget.js") !== -1 || src.indexOf("/widget/loader.js") !== -1) {
         return scripts[i] as HTMLScriptElement;
       }
     }
@@ -34,6 +34,10 @@
 
   function resolveBaseUrl(scriptSrc: string): string {
     var idx = scriptSrc.indexOf("/widget/loader.js");
+    if (idx !== -1) {
+      return scriptSrc.substring(0, idx);
+    }
+    idx = scriptSrc.indexOf("/widget.js");
     if (idx !== -1) {
       return scriptSrc.substring(0, idx);
     }
@@ -60,6 +64,23 @@
     return iframe;
   }
 
+  function applyPosition(iframe: HTMLIFrameElement, position: string): void {
+    iframe.style.top = "";
+    iframe.style.right = "";
+    iframe.style.bottom = "";
+    iframe.style.left = "";
+    if (position.indexOf("top") === 0) {
+      iframe.style.top = "20px";
+    } else {
+      iframe.style.bottom = "20px";
+    }
+    if (position.indexOf("left") !== -1) {
+      iframe.style.left = "20px";
+    } else {
+      iframe.style.right = "20px";
+    }
+  }
+
   /**
    * Handle resize messages from the iframe.
    * Only accepts messages with the expected event type and origin.
@@ -82,6 +103,9 @@
       }
       if (typeof width === "number" && width > 0) {
         iframe.style.width = width + "px";
+      }
+      if (typeof event.data.position === "string") {
+        applyPosition(iframe, event.data.position);
       }
     });
   }

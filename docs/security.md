@@ -12,9 +12,10 @@
 ## Vault Dev Bootstrap Policy
 
 - Docker Compose starts Vault in dev mode only.
-- Local/dev bootstrap then runs `uv run python scripts/seed_vault_from_env.py .env`
-  from the host to seed the expected paths.
-- The seeding input is the local `.env`; the runtime source of truth remains Vault.
+- Local/dev bootstrap can run through the one-shot `vault_seed` Docker Compose
+  service or manually with `uv run python scripts/seed_vault_from_env.py .env`.
+- The seeding input is local developer configuration; the runtime source of
+  truth remains Vault.
 - Only `VAULT_ADDR` and `VAULT_TOKEN` are used as bootstrap settings.
 - Azure OpenAI secrets stored at `secret/data/maintainer-copilot/azure-openai`.
 - LangSmith API key stored at `secret/data/maintainer-copilot/langsmith`.
@@ -128,7 +129,9 @@ The `streamlit_app/` package MUST NOT import `sqlalchemy`, `asyncpg`, `redis`, `
 
 - The `/widget/frame/{widget_id}` response includes `Content-Security-Policy: frame-ancestors <allowed_origins>` derived from the widget's allowed origins list.
 - Browsers that honor CSP will refuse to render the iframe on unapproved origins.
-- `X-Frame-Options: SAMEORIGIN` is also set as a fallback for older browsers.
+- `X-Frame-Options` is intentionally not sent on this route because it would
+  block approved cross-origin host pages; `frame-ancestors` is the source of
+  truth for embed authorization.
 
 ### Anonymous Session Tokens
 

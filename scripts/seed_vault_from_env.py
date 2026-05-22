@@ -99,9 +99,25 @@ def resolve_jwt_keypair(env_vars: dict[str, str]) -> tuple[str, str]:
     return private_pem, public_pem
 
 
-def seed_vault(env_path: str = ".env", *, timeout_seconds: float = 30.0) -> None:
-    """Seed Vault dev mode with secrets from .env."""
-    env_vars = load_env_file(env_path)
+def seed_vault(
+    env_path: str = ".env",
+    *,
+    timeout_seconds: float = 30.0,
+    from_env: bool = False,
+) -> None:
+    """Seed Vault dev mode with secrets from a file and optional process env."""
+    env_vars = load_env_file(env_path) if Path(env_path).is_file() else {}
+    if from_env:
+        for name in (
+            *REQUIRED_ENV_VARS,
+            "VAULT_ADDR",
+            "VAULT_TOKEN",
+            "JWT_PRIVATE_KEY",
+            "JWT_PUBLIC_KEY",
+        ):
+            value = os.environ.get(name)
+            if value:
+                env_vars[name] = value
     require_seed_values(env_vars)
 
     vault_addr = (
@@ -199,12 +215,17 @@ def parse_args() -> argparse.Namespace:
         default=30.0,
         help="Seconds to wait for Vault health before failing (default: 30).",
     )
+    parser.add_argument(
+        "--from-env",
+        action="store_true",
+        help="Merge required seed values from process environment.",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     env_path = Path(args.env_path)
-    if not env_path.is_file():
+    if not env_path.is_file() and not args.from_env:
         raise SystemExit(f"env file not found: {env_path}")
-    seed_vault(str(env_path), timeout_seconds=args.timeout)
+    seed_vault(str(env_path), timeout_seconds=args.timeout, from_env=args.from_env)

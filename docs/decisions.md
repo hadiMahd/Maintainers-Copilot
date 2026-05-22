@@ -31,7 +31,7 @@
 
 ## Phase 2 Data Source Decision
 
-**Decision**: Use `fastapi/fastapi` as the public repository for the Phase 2 dataset pipeline.
+**Decision**: Use `pandas-dev/pandas` as the public repository for the Week 7 dataset.
 
 **Selection Criteria**:
 - Public open-source repository with permissive license (MIT)
@@ -45,12 +45,13 @@
 **Fetch Limit**: 1000 closed issues (configurable via `DatasetSettings.max_issues`).
 
 **Alternatives Rejected**:
+- `fastapi/fastapi`: initially considered, but rejected in favor of the final pandas dataset used for training/evaluation.
 - `pytorch/pytorch`: rejected because labels are more complex and less consistent.
 - PyGithub library: rejected to keep dependencies minimal and control pagination explicitly.
 
 ## Phase 2 Label Mapping Decision
 
-**Chosen Repository Labels**: `fastapi/fastapi` uses labels such as `bug`, `feature`, `documentation`, `question`.
+**Chosen Repository Labels**: `pandas-dev/pandas` labels are mapped into `bug`, `feature`, `docs`, and `question`.
 
 **Label Mapping**:
 - `bug` → `bug` (exact match)
@@ -560,7 +561,7 @@ All numeric metric fields are floats in [0, 1].
 
 ### Loader Serving Strategy
 
-**Decision**: The widget loader (`loader.js`) is served by the FastAPI backend at `GET /widget/loader.js` with `Cache-Control: no-cache` headers. The loader is a vanilla TypeScript file built by Vite as a separate entry point.
+**Decision**: The public embed snippet uses `GET /widget.js`. The same loader asset is also available at `GET /widget/loader.js` for backward compatibility. The loader is a vanilla TypeScript file built by Vite as a separate entry point.
 
 **Rationale**:
 - Single origin for all widget assets simplifies CORS and CSP.

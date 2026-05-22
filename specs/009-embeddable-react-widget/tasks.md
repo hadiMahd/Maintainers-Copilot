@@ -82,7 +82,7 @@ rows are created. Verify regular user cannot create/edit.
 ### Implementation for User Story 1
 
 - [X] T024 [US1] Implement `delete_config()` in `app/services/widget_config_service.py` with audit row and transaction (depends on T005, T013)
-- [X] T025 [US1] Fix `generate_embed_snippet()` to use `widget_id` and `<script src="{base}/widget/loader.js" data-widget-id="{widget_id}">` format, and confirm the `greeting` field name aligns with the ORM column choice from T004/T006 (depends on T004)
+- [X] T025 [US1] Fix `generate_embed_snippet()` to use `widget_id` and `<script src="{base}/widget.js" data-widget-id="{widget_id}">` format, and confirm the `greeting` field name aligns with the ORM column choice from T004/T006 (depends on T004)
 - [X] T026 [US1] Add `DELETE /admin/widget-configs/{config_id}` route in `app/api/routes/widget_configs.py` (depends on T016)
 - [X] T027 [US1] Wire audit service calls in create/update/delete workflows (depends on T013)
 - [X] T028 [US1] Add redaction test: audit metadata must not contain secrets or raw config payloads in `tests/unit/test_widget_config_audit.py`
