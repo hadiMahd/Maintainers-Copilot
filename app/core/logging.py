@@ -6,7 +6,6 @@ import structlog
 
 from app.core.config import AppSettings
 
-
 # Track whether logging has been configured to make the function idempotent
 _logging_configured = False
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestQueryTransformationToggle:
     def test_enabled_rewrites_technical_terms(self):

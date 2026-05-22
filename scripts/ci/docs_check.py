@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Optional
 
-
 REQUIRED_DOCS = [
     "README.md",
     "docs/architecture.md",

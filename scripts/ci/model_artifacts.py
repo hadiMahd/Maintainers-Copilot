@@ -2,7 +2,6 @@
 
 import hashlib
 from pathlib import Path
-from typing import Optional
 
 
 def compute_sha256(path: Path) -> str:
@@ -61,7 +60,9 @@ def verify_model_card(
             continue
         actual = compute_sha256(artifact_path)
         if actual != expected:
-            errors.append(f"Hash mismatch for {path_str}: expected {expected[:12]}..., got {actual[:12]}...")
+            errors.append(
+                f"Hash mismatch for {path_str}: expected {expected[:12]}..., got {actual[:12]}..."
+            )
             all_ok = False
 
     return all_ok, errors

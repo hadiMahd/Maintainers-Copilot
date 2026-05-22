@@ -5,7 +5,6 @@ from typing import Any, Optional
 
 import yaml
 
-
 DEFAULT_THRESHOLD_PATH = Path("evals/eval_thresholds.yaml")
 
 

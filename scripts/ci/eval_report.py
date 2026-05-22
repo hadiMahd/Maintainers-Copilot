@@ -92,7 +92,7 @@ def write_report(report: dict[str, Any], path: Path) -> None:
 
 def read_report(path: Path) -> dict[str, Any]:
     with open(path) as f:
-        return json.load(f)
+        return json.load(f)  # type: ignore[no-any-return]
 
 
 def determine_overall_passed(report: dict[str, Any]) -> bool:
@@ -104,10 +104,18 @@ def determine_overall_passed(report: dict[str, Any]) -> bool:
     startup_passed = report.get("startup", {}).get("passed", True)
     tracing_passed = report.get("tracing", {}).get("passed", True)
     prev_passed = report.get("previous_green_comparison", {}).get("passed", True)
-    return all([
-        classifier_passed, rag_passed, redaction_passed, static_passed,
-        artifact_passed, startup_passed, tracing_passed, prev_passed,
-    ])
+    return all(
+        [
+            classifier_passed,
+            rag_passed,
+            redaction_passed,
+            static_passed,
+            artifact_passed,
+            startup_passed,
+            tracing_passed,
+            prev_passed,
+        ]
+    )
 
 
 def _empty_classifier() -> dict[str, Any]:

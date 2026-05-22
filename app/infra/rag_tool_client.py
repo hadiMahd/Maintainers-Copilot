@@ -70,7 +70,6 @@ class RAGToolClient(BaseRAGToolClient):
         request_id: str | None = None,
         trace_id: str | None = None,
     ) -> RAGToolClientResponse:
-        from app.domain.rag import RetrievalQuery, RetrievalResultSet
         from app.repositories.rag_chunk_repository import RAGChunkRepository
         from app.services.rag_generation_service import RAGGenerationService
         from app.services.rag_retrieval_service import RAGRetrievalService
@@ -88,7 +87,9 @@ class RAGToolClient(BaseRAGToolClient):
                 repo = RAGChunkRepository(session)
                 retrieval_service = RAGRetrievalService(repo)
                 result_set: RetrievalResultSet = await retrieval_service.retrieve(
-                    query, request_id=request_id, trace_id=trace_id,
+                    query,
+                    request_id=request_id,
+                    trace_id=trace_id,
                 )
         except Exception as exc:
             logger.warning("RAG retrieval failed: %s", exc)

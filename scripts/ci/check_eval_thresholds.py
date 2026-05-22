@@ -1,12 +1,7 @@
 """Check eval thresholds are non-zero and enabled."""
 
-import os
-import subprocess
-import sys
-
 from scripts.ci.common import fail, pass_gate
 from scripts.ci.thresholds import load_thresholds, validate_thresholds_nonzero
-
 
 if __name__ == "__main__":
     try:

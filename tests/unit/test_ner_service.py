@@ -6,19 +6,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from model_server.services.ner_service import (
-    NerService,
-    extract_entities_from_request,
-)
 from model_server.domain.issue_analysis import (
     IssueAnalysisRequest,
-    EntityType,
-    ExtractedEntity,
-    SourceSpan,
 )
 from model_server.infra.entity_ruler_pipeline import (
     EntityRulerPipeline,
-    EntityExtractionResult,
+)
+from model_server.services.ner_service import (
+    NerService,
+    extract_entities_from_request,
 )
 
 

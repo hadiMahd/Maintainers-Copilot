@@ -1,15 +1,15 @@
 """Integration test for blocked-origin embed flow."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+import pytest
 from fastapi import FastAPI
 
+from app.api.error_handlers import register_error_handlers
 from app.api.routes.widget_loader import router as widget_loader_router
 from app.api.routes.widget_public import router as widget_public_router
-from app.api.error_handlers import register_error_handlers
 
 
 def _make_config_dict(widget_id="wid-1"):
@@ -50,7 +50,9 @@ async def test_blocked_origin_cannot_get_public_config():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.get(
                 "/public/widgets/wid-1/config",
                 headers={"Origin": "https://evil.com"},
@@ -72,7 +74,9 @@ async def test_blocked_origin_cannot_get_session_token():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.post(
                 "/public/widgets/wid-1/session",
                 headers={"Origin": "https://evil.com"},
@@ -94,7 +98,9 @@ async def test_no_origin_cannot_get_public_config():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.get("/public/widgets/wid-1/config")
             assert resp.status_code == 403
 
@@ -114,7 +120,9 @@ async def test_disabled_widget_cannot_get_config():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.get(
                 "/public/widgets/wid-1/config",
                 headers={"Origin": "https://example.com"},

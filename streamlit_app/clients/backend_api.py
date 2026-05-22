@@ -115,9 +115,7 @@ class BackendAPIClient:
                 is_active=data.get("is_active", True),
             )
 
-    def chat_stream(
-        self, conversation_id: str, message: str
-    ) -> Iterable[ChatEventView]:
+    def chat_stream(self, conversation_id: str, message: str) -> Iterable[ChatEventView]:
         import json
 
         with self._build_client(self._timeout_sse) as client:
@@ -145,7 +143,7 @@ class BackendAPIClient:
                     line = line.strip()
                     if not line or not line.startswith("data:"):
                         continue
-                    payload = line[len("data:"):].strip()
+                    payload = line[len("data:") :].strip()
                     if not payload:
                         continue
                     try:
@@ -221,9 +219,7 @@ class BackendAPIClient:
                 updated_at=data.get("updated_at", ""),
             )
 
-    def update_widget_config(
-        self, config_id: str, form: WidgetConfigForm
-    ) -> WidgetConfigView:
+    def update_widget_config(self, config_id: str, form: WidgetConfigForm) -> WidgetConfigView:
         payload: dict = {}
         if form.name:
             payload["name"] = form.name

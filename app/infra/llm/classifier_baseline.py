@@ -8,9 +8,8 @@ import re
 import time
 from typing import Any, Protocol
 
-from prompts.classifier import CLASSIFIER_SYSTEM_PROMPT, classifier_user_prompt
-
 from app.domain.classifier import VALID_LABELS, PredictionRecord
+from prompts.classifier import CLASSIFIER_SYSTEM_PROMPT, classifier_user_prompt
 
 FAKE_PROVIDER = "fake_provider"
 AZURE_OPENAI_PROVIDER = "azure_openai"
@@ -156,9 +155,7 @@ def create_classifier_provider(
 
     if provider_backend == AZURE_OPENAI_PROVIDER:
         if not azure_openai_endpoint or not azure_openai_api_key or not azure_openai_model:
-            raise ValueError(
-                "Azure OpenAI provider requires endpoint, api_key, and openai_model"
-            )
+            raise ValueError("Azure OpenAI provider requires endpoint, api_key, and openai_model")
         return AzureOpenAIClassifierProvider(
             azure_openai_endpoint=azure_openai_endpoint,
             azure_openai_api_key=azure_openai_api_key,

@@ -42,7 +42,9 @@ class InMemoryMemoryRepo:
         self.rows.append(row)
         return row
 
-    async def search_same_user_semantic(self, owner_user_id: str, query_embedding: list[float], limit: int = 5):
+    async def search_same_user_semantic(
+        self, owner_user_id: str, query_embedding: list[float], limit: int = 5
+    ):
         return [row for row in self.rows if row.owner_user_id == owner_user_id][:limit]
 
 
@@ -84,7 +86,9 @@ class TestCrossConversationRecall:
 
         result = await service.recall_memory(
             user_id="u1",
-            data=LongTermMemoryRecallRequest(query="favorite language", conversation_id="later-c2", limit=5),
+            data=LongTermMemoryRecallRequest(
+                query="favorite language", conversation_id="later-c2", limit=5
+            ),
         )
 
         assert len(result.items) == 1
@@ -115,7 +119,9 @@ class TestCrossConversationRecall:
 
         result = await service.recall_memory(
             user_id="u2",
-            data=LongTermMemoryRecallRequest(query="favorite editor", conversation_id="later-c2", limit=5),
+            data=LongTermMemoryRecallRequest(
+                query="favorite editor", conversation_id="later-c2", limit=5
+            ),
         )
 
         assert result.items == []

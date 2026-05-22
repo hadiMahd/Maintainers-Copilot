@@ -5,27 +5,26 @@ from __future__ import annotations
 import pytest
 
 from app.infra.embedding_client import (
+    AzureEmbeddingStub,
     BaseEmbeddingClient,
     FakeEmbeddingClient,
-    LocalEmbeddingClient,
-    AzureEmbeddingStub,
     resolve_embedding_client,
 )
 from app.infra.rag_generation_client import (
+    AzureGenerationClient,
     BaseGenerationClient,
     FakeGenerationClient,
-    AzureGenerationClient,
     resolve_generation_client,
 )
 from app.infra.rag_judge_client import (
+    _DEFAULT_JUDGE_ID,
     TokenOverlapJudge,
     resolve_judge,
-    _DEFAULT_JUDGE_ID,
 )
 from app.infra.reranker_client import (
     BaseRerankerClient,
-    FakeRerankerClient,
     CrossEncoderReranker,
+    FakeRerankerClient,
     resolve_reranker,
 )
 
@@ -69,6 +68,7 @@ class TestEmbeddingClientResolution:
 
     def test_resolve_embedding_returns_fake_when_mock(self):
         from app.core.config import AppSettings
+
         settings = AppSettings(vault_addr="http://x", vault_token="t")
         client = resolve_embedding_client(settings)
         assert isinstance(client, BaseEmbeddingClient)
@@ -77,6 +77,7 @@ class TestEmbeddingClientResolution:
 class TestGenerationClientResolution:
     def test_fake_generation_is_deterministic(self):
         import asyncio
+
         client = FakeGenerationClient()
         a1 = asyncio.run(client.generate("hello", []))
         a2 = asyncio.run(client.generate("hello", []))
@@ -84,16 +85,23 @@ class TestGenerationClientResolution:
 
     def test_fake_generation_insufficient_without_chunks(self):
         import asyncio
+
         client = FakeGenerationClient()
         answer = asyncio.run(client.generate("query", []))
         assert answer.insufficient_evidence
 
     def test_fake_generation_returns_supporting_chunks(self):
         import asyncio
-        from app.domain.rag import RetrievalResult, RAGChunk
+
+        from app.domain.rag import RAGChunk, RetrievalResult
+
         chunk = RAGChunk(
-            chunk_id="c1", parent_id="p1", source_type="docs",
-            content="evidence", content_hash="abc", token_count=3,
+            chunk_id="c1",
+            parent_id="p1",
+            source_type="docs",
+            content="evidence",
+            content_hash="abc",
+            token_count=3,
         )
         result = RetrievalResult(rank=1, final_score=0.9, chunk=chunk, retrieval_mode="hybrid")
         client = FakeGenerationClient()
@@ -137,7 +145,8 @@ class TestJudgeResolution:
     def test_judge_relevancy(self):
         judge = TokenOverlapJudge()
         score = judge.score_answer_relevancy(
-            "install numpy", "how to install numpy",
+            "install numpy",
+            "how to install numpy",
             "pip install numpy pandas",
         )
         assert 0.0 < score <= 1.0
@@ -145,10 +154,17 @@ class TestJudgeResolution:
 
 class TestRerankerResolution:
     def test_fake_reranker_returns_same_ordering(self):
-        from app.domain.rag import RetrievalResult, RAGChunk
+        from app.domain.rag import RAGChunk, RetrievalResult
+
         chunks = [
-            RAGChunk(chunk_id=f"c{i}", parent_id="p", source_type="docs",
-                     content=f"text {i}", content_hash="abc", token_count=2)
+            RAGChunk(
+                chunk_id=f"c{i}",
+                parent_id="p",
+                source_type="docs",
+                content=f"text {i}",
+                content_hash="abc",
+                token_count=2,
+            )
             for i in range(5)
         ]
         results = [
@@ -166,6 +182,7 @@ class TestRerankerResolution:
 
     def test_resolve_reranker_returns_fake(self):
         from app.core.config import AppSettings
+
         settings = AppSettings(vault_addr="http://x", vault_token="t")
         r = resolve_reranker(settings)
         assert isinstance(r, BaseRerankerClient)

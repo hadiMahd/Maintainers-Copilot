@@ -1,7 +1,6 @@
 """Unit tests for BackendAPIClient with mocked httpx transport."""
 
 import json
-from unittest.mock import patch
 
 import httpx
 import pytest
@@ -36,7 +35,7 @@ def _make_client(settings, handler, token="fake-token", on_invalid=None):
 
 def test_login_calls_backend(settings):
     def handler(request):
-        body = json.loads(request.content)
+        json.loads(request.content)
         return httpx.Response(
             200,
             json={"access_token": "tok-abc", "refresh_token": "rt-abc", "token_type": "bearer"},
@@ -63,7 +62,9 @@ def test_login_invalid_credentials_raises(settings):
 def test_get_current_user_sends_auth_header(settings):
     def handler(request):
         assert request.headers["Authorization"] == "Bearer fake-token"
-        return httpx.Response(200, json={"id": "u1", "email": "u@t.com", "role": "admin", "is_active": True})
+        return httpx.Response(
+            200, json={"id": "u1", "email": "u@t.com", "role": "admin", "is_active": True}
+        )
 
     c = _make_client(settings, handler)
     user = c.get_current_user()
@@ -105,6 +106,7 @@ def test_list_widget_configs_parses_response(settings):
 
 def test_list_widget_configs_parses_missing_phase9_fields(settings):
     """Backward compatibility: missing Phase 9 fields get defaults."""
+
     def handler(request):
         return httpx.Response(
             200,
@@ -220,7 +222,9 @@ def test_delete_widget_config_calls_backend(settings):
 
     def handler(request):
         call_log.append((request.method, request.url.path))
-        return httpx.Response(200, json={"id": "wc-1", "widget_id": "wid-abc", "deleted_at": "2026-01-01T00:00:00Z"})
+        return httpx.Response(
+            200, json={"id": "wc-1", "widget_id": "wid-abc", "deleted_at": "2026-01-01T00:00:00Z"}
+        )
 
     c = _make_client(settings, handler)
     c.delete_widget_config("wc-1")

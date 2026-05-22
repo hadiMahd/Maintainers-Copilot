@@ -4,10 +4,11 @@ Revision ID: 0002_phase5_rag
 Revises: 0001_baseline
 Create Date: 2026-05-20 00:00:00.000000
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from pgvector.sqlalchemy import Vector
 
 revision = "0002_phase5_rag"

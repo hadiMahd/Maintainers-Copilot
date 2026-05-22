@@ -16,10 +16,9 @@ router = APIRouter()
 
 
 def _get_memory_inspector_service(request: Request):
+    import app.infra.database as db_mod
     from app.repositories.memory_inspector_repository import MemoryInspectorRepository
     from app.services.memory_inspector_service import MemoryInspectorService
-
-    import app.infra.database as db_mod
 
     return MemoryInspectorService(
         memory_inspector_repo=MemoryInspectorRepository,

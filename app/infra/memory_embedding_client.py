@@ -98,9 +98,7 @@ class AzureMemoryEmbeddingClient:
                 embedding = data["data"][0]["embedding"]
                 return embedding
         except Exception as exc:
-            logger.warning(
-                "Azure embedding failed, falling back to deterministic: %s", exc
-            )
+            logger.warning("Azure embedding failed, falling back to deterministic: %s", exc)
             fallback = MemoryEmbeddingClient()
             return await fallback.embed(text)
 
@@ -116,7 +114,8 @@ def resolve_memory_embedding_client() -> MemoryEmbeddingClient | AzureMemoryEmbe
     if endpoint and api_key:
         model = os.environ.get("AZURE_EMBEDDING_MODEL", "text-embedding-3-small")
         logger.info(
-            "Using Azure embeddings for semantic memory: model=%s", model,
+            "Using Azure embeddings for semantic memory: model=%s",
+            model,
         )
         return AzureMemoryEmbeddingClient(
             endpoint=endpoint,

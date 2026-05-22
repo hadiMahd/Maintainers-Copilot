@@ -1,6 +1,5 @@
 """Tests for runbook failure-path coverage."""
 
-import re
 from pathlib import Path
 
 

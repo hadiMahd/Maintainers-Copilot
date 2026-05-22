@@ -12,15 +12,14 @@ from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 import hvac
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-
 
 REQUIRED_ENV_VARS = (
     "APP_DATABASE_URL",
@@ -105,7 +104,9 @@ def seed_vault(env_path: str = ".env", *, timeout_seconds: float = 30.0) -> None
     env_vars = load_env_file(env_path)
     require_seed_values(env_vars)
 
-    vault_addr = os.environ.get("VAULT_ADDR") or env_vars.get("VAULT_ADDR") or "http://localhost:8200"
+    vault_addr = (
+        os.environ.get("VAULT_ADDR") or env_vars.get("VAULT_ADDR") or "http://localhost:8200"
+    )
     vault_token = os.environ.get("VAULT_TOKEN") or env_vars.get("VAULT_TOKEN") or "dev-root-token"
 
     wait_for_vault(vault_addr, timeout_seconds)

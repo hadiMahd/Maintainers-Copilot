@@ -14,7 +14,12 @@ from typing import Callable
 import structlog
 
 from app.domain.errors import WidgetConfigNotFoundError
-from app.domain.widget_config import EmbedSnippetRead, WidgetConfigCreate, WidgetConfigRead, WidgetConfigUpdate
+from app.domain.widget_config import (
+    EmbedSnippetRead,
+    WidgetConfigCreate,
+    WidgetConfigRead,
+    WidgetConfigUpdate,
+)
 from app.infra.orm_models import WidgetConfig
 
 _log = structlog.get_logger
@@ -172,7 +177,7 @@ class WidgetConfigService:
                     trace_id=trace["trace_id"],
                 )
         snippet = (
-            f'<!-- Maintainer Copilot Widget (id: {row.widget_id}) -->\n'
+            f"<!-- Maintainer Copilot Widget (id: {row.widget_id}) -->\n"
             f'<script src="BASE_URL/widget/loader.js" data-widget-id="{row.widget_id}"></script>'
         )
         return EmbedSnippetRead(

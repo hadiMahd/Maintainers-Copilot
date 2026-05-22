@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-import pytest
-
-from app.domain.rag import RAGChunk, RetrievalResult, RetrievalResultSet, RetrievalQuery
+from app.domain.rag import RAGChunk, RetrievalResult, RetrievalResultSet
 from app.infra.reranker_client import FakeRerankerClient
 
 
-def _make_chunk(chunk_id: str, source_type: str = "docs", labels: list[str] | None = None) -> RAGChunk:
+def _make_chunk(
+    chunk_id: str, source_type: str = "docs", labels: list[str] | None = None
+) -> RAGChunk:
     return RAGChunk(
-        chunk_id=chunk_id, parent_id=f"p-{chunk_id}", source_type=source_type,
-        labels=labels or [], content=f"Content for {chunk_id}",
-        content_hash="abc", token_count=3,
+        chunk_id=chunk_id,
+        parent_id=f"p-{chunk_id}",
+        source_type=source_type,
+        labels=labels or [],
+        content=f"Content for {chunk_id}",
+        content_hash="abc",
+        token_count=3,
     )
 
 
@@ -100,23 +104,34 @@ class TestRerankingRankChanges:
 
 # -- Simulated search (fixture-backed, no real pgvector) ---------------------
 
+
 def _simulate_dense_search(chunks: list[RAGChunk], top_k: int = 5) -> list[RetrievalResult]:
     results = []
     for i, c in enumerate(chunks[:top_k]):
-        results.append(RetrievalResult(
-            rank=i + 1, final_score=0.95 - i * 0.1, chunk=c,
-            dense_score=0.95 - i * 0.1, retrieval_mode="dense",
-        ))
+        results.append(
+            RetrievalResult(
+                rank=i + 1,
+                final_score=0.95 - i * 0.1,
+                chunk=c,
+                dense_score=0.95 - i * 0.1,
+                retrieval_mode="dense",
+            )
+        )
     return results
 
 
 def _simulate_sparse_search(chunks: list[RAGChunk], top_k: int = 5) -> list[RetrievalResult]:
     results = []
     for i, c in enumerate(chunks[:top_k]):
-        results.append(RetrievalResult(
-            rank=i + 1, final_score=0.8 - i * 0.15, chunk=c,
-            sparse_score=0.8 - i * 0.15, retrieval_mode="sparse",
-        ))
+        results.append(
+            RetrievalResult(
+                rank=i + 1,
+                final_score=0.8 - i * 0.15,
+                chunk=c,
+                sparse_score=0.8 - i * 0.15,
+                retrieval_mode="sparse",
+            )
+        )
     return results
 
 

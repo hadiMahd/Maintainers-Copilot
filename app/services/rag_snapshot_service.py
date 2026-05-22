@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import logging
-import uuid
 
-from app.domain.rag import SnapshotRecord, RetrievalResultSet
+from app.domain.rag import RetrievalResultSet, SnapshotRecord
 from app.infra.redaction import redact_snapshot_row
 from app.repositories.rag_snapshot_repository import RAGSnapshotRepository
 

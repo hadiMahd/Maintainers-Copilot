@@ -10,8 +10,10 @@ from app.domain.models import ReadinessCheck
 @pytest.fixture
 def mock_pgvector(monkeypatch):
     """Mock pgvector probe."""
+
     async def mock_probe(*args, **kwargs):
         return ReadinessCheck(name="pgvector", status="ok")
+
     monkeypatch.setattr("app.services.health_service.probe_pgvector", mock_probe)
 
 
@@ -44,8 +46,10 @@ async def test_ready_all_ok_returns_200(app, mock_pgvector):
 @pytest.mark.asyncio
 async def test_ready_postgres_fail_returns_503(app, mock_pgvector, monkeypatch):
     """Mock probe_database to unavailable and assert 503."""
+
     async def fail_probe(*args, **kwargs):
         return ReadinessCheck(name="postgres", status="unavailable")
+
     monkeypatch.setattr("app.services.health_service.probe_database", fail_probe)
 
     response = await app.get("/health/ready")

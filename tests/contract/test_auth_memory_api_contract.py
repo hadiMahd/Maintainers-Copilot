@@ -54,6 +54,7 @@ def _patch_app_state(app, test_key_pair, mock_session_factory):
     app.state.settings = settings
 
     import app.infra.database as db_mod
+
     db_mod.async_session_factory = mock_session_factory
 
 
@@ -79,13 +80,16 @@ class TestAuthRegister:
     async def test_register_creates_user_returns_201(self, client, monkeypatch):
         user_read = UserRead(id="user1", email="new@test.com", role="user", is_active=True)
         mock_svc = AsyncMock()
-        mock_audit_svc = AsyncMock()
+        AsyncMock()
         mock_svc.register = AsyncMock(return_value=user_read)
 
         import app.api.routes.auth as auth_mod
+
         monkeypatch.setattr(auth_mod, "_get_auth_service", lambda r: mock_svc)
 
-        resp = await client.post("/auth/register", json={"email": "new@test.com", "password": "password123"})
+        resp = await client.post(
+            "/auth/register", json={"email": "new@test.com", "password": "password123"}
+        )
         assert resp.status_code == 201
         data = resp.json()
         assert data["email"] == "new@test.com"
@@ -95,34 +99,44 @@ class TestAuthRegister:
         from app.domain.errors import EmailAlreadyRegisteredError
 
         mock_svc = AsyncMock()
-        mock_audit_svc = AsyncMock()
+        AsyncMock()
         mock_svc.register = AsyncMock(side_effect=EmailAlreadyRegisteredError("taken"))
 
         import app.api.routes.auth as auth_mod
+
         monkeypatch.setattr(auth_mod, "_get_auth_service", lambda r: mock_svc)
 
-        resp = await client.post("/auth/register", json={"email": "exists@test.com", "password": "password123"})
+        resp = await client.post(
+            "/auth/register", json={"email": "exists@test.com", "password": "password123"}
+        )
         assert resp.status_code == 409
 
     async def test_register_invalid_input_returns_422(self, client):
-        resp = await client.post("/auth/register", json={"email": "not-an-email", "password": "short"})
+        resp = await client.post(
+            "/auth/register", json={"email": "not-an-email", "password": "short"}
+        )
         assert resp.status_code == 422
 
 
 class TestAuthLogin:
     async def test_login_valid_returns_200_with_tokens(self, client, monkeypatch):
         token_pair = TokenPair(
-            access_token="access-abc", refresh_token="refresh-abc",
-            token_type="bearer", expires_in=1800,
+            access_token="access-abc",
+            refresh_token="refresh-abc",
+            token_type="bearer",
+            expires_in=1800,
         )
         mock_svc = AsyncMock()
-        mock_audit_svc = AsyncMock()
+        AsyncMock()
         mock_svc.login = AsyncMock(return_value=token_pair)
 
         import app.api.routes.auth as auth_mod
+
         monkeypatch.setattr(auth_mod, "_get_auth_service", lambda r: mock_svc)
 
-        resp = await client.post("/auth/login", json={"email": "user@test.com", "password": "password123"})
+        resp = await client.post(
+            "/auth/login", json={"email": "user@test.com", "password": "password123"}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "access_token" in data
@@ -132,27 +146,33 @@ class TestAuthLogin:
         from app.domain.errors import AuthenticationError
 
         mock_svc = AsyncMock()
-        mock_audit_svc = AsyncMock()
+        AsyncMock()
         mock_svc.login = AsyncMock(side_effect=AuthenticationError("bad"))
 
         import app.api.routes.auth as auth_mod
+
         monkeypatch.setattr(auth_mod, "_get_auth_service", lambda r: mock_svc)
 
-        resp = await client.post("/auth/login", json={"email": "user@test.com", "password": "wrong"})
+        resp = await client.post(
+            "/auth/login", json={"email": "user@test.com", "password": "wrong"}
+        )
         assert resp.status_code == 401
 
 
 class TestAuthRefresh:
     async def test_refresh_valid_returns_200(self, client, monkeypatch):
         token_pair = TokenPair(
-            access_token="new-access", refresh_token="new-refresh",
-            token_type="bearer", expires_in=1800,
+            access_token="new-access",
+            refresh_token="new-refresh",
+            token_type="bearer",
+            expires_in=1800,
         )
         mock_svc = AsyncMock()
-        mock_audit_svc = AsyncMock()
+        AsyncMock()
         mock_svc.refresh_token = AsyncMock(return_value=token_pair)
 
         import app.api.routes.auth as auth_mod
+
         monkeypatch.setattr(auth_mod, "_get_auth_service", lambda r: mock_svc)
 
         resp = await client.post("/auth/refresh", json={"refresh_token": "valid-refresh"})
@@ -162,10 +182,11 @@ class TestAuthRefresh:
         from app.domain.errors import TokenError
 
         mock_svc = AsyncMock()
-        mock_audit_svc = AsyncMock()
+        AsyncMock()
         mock_svc.refresh_token = AsyncMock(side_effect=TokenError("bad"))
 
         import app.api.routes.auth as auth_mod
+
         monkeypatch.setattr(auth_mod, "_get_auth_service", lambda r: mock_svc)
 
         resp = await client.post("/auth/refresh", json={"refresh_token": "bad"})
@@ -181,11 +202,13 @@ class TestUsersMe:
 
         # Mock the user repo lookup that the /users/me route performs
         from app.repositories.user_repository import UserRepository
+
         mock_user = MagicMock(id="u1", email="u@t.com", role="user", is_active=True)
         UserRepository.get_by_id = AsyncMock(return_value=mock_user)
 
         fastapi_app = client._transport.app
         from app.api.dependencies.auth import get_current_user
+
         fastapi_app.dependency_overrides[get_current_user] = mock_dep
 
         resp = await client.get("/users/me")
@@ -198,7 +221,7 @@ class TestUsersMe:
 
 class TestAdminInvitations:
     async def test_create_invitation_as_admin_returns_201(self, client, monkeypatch):
-        from unittest.mock import AsyncMock, MagicMock
+        from unittest.mock import AsyncMock
 
         fastapi_app = client._transport.app
         from app.api.dependencies.auth import get_current_user
@@ -209,7 +232,10 @@ class TestAdminInvitations:
         async def mock_auth(request=None, credentials=None):
             return admin_ctx
 
-        async def mock_admin(request=None, current_user=AuthContext(user_id="admin1", email="admin@t.com", role="admin")):
+        async def mock_admin(
+            request=None,
+            current_user=AuthContext(user_id="admin1", email="admin@t.com", role="admin"),
+        ):
             return admin_ctx
 
         fastapi_app.dependency_overrides[get_current_user] = mock_auth
@@ -218,12 +244,18 @@ class TestAdminInvitations:
         mock_svc = AsyncMock()
         mock_audit_svc = AsyncMock()
         from app.domain.auth import AdminInvitationRead
-        mock_svc.create_invitation = AsyncMock(return_value=AdminInvitationRead(
-            id="inv1", invitee_email="new@t.com", status="pending",
-            expires_at="2026-06-01T00:00:00Z",
-        ))
+
+        mock_svc.create_invitation = AsyncMock(
+            return_value=AdminInvitationRead(
+                id="inv1",
+                invitee_email="new@t.com",
+                status="pending",
+                expires_at="2026-06-01T00:00:00Z",
+            )
+        )
 
         import app.api.routes.admin as admin_mod
+
         monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
 
         resp = await client.post("/admin/invitations", json={"email": "new@t.com"})
@@ -256,7 +288,7 @@ class TestAdminInvitations:
         fastapi_app.dependency_overrides.clear()
 
     async def test_accept_invitation_grants_admin(self, client, monkeypatch):
-        from unittest.mock import AsyncMock, MagicMock
+        from unittest.mock import AsyncMock
 
         fastapi_app = client._transport.app
         from app.api.dependencies.auth import get_current_user
@@ -274,11 +306,18 @@ class TestAdminInvitations:
         mock_svc = AsyncMock()
         mock_audit_svc = AsyncMock()
         from app.domain.auth import UserRead
-        mock_svc.accept_invitation = AsyncMock(return_value=UserRead(
-            id="u2", email="u2@t.com", role="admin", is_active=True,
-        ))
+
+        mock_svc.accept_invitation = AsyncMock(
+            return_value=UserRead(
+                id="u2",
+                email="u2@t.com",
+                role="admin",
+                is_active=True,
+            )
+        )
 
         import app.api.routes.admin as admin_mod
+
         monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
 
         resp = await client.post("/admin/invitations/accept", json={"token": "valid-token"})
@@ -289,6 +328,7 @@ class TestAdminInvitations:
 
     async def test_accept_invitation_invalid_returns_400(self, client, monkeypatch):
         from unittest.mock import AsyncMock
+
         from app.domain.errors import InvitationError
 
         fastapi_app = client._transport.app
@@ -308,6 +348,7 @@ class TestAdminInvitations:
         mock_audit_svc = AsyncMock()
         mock_svc.accept_invitation = AsyncMock(side_effect=InvitationError("Expired invitation"))
         import app.api.routes.admin as admin_mod
+
         monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
 
         resp = await client.post("/admin/invitations/accept", json={"token": "bad-token"})
@@ -318,7 +359,7 @@ class TestAdminInvitations:
 
 class TestAdminAuditLogs:
     async def test_list_audit_logs_as_admin_returns_200(self, client, monkeypatch):
-        from unittest.mock import AsyncMock, MagicMock
+        from unittest.mock import AsyncMock
 
         fastapi_app = client._transport.app
         from app.api.dependencies.auth import get_current_user
@@ -338,11 +379,23 @@ class TestAdminAuditLogs:
         mock_svc = AsyncMock()
         mock_audit_svc = AsyncMock()
         from app.domain.audit import AuditLogEntry
-        mock_audit_svc.list_audit_logs = AsyncMock(return_value=[
-            AuditLogEntry(id="a1", actor_user_id="admin1", action="role.change", target_type="user", target_id="u1", timestamp="2026-01-01T00:00:00Z", metadata={}),
-        ])
+
+        mock_audit_svc.list_audit_logs = AsyncMock(
+            return_value=[
+                AuditLogEntry(
+                    id="a1",
+                    actor_user_id="admin1",
+                    action="role.change",
+                    target_type="user",
+                    target_id="u1",
+                    timestamp="2026-01-01T00:00:00Z",
+                    metadata={},
+                ),
+            ]
+        )
 
         import app.api.routes.admin as admin_mod
+
         monkeypatch.setattr(admin_mod, "_get_admin_service", lambda r: (mock_svc, mock_audit_svc))
 
         resp = await client.get("/admin/audit-logs")
@@ -605,7 +658,9 @@ class TestLongTermMemoryRecall:
 
         fastapi_app.dependency_overrides.clear()
 
-    async def test_post_long_term_memory_recall_invalid_input_returns_422(self, client, monkeypatch):
+    async def test_post_long_term_memory_recall_invalid_input_returns_422(
+        self, client, monkeypatch
+    ):
         fastapi_app = client._transport.app
         from app.api.dependencies.auth import get_current_user
 

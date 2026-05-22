@@ -7,18 +7,14 @@ import os
 import sys
 import tempfile
 
-from config.dataset_settings import DatasetSettings
 from app.infra.github_client import GitHubClient
+from config.dataset_settings import DatasetSettings
 
 
 async def main() -> None:
     """Fetch issues and write to raw JSONL file."""
     settings = DatasetSettings()
-    token = (
-        settings.github_token.get_secret_value()
-        if settings.github_token
-        else None
-    )
+    token = settings.github_token.get_secret_value() if settings.github_token else None
     client = GitHubClient(token=token)
 
     try:
@@ -60,9 +56,7 @@ async def main() -> None:
         records.append(record)
 
     # Atomic write
-    fd, tmp_path = tempfile.mkstemp(
-        dir=os.path.dirname(settings.raw_issues_path) or "."
-    )
+    fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(settings.raw_issues_path) or ".")
     try:
         with os.fdopen(fd, "w") as f:
             for record in records:

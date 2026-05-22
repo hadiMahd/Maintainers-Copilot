@@ -14,16 +14,14 @@ import argparse
 import json
 import logging
 import os
-from pathlib import Path
 
 from app.core.config import AppSettings
+from app.domain.rag import RAGChunk
 from app.infra.embedding_client import (
-    LocalEmbeddingClient,
     FakeEmbeddingClient,
     resolve_embedding_client,
 )
 from app.services.rag_index_service import RAGIndexService
-from app.domain.rag import RAGChunk
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +32,12 @@ _DEFAULT_COMPARISON_OUTPUT = "artifacts/rag/embedding_comparison.json"
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build RAG index from chunk corpus")
     parser.add_argument("--chunks", default=_DEFAULT_CHUNKS_PATH, help="Path to chunks JSONL")
-    parser.add_argument("--output", default=_DEFAULT_COMPARISON_OUTPUT, help="Path to comparison output JSON")
-    parser.add_argument("--fake", action="store_true", help="Use fake embedding client (for testing)")
+    parser.add_argument(
+        "--output", default=_DEFAULT_COMPARISON_OUTPUT, help="Path to comparison output JSON"
+    )
+    parser.add_argument(
+        "--fake", action="store_true", help="Use fake embedding client (for testing)"
+    )
     return parser.parse_args(argv)
 
 
@@ -95,4 +97,5 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

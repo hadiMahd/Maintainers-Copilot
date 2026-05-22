@@ -1,20 +1,25 @@
 """Tests for previous-green report comparison with regression detection."""
 
-import json
-import tempfile
 from pathlib import Path
 
-import pytest
-
-from scripts.ci.eval_report import build_report, write_report
-from scripts.ci.report_storage import find_previous_green_report, load_report_local, store_report_local
-
+from scripts.ci.eval_report import build_report
+from scripts.ci.report_storage import (
+    find_previous_green_report,
+    store_report_local,
+)
 
 REGRESSION_THRESHOLD = 0.02
 
 
-def _make_report(accuracy=0.85, macro_f1=0.80, hit_at_5=0.30, mrr_at_10=0.25,
-                 faithfulness=0.80, answer_relevancy=0.75, passed=True):
+def _make_report(
+    accuracy=0.85,
+    macro_f1=0.80,
+    hit_at_5=0.30,
+    mrr_at_10=0.25,
+    faithfulness=0.80,
+    answer_relevancy=0.75,
+    passed=True,
+):
     return build_report(
         run_id="test-run",
         classifier_metrics={

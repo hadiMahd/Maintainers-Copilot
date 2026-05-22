@@ -66,9 +66,7 @@ class MemoryRepository:
             )
         )
         rows = list(result.scalars().all())
-        rows.sort(
-            key=lambda row: self._cosine_distance(row.embedding, query_embedding)
-        )
+        rows.sort(key=lambda row: self._cosine_distance(row.embedding, query_embedding))
         return rows[:limit]
 
     @staticmethod

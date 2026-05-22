@@ -58,7 +58,8 @@ class TestModelArtifactHashGate:
         card_path.unlink(missing_ok=True)
 
     def test_verify_model_card_with_artifacts(self):
-        import tempfile, shutil
+        import shutil
+        import tempfile
 
         test_dir = Path(tempfile.mkdtemp())
         try:
@@ -72,9 +73,7 @@ class TestModelArtifactHashGate:
                 json.dumps(
                     {
                         "model_version": "0.1.0",
-                        "artifacts": [
-                            {"path": "model.pt", "sha256": art_hash}
-                        ],
+                        "artifacts": [{"path": "model.pt", "sha256": art_hash}],
                     }
                 )
             )
@@ -86,7 +85,8 @@ class TestModelArtifactHashGate:
             shutil.rmtree(test_dir, ignore_errors=True)
 
     def test_verify_model_card_hash_mismatch(self):
-        import tempfile, shutil
+        import shutil
+        import tempfile
 
         test_dir = Path(tempfile.mkdtemp())
         try:
@@ -99,9 +99,7 @@ class TestModelArtifactHashGate:
                 json.dumps(
                     {
                         "model_version": "0.1.0",
-                        "artifacts": [
-                            {"path": "model.pt", "sha256": "wrong_hash_1234567890"}
-                        ],
+                        "artifacts": [{"path": "model.pt", "sha256": "wrong_hash_1234567890"}],
                     }
                 )
             )
@@ -113,7 +111,8 @@ class TestModelArtifactHashGate:
             shutil.rmtree(test_dir, ignore_errors=True)
 
     def test_verify_model_card_missing_artifact(self):
-        import tempfile, shutil
+        import shutil
+        import tempfile
 
         test_dir = Path(tempfile.mkdtemp())
         try:
@@ -122,9 +121,7 @@ class TestModelArtifactHashGate:
                 json.dumps(
                     {
                         "model_version": "0.1.0",
-                        "artifacts": [
-                            {"path": "nonexistent.pt", "sha256": "abc123"}
-                        ],
+                        "artifacts": [{"path": "nonexistent.pt", "sha256": "abc123"}],
                     }
                 )
             )

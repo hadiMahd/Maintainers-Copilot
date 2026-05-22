@@ -84,6 +84,7 @@ class WidgetConfigRepository:
             if value is not None:
                 setattr(row, key, value)
         from sqlalchemy import func as sa_func
+
         row.updated_by_user_id = updated_by_user_id
         row.updated_at = sa_func.now()
         return row

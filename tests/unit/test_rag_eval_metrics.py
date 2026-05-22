@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 
 from app.infra.rag_judge_client import (
+    _DEFAULT_JUDGE_ID,
     TokenOverlapJudge,
     compute_unigram_f1,
-    _DEFAULT_JUDGE_ID,
 )
 
 
@@ -67,8 +67,11 @@ class TestUnigramF1:
 class TestHitAt5:
     def test_hit_when_expected_in_top_5(self):
         results = [
-            {"chunk_id": "a"}, {"chunk_id": "b"}, {"chunk_id": "c"},
-            {"chunk_id": "d"}, {"chunk_id": "e"},
+            {"chunk_id": "a"},
+            {"chunk_id": "b"},
+            {"chunk_id": "c"},
+            {"chunk_id": "d"},
+            {"chunk_id": "e"},
         ]
         hit = _compute_hit_at_5(results, ["c"])
         assert hit == 1.0
@@ -80,8 +83,11 @@ class TestHitAt5:
 
     def test_hit_with_multiple_expected(self):
         results = [
-            {"chunk_id": "a"}, {"chunk_id": "b"}, {"chunk_id": "c"},
-            {"chunk_id": "d"}, {"chunk_id": "e"},
+            {"chunk_id": "a"},
+            {"chunk_id": "b"},
+            {"chunk_id": "c"},
+            {"chunk_id": "d"},
+            {"chunk_id": "e"},
         ]
         hit = _compute_hit_at_5(results, ["b", "z"])
         assert hit == 1.0
@@ -105,7 +111,10 @@ class TestMRR:
 
     def test_mrr_rank_3(self):
         results = [
-            {"chunk_id": "x"}, {"chunk_id": "y"}, {"chunk_id": "a"}, {"chunk_id": "z"},
+            {"chunk_id": "x"},
+            {"chunk_id": "y"},
+            {"chunk_id": "a"},
+            {"chunk_id": "z"},
         ]
         mrr = _compute_mrr_at_10(results, ["a"])
         assert mrr == pytest.approx(1.0 / 3.0)
@@ -143,6 +152,7 @@ class TestLatencyAggregation:
 
 
 # -- Helper implementations (mirror the eval service logic) -------------------
+
 
 def _compute_hit_at_5(results: list[dict], expected_chunks: list[str]) -> float:
     for r in results[:5]:

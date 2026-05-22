@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.domain.errors import WidgetConfigNotFoundError
-from app.domain.widget_config import WidgetConfigCreate, WidgetConfigUpdate, WidgetConfigRead
-from app.services.widget_config_service import WidgetConfigService
+from app.domain.widget_config import WidgetConfigCreate, WidgetConfigUpdate
 from app.infra.orm_models import WidgetConfig as WC
+from app.services.widget_config_service import WidgetConfigService
 
 
 @pytest.fixture
@@ -35,13 +35,32 @@ def mock_session_factory(mock_repo):
     return factory, repo_cls, mock_repo
 
 
-def _make_row(id="cfg-1", name="Test Widget", origins='["https://example.com"]', theme="dark", welcome="Hello", greeting="Hi there", widget_id="wid-1", position="bottom-right", enabled_tools='["classify_issue"]'):
+def _make_row(
+    id="cfg-1",
+    name="Test Widget",
+    origins='["https://example.com"]',
+    theme="dark",
+    welcome="Hello",
+    greeting="Hi there",
+    widget_id="wid-1",
+    position="bottom-right",
+    enabled_tools='["classify_issue"]',
+):
     row = WC(
-        id=id, widget_id=widget_id, name=name, allowed_origins=origins,
-        theme=theme, welcome_message=welcome, greeting=greeting,
-        position=position, enabled_tools=enabled_tools, is_enabled=True,
-        created_by_user_id="u1", updated_by_user_id="u1",
-        created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc),
+        id=id,
+        widget_id=widget_id,
+        name=name,
+        allowed_origins=origins,
+        theme=theme,
+        welcome_message=welcome,
+        greeting=greeting,
+        position=position,
+        enabled_tools=enabled_tools,
+        is_enabled=True,
+        created_by_user_id="u1",
+        updated_by_user_id="u1",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     return row
 
@@ -61,7 +80,9 @@ async def test_create_and_read_config(mock_session_factory, mock_audit_service):
     mock_repo.list_all.return_value = [row]
 
     svc = WidgetConfigService(repo_cls, factory)
-    create = WidgetConfigCreate(name="Test Widget", allowed_origins=["https://example.com"], theme="dark")
+    create = WidgetConfigCreate(
+        name="Test Widget", allowed_origins=["https://example.com"], theme="dark"
+    )
     result = await svc.create_config(create, "u1", audit_service=mock_audit_service)
     assert result.name == "Test Widget"
     assert result.theme == "dark"

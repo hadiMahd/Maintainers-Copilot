@@ -18,6 +18,7 @@ EmbeddingModelName = Literal["all-MiniLM-L6-v2", "text-embedding-3-small", "fake
 
 # -- Domain exceptions ---------------------------------------------------------
 
+
 class RAGDomainError(Exception):
     """Base RAG domain error."""
 
@@ -49,6 +50,7 @@ class RAGInsufficientEvidenceError(RAGDomainError):
 
 # -- Source entities -----------------------------------------------------------
 
+
 class RAGSource(BaseModel):
     """Documentation or issue source available for RAG ingestion."""
 
@@ -75,6 +77,7 @@ class ResolvedIssueAnswer(RAGSource):
 
 # -- Chunk entities ------------------------------------------------------------
 
+
 class RAGChunk(BaseModel):
     """Searchable unit with parent-document linkage."""
 
@@ -96,6 +99,7 @@ class RAGChunk(BaseModel):
 
 
 # -- Embedding entities --------------------------------------------------------
+
 
 class RAGEmbedding(BaseModel):
     """Dense vector for one chunk and one embedding model."""
@@ -120,6 +124,7 @@ class SparseSearchRecord(BaseModel):
 
 
 # -- Retrieval entities --------------------------------------------------------
+
 
 class RetrievalQuery(BaseModel):
     """Maintainer question with retrieval controls."""
@@ -161,6 +166,7 @@ class RetrievalResultSet(BaseModel):
 
 # -- Generation entities -------------------------------------------------------
 
+
 class GroundedAnswer(BaseModel):
     """Maintainer-facing answer grounded in retrieved evidence."""
 
@@ -173,6 +179,7 @@ class GroundedAnswer(BaseModel):
 
 
 # -- Evaluation entities -------------------------------------------------------
+
 
 class EvalMetrics(BaseModel):
     """Retrieval and generation metrics for one run mode."""
@@ -216,6 +223,7 @@ class EvalReport(BaseModel):
 
 
 # -- Snapshot entities ---------------------------------------------------------
+
 
 class SnapshotRecord(BaseModel):
     """Redacted retrieved-chunk snapshot for one conversation message."""

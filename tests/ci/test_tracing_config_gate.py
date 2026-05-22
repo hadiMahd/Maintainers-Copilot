@@ -1,6 +1,5 @@
 """Tests for tracing config validation gate."""
 
-import os
 from pathlib import Path
 
 from scripts.ci.tracing_checks import check_tracing_enabled_warning, validate_tracing_config

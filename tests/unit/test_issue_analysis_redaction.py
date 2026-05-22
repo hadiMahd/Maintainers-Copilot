@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.infra.redaction import (
     redact_issue_analysis_metadata,
     redact_log_payload,

@@ -98,9 +98,7 @@ class TestClassifierPrediction:
 
     def test_valid_prediction(self):
         """Prediction with all fields is valid."""
-        pred = ClassifierPrediction(
-            label="bug", confidence=0.92, model_version="0.1.0"
-        )
+        pred = ClassifierPrediction(label="bug", confidence=0.92, model_version="0.1.0")
         assert pred.label == "bug"
         assert pred.confidence == 0.92
         assert pred.model_version == "0.1.0"
@@ -142,7 +140,12 @@ class TestClassifierUnavailableError:
 
     def test_all_valid_reasons(self):
         """All four valid reasons are accepted."""
-        for reason in ["missing_artifact", "invalid_artifact", "hash_mismatch", "startup_load_failed"]:
+        for reason in [
+            "missing_artifact",
+            "invalid_artifact",
+            "hash_mismatch",
+            "startup_load_failed",
+        ]:
             err = ClassifierUnavailableError(
                 code="classifier_model_unavailable",
                 message="Error",

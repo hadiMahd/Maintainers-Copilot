@@ -5,7 +5,13 @@ from __future__ import annotations
 import pytest
 
 from app.domain.chat import ChatLimits, ConversationMessage
-from app.domain.chat_tools import LLMCompletion, LLMToolCall, RAGRetrievedChunk, RAGToolClientResponse, ToolSourceReference
+from app.domain.chat_tools import (
+    LLMCompletion,
+    LLMToolCall,
+    RAGRetrievedChunk,
+    RAGToolClientResponse,
+    ToolSourceReference,
+)
 from app.infra.llm_adapter import FakeLLMAdapter
 from app.infra.memory_tool_client import FakeMemoryToolClient
 from app.infra.model_server_tools import FakeModelServerTools
@@ -40,10 +46,19 @@ async def test_rag_tool_results_are_wrapped_as_untrusted_context():
         rag_tool_client=FakeRAGToolClient(
             RAGToolClientResponse(
                 answer="Use the auth service.",
-                supporting_sources=[ToolSourceReference(source_id="chunk-1", source_path="docs/auth.md", score=0.9)],
+                supporting_sources=[
+                    ToolSourceReference(source_id="chunk-1", source_path="docs/auth.md", score=0.9)
+                ],
                 limitations=[],
                 retrieval_trace_id="rag-trace-1",
-                retrieved_chunks=[RAGRetrievedChunk(chunk_id="chunk-1", source_path="docs/auth.md", score=0.9, preview="raw chunk")],
+                retrieved_chunks=[
+                    RAGRetrievedChunk(
+                        chunk_id="chunk-1",
+                        source_path="docs/auth.md",
+                        score=0.9,
+                        preview="raw chunk",
+                    )
+                ],
             )
         ),
         memory_tool_client=FakeMemoryToolClient(),
@@ -53,7 +68,13 @@ async def test_rag_tool_results_are_wrapped_as_untrusted_context():
     graph_service = ChatbotGraphService(
         llm_adapter=FakeLLMAdapter(
             [
-                LLMCompletion(tool_calls=[LLMToolCall(name="answer_project_question", arguments={"question": "where is auth?"})]),
+                LLMCompletion(
+                    tool_calls=[
+                        LLMToolCall(
+                            name="answer_project_question", arguments={"question": "where is auth?"}
+                        )
+                    ]
+                ),
                 LLMCompletion(message="The auth service handles that."),
             ]
         ),

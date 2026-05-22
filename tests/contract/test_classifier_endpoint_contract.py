@@ -10,10 +10,10 @@ import pytest
 from pydantic import ValidationError
 
 from app.domain.classifier import (
+    VALID_LABELS,
     ClassifierPrediction,
     ClassifierRequest,
     ClassifierUnavailableError,
-    VALID_LABELS,
 )
 
 
@@ -60,7 +60,12 @@ class TestClassifierEndpointContract:
             reason="missing_artifact",
         )
         assert err.code == "classifier_model_unavailable"
-        assert err.reason in ("missing_artifact", "invalid_artifact", "hash_mismatch", "startup_load_failed")
+        assert err.reason in (
+            "missing_artifact",
+            "invalid_artifact",
+            "hash_mismatch",
+            "startup_load_failed",
+        )
 
     def test_503_unavailable_no_stack_trace(self):
         """Unavailable error does not contain stack traces."""
@@ -76,9 +81,7 @@ class TestClassifierEndpointContract:
 
     def test_request_id_in_response(self):
         """Response includes optional request_id."""
-        pred = ClassifierPrediction(
-            label="bug", model_version="0.1.0", request_id="req-123"
-        )
+        pred = ClassifierPrediction(label="bug", model_version="0.1.0", request_id="req-123")
         assert pred.request_id == "req-123"
 
     def test_semantic_version_in_response(self):

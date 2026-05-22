@@ -15,7 +15,7 @@ def _parse_sse(body: str) -> list[dict]:
     events: list[dict] = []
     for line in body.splitlines():
         if line.startswith("data: "):
-            events.append(json.loads(line[len("data: "):]))
+            events.append(json.loads(line[len("data: ") :]))
     return events
 
 
@@ -42,8 +42,8 @@ async def test_chat_requires_authentication(app):
 @pytest.mark.asyncio
 async def test_chat_authenticated_stream_shape(app, monkeypatch):
     fastapi_app = app._transport.app
-    from app.api.dependencies.auth import get_current_user
     import app.api.routes.chat as chat_mod
+    from app.api.dependencies.auth import get_current_user
 
     async def mock_auth(request=None, credentials=None):
         return AuthContext(user_id="user-1", email="user@test.com", role="user")
@@ -95,8 +95,8 @@ async def test_chat_authenticated_stream_shape(app, monkeypatch):
 @pytest.mark.asyncio
 async def test_chat_invalid_input_returns_structured_422(app, monkeypatch):
     fastapi_app = app._transport.app
-    from app.api.dependencies.auth import get_current_user
     import app.api.routes.chat as chat_mod
+    from app.api.dependencies.auth import get_current_user
 
     async def mock_auth(request=None, credentials=None):
         return AuthContext(user_id="user-1", email="user@test.com", role="user")
@@ -117,8 +117,8 @@ async def test_chat_invalid_input_returns_structured_422(app, monkeypatch):
 @pytest.mark.asyncio
 async def test_chat_request_too_large_returns_413(app, monkeypatch):
     fastapi_app = app._transport.app
-    from app.api.dependencies.auth import get_current_user
     import app.api.routes.chat as chat_mod
+    from app.api.dependencies.auth import get_current_user
 
     async def mock_auth(request=None, credentials=None):
         return AuthContext(user_id="user-1", email="user@test.com", role="user")
@@ -139,8 +139,8 @@ async def test_chat_request_too_large_returns_413(app, monkeypatch):
 @pytest.mark.asyncio
 async def test_chat_safe_sse_error_event_shape(app, monkeypatch):
     fastapi_app = app._transport.app
-    from app.api.dependencies.auth import get_current_user
     import app.api.routes.chat as chat_mod
+    from app.api.dependencies.auth import get_current_user
 
     async def mock_auth(request=None, credentials=None):
         return AuthContext(user_id="user-1", email="user@test.com", role="user")

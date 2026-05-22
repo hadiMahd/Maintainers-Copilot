@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
-import uuid
 
 from pydantic import BaseModel, Field
-
 
 ChatEventType = Literal["message_delta", "tool_status", "warning", "error", "done"]
 ChatMessageRole = Literal["system", "developer", "user", "assistant", "tool"]

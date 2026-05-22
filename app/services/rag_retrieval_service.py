@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import logging
-import math
 import uuid
 
 from app.domain.rag import (
+    RAGRetrievalError,
     RetrievalQuery,
     RetrievalResult,
     RetrievalResultSet,
-    RAGRetrievalError,
 )
-from app.infra.reranker_client import BaseRerankerClient, FakeRerankerClient, resolve_reranker
+from app.infra.reranker_client import BaseRerankerClient, FakeRerankerClient
 from app.repositories.rag_chunk_repository import RAGChunkRepository
 
 logger = logging.getLogger(__name__)
@@ -121,15 +120,19 @@ class RAGRetrievalService:
                 if not query.embedding_model:
                     raise RAGRetrievalError("embedding_model is required for hybrid retrieval")
                 dense_results = await self._repo.search_dense(
-                    q_text, query.embedding_model, query.top_k * 2,
+                    q_text,
+                    query.embedding_model,
+                    query.top_k * 2,
                 )
                 sparse_results = await self._repo.search_sparse(q_text, query.top_k * 2)
                 scored = _normalize_hybrid_merge(
-                    dense_results, sparse_results,
-                    self._sparse_weight, self._dense_weight,
+                    dense_results,
+                    sparse_results,
+                    self._sparse_weight,
+                    self._dense_weight,
                 )
                 results = sorted(scored.values(), key=lambda x: x.final_score, reverse=True)
-                results = results[:query.top_k]
+                results = results[: query.top_k]
                 mode = "hybrid"
 
             for idx, r in enumerate(results, start=1):
@@ -191,4 +194,9 @@ def _transform_query(query: str) -> str:
     return query
 
 
-__all__ = ["RAGRetrievalService", "_apply_metadata_filters", "_transform_query", "_normalize_hybrid_merge"]
+__all__ = [
+    "RAGRetrievalService",
+    "_apply_metadata_filters",
+    "_transform_query",
+    "_normalize_hybrid_merge",
+]

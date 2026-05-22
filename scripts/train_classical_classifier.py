@@ -8,9 +8,8 @@ and optionally writes metrics.json for the shared evaluator.
 from __future__ import annotations
 
 import json
-import hashlib
-import tempfile
 import os
+import tempfile
 import time
 from pathlib import Path
 
@@ -19,9 +18,7 @@ import yaml
 from app.domain.classifier import PredictionRecord
 from app.services.classifier_evaluation import (
     compute_metrics,
-    compute_dataset_hash,
     save_predictions_jsonl,
-    LABEL_ORDER,
 )
 
 
@@ -49,10 +46,10 @@ def train_classical_classifier(
     artifact_dir: str = "artifacts/classifiers/classical",
 ) -> None:
     """Train the classical baseline and save predictions, metrics, and model artifacts."""
+    import joblib
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import Pipeline
-    import joblib
 
     # Load data
     train_data = load_dataset(train_path)
@@ -65,10 +62,12 @@ def train_classical_classifier(
     y_test = [r.get("mapped_label", r.get("label_mapped", "")) for r in test_data]
 
     # Build pipeline
-    pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(max_features=5000, ngram_range=(1, 2))),
-        ("clf", LogisticRegression(max_iter=1000, random_state=42)),
-    ])
+    pipeline = Pipeline(
+        [
+            ("tfidf", TfidfVectorizer(max_features=5000, ngram_range=(1, 2))),
+            ("clf", LogisticRegression(max_iter=1000, random_state=42)),
+        ]
+    )
 
     # Train
     start_time = time.time()
@@ -91,15 +90,17 @@ def train_classical_classifier(
         record_id = test_data[i].get("id", f"record-{i}")
         prob = pipeline.predict_proba([X_test[i]])[0]
         confidence = float(max(prob))
-        predictions.append(PredictionRecord(
-            record_id=record_id,
-            approach="classical",
-            label_true=true_label,
-            label_predicted=pred_label,
-            confidence=confidence,
-            model_version="0.1.0",
-            latency_ms=round(infer_duration_ms / len(X_test), 2),
-        ))
+        predictions.append(
+            PredictionRecord(
+                record_id=record_id,
+                approach="classical",
+                label_true=true_label,
+                label_predicted=pred_label,
+                confidence=confidence,
+                model_version="0.1.0",
+                latency_ms=round(infer_duration_ms / len(X_test), 2),
+            )
+        )
 
     # Create artifact directory
     artifact_path = Path(artifact_dir)
@@ -145,7 +146,9 @@ def train_classical_classifier(
         os.unlink(tmp_path) if os.path.exists(tmp_path) else None
         raise
 
-    print(f"Classical baseline trained. Metrics: accuracy={metrics['accuracy']:.4f}, macro_f1={metrics['macro_f1']:.4f}")
+    print(
+        f"Classical baseline trained. Metrics: accuracy={metrics['accuracy']:.4f}, macro_f1={metrics['macro_f1']:.4f}"
+    )
     print(f"Artifacts saved to {artifact_dir}")
 
 

@@ -6,7 +6,7 @@ token issuance, and chat orchestration.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.domain.errors import WidgetEmbedError, WidgetSessionError
@@ -20,9 +20,10 @@ _pending_messages: dict[str, str] = {}
 
 
 def _get_widget_config_service(request: Request):
+    import app.infra.database as db_mod
     from app.repositories.widget_config_repository import WidgetConfigRepository
     from app.services.widget_config_service import WidgetConfigService
-    import app.infra.database as db_mod
+
     return WidgetConfigService(
         widget_config_repo=WidgetConfigRepository,
         session_factory=db_mod.async_session_factory,
@@ -30,16 +31,16 @@ def _get_widget_config_service(request: Request):
 
 
 def _get_widget_chat_service(request: Request):
-    from app.services.widget_chat_service import WidgetChatService
-    from app.services.chatbot_service import ChatbotService
-    from app.services.conversation_state_service import ConversationStateService
-    from app.services.chatbot_graph_service import ChatbotGraphService
-    from app.services.chat_tracing_service import ChatTracingService
+    from app.core.config import AppSettings
     from app.infra.conversation_state_adapter import ConversationStateAdapter
-    from app.infra.llm_adapter import AzureChatLLMAdapter, FakeLLMAdapter
+    from app.infra.llm_adapter import FakeLLMAdapter
     from app.infra.prompt_registry import PromptRegistry
     from app.infra.tracing import FakeTraceAdapter
-    from app.core.config import AppSettings
+    from app.services.chat_tracing_service import ChatTracingService
+    from app.services.chatbot_graph_service import ChatbotGraphService
+    from app.services.chatbot_service import ChatbotService
+    from app.services.conversation_state_service import ConversationStateService
+    from app.services.widget_chat_service import WidgetChatService
 
     settings = AppSettings()
     adapter = getattr(request.app.state, "chat_conversation_state_adapter", None)
@@ -56,15 +57,25 @@ def _get_widget_chat_service(request: Request):
         prompt_registry = PromptRegistry.from_settings(settings)
     tool_exec_svc = getattr(request.app.state, "chat_tool_execution_service", None)
     if tool_exec_svc is None:
+        from app.infra.memory_tool_client import FakeMemoryToolClient
         from app.infra.model_server_tools import FakeModelServerTools
         from app.infra.rag_tool_client import FakeRAGToolClient
-        from app.infra.memory_tool_client import FakeMemoryToolClient
         from app.services.chat_rag_snapshot_coordinator import ChatRAGSnapshotCoordinator
         from app.services.tool_execution_service import ToolExecutionService
+
         class _FakeSnapshotSvc:
             async def store_snapshot(self, **kw):
                 from app.domain.rag import SnapshotRecord
-                return SnapshotRecord(conversation_id=kw["conversation_id"], message_id=kw["message_id"], trace_id=kw.get("trace_id"), query=kw["query"], chunk_ids=[], scores=[])
+
+                return SnapshotRecord(
+                    conversation_id=kw["conversation_id"],
+                    message_id=kw["message_id"],
+                    trace_id=kw.get("trace_id"),
+                    query=kw["query"],
+                    chunk_ids=[],
+                    scores=[],
+                )
+
         tool_exec_svc = ToolExecutionService(
             model_server_tools=FakeModelServerTools(),
             rag_tool_client=FakeRAGToolClient(),
@@ -85,14 +96,18 @@ def _get_widget_chat_service(request: Request):
         conversation_state_service=conv_state_svc,
         chatbot_graph_service=graph_svc,
         tracing_service=tracing_svc,
-        limits=type("ChatLimits", (), {
-            "request_size_limit_bytes": settings.chat_request_size_limit_bytes,
-            "context_size_limit_chars": settings.chat_context_size_limit_chars,
-            "max_tool_calls": settings.chat_max_tool_calls,
-            "recursion_limit": settings.chat_recursion_limit,
-            "total_timeout_seconds": settings.chat_total_timeout_seconds,
-            "per_tool_timeout_seconds": settings.chat_per_tool_timeout_seconds,
-        })(),
+        limits=type(
+            "ChatLimits",
+            (),
+            {
+                "request_size_limit_bytes": settings.chat_request_size_limit_bytes,
+                "context_size_limit_chars": settings.chat_context_size_limit_chars,
+                "max_tool_calls": settings.chat_max_tool_calls,
+                "recursion_limit": settings.chat_recursion_limit,
+                "total_timeout_seconds": settings.chat_total_timeout_seconds,
+                "per_tool_timeout_seconds": settings.chat_per_tool_timeout_seconds,
+            },
+        )(),
     )
     return WidgetChatService(chatbot_service=chat_svc)
 

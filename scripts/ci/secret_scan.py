@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Optional
 
-
 UNSAFE_PATTERNS = [
     ("sk-", "API key prefix (OpenAI-style)"),
     ("password=", "Hardcoded password assignment"),
@@ -12,7 +11,9 @@ UNSAFE_PATTERNS = [
 ]
 
 
-def scan_file(path: Path, patterns: Optional[list[tuple[str, str]]] = None) -> list[tuple[int, str, str]]:
+def scan_file(
+    path: Path, patterns: Optional[list[tuple[str, str]]] = None
+) -> list[tuple[int, str, str]]:
     """Scan a file for secret patterns. Returns list of (line_number, pattern, line_snippet)."""
     pats = patterns or UNSAFE_PATTERNS
     hits: list[tuple[int, str, str]] = []
@@ -33,8 +34,28 @@ def scan_directory(
     exclude_extensions: Optional[set[str]] = None,
 ) -> list[tuple[Path, int, str, str]]:
     """Scan a directory tree for secret patterns. Returns (path, lineno, pattern, snippet)."""
-    exclude_dirs = exclude_dirs or {".git", ".venv", "__pycache__", "node_modules", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
-    exclude_extensions = exclude_extensions or {".pyc", ".png", ".jpg", ".gif", ".svg", ".woff", ".ttf", ".gz", ".zip", ".tar", ".ico"}
+    exclude_dirs = exclude_dirs or {
+        ".git",
+        ".venv",
+        "__pycache__",
+        "node_modules",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+    }
+    exclude_extensions = exclude_extensions or {
+        ".pyc",
+        ".png",
+        ".jpg",
+        ".gif",
+        ".svg",
+        ".woff",
+        ".ttf",
+        ".gz",
+        ".zip",
+        ".tar",
+        ".ico",
+    }
     results: list[tuple[Path, int, str, str]] = []
     for item in root.rglob("*"):
         if item.is_dir():

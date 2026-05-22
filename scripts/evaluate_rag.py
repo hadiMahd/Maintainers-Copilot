@@ -16,8 +16,8 @@ from app.core.config import AppSettings
 from app.domain.rag import EvalReport
 from app.infra.rag_generation_client import FakeGenerationClient
 from app.infra.rag_judge_client import resolve_judge
-from app.services.rag_evaluation_service import RAGEvaluationService
 from app.infra.redaction import redact_eval_report
+from app.services.rag_evaluation_service import RAGEvaluationService
 
 logger = logging.getLogger(__name__)
 

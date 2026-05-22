@@ -13,20 +13,37 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 KEYWORD_CLASSIFIER: dict[str, list[str]] = {
     "bug": [
-        "null", "segfault", "crash", "memory leak", "race condition",
-        "typeerror", "null pointer",
+        "null",
+        "segfault",
+        "crash",
+        "memory leak",
+        "race condition",
+        "typeerror",
+        "null pointer",
     ],
     "feature": [
-        "add ", "implement ", "integrate ", "support ", "dark mode",
-        "pagination", "rate limiting", "ci/cd", "ci pipeline",
+        "add ",
+        "implement ",
+        "integrate ",
+        "support ",
+        "dark mode",
+        "pagination",
+        "rate limiting",
+        "ci/cd",
+        "ci pipeline",
     ],
     "documentation": [
-        "readme", "docstring", "license", "contributing",
-        "api reference", "installation instruction", "installation instructions",
-        "clarify", "typo",
+        "readme",
+        "docstring",
+        "license",
+        "contributing",
+        "api reference",
+        "installation instruction",
+        "installation instructions",
+        "clarify",
+        "typo",
     ],
 }
 
@@ -57,7 +74,9 @@ def evaluate_classifier(golden_path: str) -> dict[str, Any]:
 
     accuracy = float(accuracy_score(labels_true, labels_pred))
     macro_f1 = float(f1_score(labels_true, labels_pred, average="macro", zero_division=0))
-    per_class = f1_score(labels_true, labels_pred, average=None, labels=unique_labels, zero_division=0)
+    per_class = f1_score(
+        labels_true, labels_pred, average=None, labels=unique_labels, zero_division=0
+    )
     per_class_f1 = {label: float(score) for label, score in zip(unique_labels, per_class)}
 
     return {
@@ -135,8 +154,8 @@ if __name__ == "__main__":
 
     out_dir = Path("evals/reports")
     out_dir.mkdir(parents=True, exist_ok=True)
-    with open(out_dir / "classifier_result.json", "w") as f:
-        json.dump(result, f, indent=2)
+    with open(out_dir / "classifier_result.json", "w") as fh:
+        json.dump(result, fh, indent=2)
     print(f"Classifier result saved to {out_dir / 'classifier_result.json'}")
 
     if not passed:

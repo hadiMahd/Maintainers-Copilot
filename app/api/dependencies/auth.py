@@ -4,7 +4,6 @@ Thin FastAPI dependencies for extracting the current user.
 """
 
 import jwt as _jwt
-
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -27,7 +26,6 @@ async def get_current_user(
     settings: AppSettings = request.app.state.settings
     signer = TokenSigner(settings)
 
-    import jwt as _jwt
     try:
         payload = signer.verify_token(credentials.credentials)
     except _jwt.PyJWTError:

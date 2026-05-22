@@ -26,8 +26,8 @@ class FakeEmbeddingClient:
 class TestMemoryAuditTransaction:
     async def test_redacted_memory_persistence_and_single_audit_write(self):
         from app.domain.memory import WriteMemoryRequest
-        from app.services.long_term_memory_service import LongTermMemoryService
         from app.services.audit_service import MEMORY_WRITE_ACTION
+        from app.services.long_term_memory_service import LongTermMemoryService
 
         session = AsyncMock()
 

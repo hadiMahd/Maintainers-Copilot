@@ -8,8 +8,8 @@ Requires authenticated session state.  Sends messages to the backend
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 import uuid
+from pathlib import Path
 
 import streamlit as st
 
@@ -21,7 +21,7 @@ from streamlit_app.clients.backend_api import BackendAPIClient, BackendAPIError
 from streamlit_app.components.auth import clear_auth, init_auth_state
 from streamlit_app.components.errors import display_error
 from streamlit_app.config import StreamlitSettings
-from streamlit_app.models import ChatEventView, UIErrorMessage
+from streamlit_app.models import UIErrorMessage
 
 init_auth_state()
 
@@ -45,7 +45,9 @@ client = BackendAPIClient(
 )
 
 st.title("Chat")
-st.caption("Ask a maintainer question — the assistant will classify, extract, summarise, and answer.")
+st.caption(
+    "Ask a maintainer question — the assistant will classify, extract, summarise, and answer."
+)
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []

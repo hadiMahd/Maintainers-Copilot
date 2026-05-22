@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import uuid
 
 from app.domain.rag import (
+    RAGChunk,
     RAGSource,
     ResolvedIssueAnswer,
-    RAGChunk,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,30 +43,34 @@ def _chunk_text(
             buffer = combined
         else:
             if buffer:
-                chunks.append(_make_chunk(
-                    parent_id=parent_id,
-                    content=buffer.strip(),
-                    chunk_index=len(chunks),
-                    source_type=source_type,
-                    source_path=source_path,
-                    title=title,
-                    source_url=source_url,
-                    issue_number=issue_number,
-                    labels=labels,
-                ))
+                chunks.append(
+                    _make_chunk(
+                        parent_id=parent_id,
+                        content=buffer.strip(),
+                        chunk_index=len(chunks),
+                        source_type=source_type,
+                        source_path=source_path,
+                        title=title,
+                        source_url=source_url,
+                        issue_number=issue_number,
+                        labels=labels,
+                    )
+                )
             buffer = p
     if buffer:
-        chunks.append(_make_chunk(
-            parent_id=parent_id,
-            content=buffer.strip(),
-            chunk_index=len(chunks),
-            source_type=source_type,
-            source_path=source_path,
-            title=title,
-            source_url=source_url,
-            issue_number=issue_number,
-            labels=labels,
-        ))
+        chunks.append(
+            _make_chunk(
+                parent_id=parent_id,
+                content=buffer.strip(),
+                chunk_index=len(chunks),
+                source_type=source_type,
+                source_path=source_path,
+                title=title,
+                source_url=source_url,
+                issue_number=issue_number,
+                labels=labels,
+            )
+        )
     return chunks
 
 
@@ -124,15 +127,17 @@ class RAGIngestionService:
             content = doc.get("content", "")
             source_id = _stable_hash(source_path)
             content_hash = _stable_hash(content)
-            sources.append(RAGSource(
-                source_id=source_id,
-                source_type="docs",
-                source_path=source_path,
-                source_url=doc.get("source_url"),
-                title=title,
-                content=content,
-                content_hash=content_hash,
-            ))
+            sources.append(
+                RAGSource(
+                    source_id=source_id,
+                    source_type="docs",
+                    source_path=source_path,
+                    source_url=doc.get("source_url"),
+                    title=title,
+                    content=content,
+                    content_hash=content_hash,
+                )
+            )
             child_chunks = _chunk_text(
                 content,
                 parent_id=source_id,
@@ -166,20 +171,22 @@ class RAGIngestionService:
             maintainer_answer = issue.get("maintainer_answer", "")
             content = f"{title}\n\n{question_context}\n\n{maintainer_answer}"
             content_hash = _stable_hash(content)
-            sources.append(ResolvedIssueAnswer(
-                source_id=source_id,
-                source_path=f"issues/{issue_number}.json",
-                source_url=issue.get("source_url"),
-                title=title,
-                content=content,
-                content_hash=content_hash,
-                issue_number=issue_number,
-                labels=issue.get("labels", []),
-                created_at=issue.get("created_at"),
-                updated_at=issue.get("updated_at"),
-                question_context=question_context,
-                maintainer_answer=maintainer_answer,
-            ))
+            sources.append(
+                ResolvedIssueAnswer(
+                    source_id=source_id,
+                    source_path=f"issues/{issue_number}.json",
+                    source_url=issue.get("source_url"),
+                    title=title,
+                    content=content,
+                    content_hash=content_hash,
+                    issue_number=issue_number,
+                    labels=issue.get("labels", []),
+                    created_at=issue.get("created_at"),
+                    updated_at=issue.get("updated_at"),
+                    question_context=question_context,
+                    maintainer_answer=maintainer_answer,
+                )
+            )
             child_chunks = _chunk_text(
                 content,
                 parent_id=source_id,

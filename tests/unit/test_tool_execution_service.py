@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from app.domain.chat_tools import LLMToolCall, MemoryWriteIntent, SummarizeIssueOutput
+from app.domain.chat_tools import LLMToolCall, MemoryWriteIntent
 from app.infra.memory_tool_client import FakeMemoryToolClient
 from app.infra.model_server_tools import FakeModelServerTools
 from app.infra.rag_tool_client import FakeRAGToolClient

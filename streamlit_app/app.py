@@ -18,8 +18,8 @@ if str(streamlit_app_dir) not in sys.path:
 
 from streamlit_app.clients.backend_api import BackendAPIClient, BackendAPIError
 from streamlit_app.components.auth import (
-    get_cookie_manager,
     clear_auth,
+    get_cookie_manager,
     init_auth_state,
     login_form,
     restore_session,
@@ -27,7 +27,6 @@ from streamlit_app.components.auth import (
 )
 from streamlit_app.components.errors import display_error
 from streamlit_app.config import StreamlitSettings
-from streamlit_app.models import CurrentUserView
 
 st.set_page_config(page_title="Maintainer's Copilot", layout="wide")
 
@@ -106,9 +105,7 @@ def _get_page_roots() -> list[st.Page]:
     ]
     role = st.session_state.get("role", "user")
     if role == "admin":
-        pages.append(
-            st.Page("pages/admin_widget_config.py", title="Widget Config", icon="⚙️")
-        )
+        pages.append(st.Page("pages/admin_widget_config.py", title="Widget Config", icon="⚙️"))
     return pages
 
 

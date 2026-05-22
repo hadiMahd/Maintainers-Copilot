@@ -165,10 +165,12 @@ class AzureOpenAISummarizationAdapter(BaseSummarizationAdapter):
         self._ensure_model()
         try:
             response = await asyncio.wait_for(
-                self._model.ainvoke([
-                    self._system_message_cls(content=SUMMARIZATION_SYSTEM_PROMPT),
-                    self._human_message_cls(content=prompt),
-                ]),
+                self._model.ainvoke(
+                    [
+                        self._system_message_cls(content=SUMMARIZATION_SYSTEM_PROMPT),
+                        self._human_message_cls(content=prompt),
+                    ]
+                ),
                 timeout=self._timeout_seconds,
             )
         except TimeoutError:

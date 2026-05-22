@@ -1,10 +1,7 @@
 """Tests for classifier eval gate."""
 
 import json
-import tempfile
 from pathlib import Path
-
-import pytest
 
 
 class TestClassifierEvalGate:
@@ -12,6 +9,7 @@ class TestClassifierEvalGate:
 
     def test_classifier_eval_module_imports(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "run_classifier_eval", "scripts/ci/run_classifier_eval.py"
         )
@@ -23,12 +21,12 @@ class TestClassifierEvalGate:
 
     def test_golden_set_has_minimum_items(self):
         lines = Path("evals/classification/golden.jsonl").read_text().strip().split("\n")
-        items = [json.loads(l) for l in lines if l.strip()]
+        items = [json.loads(ln) for ln in lines if ln.strip()]
         assert len(items) >= 10, "golden set should have at least 10 items"
 
     def test_golden_set_has_required_fields(self):
         lines = Path("evals/classification/golden.jsonl").read_text().strip().split("\n")
-        items = [json.loads(l) for l in lines if l.strip()]
+        items = [json.loads(ln) for ln in lines if ln.strip()]
         for item in items:
             assert "text" in item
             assert "label" in item
@@ -37,6 +35,7 @@ class TestClassifierEvalGate:
 
     def test_run_classifier_eval_with_golden_set(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "run_classifier_eval", "scripts/ci/run_classifier_eval.py"
         )
@@ -78,6 +77,7 @@ class TestClassifierEvalGate:
 
     def test_deterministic_classifier_produces_repeatable_results(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "run_classifier_eval", "scripts/ci/run_classifier_eval.py"
         )
@@ -90,9 +90,7 @@ class TestClassifierEvalGate:
         assert result1["macro_f1"] == result2["macro_f1"]
 
     def test_run_classifier_eval_main_passes_with_real_thresholds(self):
-        import sys
         import importlib.util
-        from unittest.mock import patch
 
         spec = importlib.util.spec_from_file_location(
             "run_classifier_eval", "scripts/ci/run_classifier_eval.py"

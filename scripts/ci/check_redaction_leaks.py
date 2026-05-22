@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from scripts.ci.common import fail, pass_gate, redact_output, safe_summary
+from scripts.ci.common import fail, pass_gate, safe_summary
 
 FAKE_PROBES = [
     "sk-fake-test-key-12345",
@@ -78,7 +78,7 @@ def _check_captured_output() -> list[str]:
     simulated_outputs = {
         "log_output": "INFO: Request processed, trace_id=abc, status=200",
         "trace_output": '{"trace_id": "abc", "operation": "chat"}',
-        "memory_output": 'memory write: key=user_123, size=45',
+        "memory_output": "memory write: key=user_123, size=45",
         "audit_output": '{"action": "memory.write", "user_id": "u1"}',
     }
     leaks = []

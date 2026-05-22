@@ -2,22 +2,22 @@
 
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI
 from pydantic import SecretStr
-import structlog
 
+import app.infra.database as db_mod
 from app.core.config import AppSettings
 from app.core.logging import configure_logging
 from app.domain.errors import ConfigError
-import app.infra.database as db_mod
-from app.infra.database import create_engine, create_session_factory
 from app.infra.conversation_state_adapter import ConversationStateAdapter
+from app.infra.database import create_engine, create_session_factory
 from app.infra.llm_adapter import AzureChatLLMAdapter, FakeLLMAdapter
+from app.infra.minio_client import create_minio_client
 from app.infra.model_server_tools import HTTPModelServerTools
 from app.infra.prompt_registry import PromptRegistry
-from app.infra.rag_tool_client import FakeRAGToolClient, RAGToolClient
 from app.infra.rag_generation_client import resolve_generation_client
-from app.infra.minio_client import create_minio_client
+from app.infra.rag_tool_client import FakeRAGToolClient, RAGToolClient
 from app.infra.redis_client import create_redis_client
 from app.infra.tracing import FakeTraceAdapter, LangSmithTraceAdapter
 from app.infra.vault_client import (
@@ -32,15 +32,11 @@ def _apply_optional_provider_settings(settings: AppSettings, resolved: dict) -> 
     """Apply optional Vault-resolved provider settings to the live AppSettings."""
     settings.azure_openai_endpoint = resolved.get("azure_openai_endpoint")
     azure_api_key = resolved.get("azure_openai_api_key")
-    settings.azure_openai_api_key = (
-        SecretStr(str(azure_api_key)) if azure_api_key else None
-    )
+    settings.azure_openai_api_key = SecretStr(str(azure_api_key)) if azure_api_key else None
     settings.azure_openai_model = resolved.get("azure_openai_model")
     settings.azure_openai_embedding_model = resolved.get("azure_openai_embedding_model")
     langchain_api_key = resolved.get("langchain_api_key")
-    settings.langchain_api_key = (
-        SecretStr(str(langchain_api_key)) if langchain_api_key else None
-    )
+    settings.langchain_api_key = SecretStr(str(langchain_api_key)) if langchain_api_key else None
     settings.langsmith_endpoint = resolved.get("langchain_endpoint")
     settings.langsmith_project = resolved.get("langchain_project")
 
@@ -122,9 +118,7 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
         else FakeTraceAdapter()
     )
     app.state.chat_llm_adapter = (
-        AzureChatLLMAdapter(settings)
-        if settings.environment != "test"
-        else FakeLLMAdapter()
+        AzureChatLLMAdapter(settings) if settings.environment != "test" else FakeLLMAdapter()
     )
 
     log.info("startup complete")

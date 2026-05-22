@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.domain.rag import RAGChunk, RetrievalResult, SnapshotRecord
-from app.infra.reranker_client import FakeRerankerClient, BaseRerankerClient
 from app.infra.redaction import redact_snapshot_row
+from app.infra.reranker_client import BaseRerankerClient, FakeRerankerClient
 
 
 class TestRerankingImpact:
     def test_rerank_changes_ordering(self):
         chunks = [_make_chunk(f"c{i}") for i in range(5)]
         results = [
-            RetrievalResult(rank=i + 1, final_score=0.9 - i * 0.1, chunk=chunks[i],
-                          retrieval_mode="hybrid")
+            RetrievalResult(
+                rank=i + 1, final_score=0.9 - i * 0.1, chunk=chunks[i], retrieval_mode="hybrid"
+            )
             for i in range(5)
         ]
         reranker = FakeRerankerClient()
@@ -53,8 +52,8 @@ class TestRerankingImpact:
         assert len(ranked) == 5
 
     def test_base_reranker_interface(self):
-        assert hasattr(BaseRerankerClient, 'rerank')
-        assert hasattr(BaseRerankerClient, 'model_name')
+        assert hasattr(BaseRerankerClient, "rerank")
+        assert hasattr(BaseRerankerClient, "model_name")
 
 
 class TestSnapshotRedaction:
@@ -101,9 +100,7 @@ class TestSnapshotRedaction:
 
 class TestConversationRetention:
     def test_retain_last_50_conversations(self):
-        snapshots = [
-            _make_snapshot(conv_id=f"conv-{i}") for i in range(100)
-        ]
+        snapshots = [_make_snapshot(conv_id=f"conv-{i}") for i in range(100)]
         retained = _prune_snapshots(snapshots, max_conversations=50)
         assert len(retained) == 50
         ids = [s.conversation_id for s in retained]
@@ -133,14 +130,21 @@ class TestConversationRetention:
 
 # -- Helpers -----------------------------------------------------------------
 
+
 def _make_chunk(chunk_id: str) -> RAGChunk:
     return RAGChunk(
-        chunk_id=chunk_id, parent_id="p1", source_type="docs",
-        content="test", content_hash="abc", token_count=2,
+        chunk_id=chunk_id,
+        parent_id="p1",
+        source_type="docs",
+        content="test",
+        content_hash="abc",
+        token_count=2,
     )
 
 
-def _make_snapshot(conv_id: str = "conv-1", msg_id: str = "msg-1", trace_id: str = "trace-1") -> SnapshotRecord:
+def _make_snapshot(
+    conv_id: str = "conv-1", msg_id: str = "msg-1", trace_id: str = "trace-1"
+) -> SnapshotRecord:
     return SnapshotRecord(
         conversation_id=conv_id,
         message_id=msg_id,

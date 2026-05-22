@@ -21,7 +21,7 @@ def load_report_local(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise ReportStorageError(f"Report not found: {path}")
     with open(path) as f:
-        return json.load(f)
+        return json.load(f)  # type: ignore[no-any-return]
 
 
 def store_report(report: dict[str, Any], bucket: str, key: str) -> bool:
@@ -49,17 +49,21 @@ def try_load_minio(bucket: str, key: str) -> Optional[dict[str, Any]]:
         data = json.loads(response.read())
         response.close()
         response.release_conn()
-        return data
+        return data  # type: ignore[no-any-return]
     except Exception:
         return None
 
 
-def find_previous_green_report(bucket: str, prefix: str = "eval_report_") -> Optional[dict[str, Any]]:
+def find_previous_green_report(
+    bucket: str, prefix: str = "eval_report_"
+) -> Optional[dict[str, Any]]:
     """Find the most recent passing report in storage."""
     local_dir = Path("evals/reports/")
     if not local_dir.exists():
         return None
-    reports = sorted(local_dir.glob(f"{prefix}*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    reports = sorted(
+        local_dir.glob(f"{prefix}*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
     for rp in reports:
         try:
             report = load_report_local(rp)

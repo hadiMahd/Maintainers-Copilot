@@ -39,7 +39,11 @@ async def test_rag_snapshot_coordinator_returns_snapshot_reference():
             supporting_sources=[],
             limitations=[],
             retrieval_trace_id="rag-trace-1",
-            retrieved_chunks=[RAGRetrievedChunk(chunk_id="chunk-1", source_path="docs/auth.md", score=0.9, preview="preview")],
+            retrieved_chunks=[
+                RAGRetrievedChunk(
+                    chunk_id="chunk-1", source_path="docs/auth.md", score=0.9, preview="preview"
+                )
+            ],
         ),
         trace_id="trace-1",
     )

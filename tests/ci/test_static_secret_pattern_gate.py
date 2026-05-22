@@ -1,10 +1,9 @@
 """Tests for static secret pattern gate — unsafe sk- and password patterns."""
 
-import json
 import tempfile
 from pathlib import Path
 
-from scripts.ci.secret_scan import is_allowlisted, scan_directory, scan_file, UNSAFE_PATTERNS
+from scripts.ci.secret_scan import UNSAFE_PATTERNS, is_allowlisted, scan_directory, scan_file
 
 
 class TestStaticSecretPatternGate:
@@ -69,15 +68,17 @@ class TestStaticSecretPatternGate:
             shutil.rmtree(safe_dir, ignore_errors=True)
 
     def test_scan_directory_detects_probe_file(self):
-        import tempfile
         import shutil
+        import tempfile
 
         test_dir = Path(tempfile.mkdtemp())
         try:
             secret_file = test_dir / "leaked.py"
             secret_file.write_text("sk-12345\n")
             hits = scan_directory(test_dir)
-            non_allowlisted = [(p, l, pat, s) for p, l, pat, s in hits if not is_allowlisted(p, pat, s)]
+            non_allowlisted = [
+                (p, l, pat, s) for p, l, pat, s in hits if not is_allowlisted(p, pat, s)
+            ]
             assert len(non_allowlisted) >= 1
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)

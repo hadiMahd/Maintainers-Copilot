@@ -5,7 +5,13 @@ from __future__ import annotations
 import pytest
 
 from app.domain.chat import ChatLimits, ChatRequest
-from app.domain.chat_tools import LLMCompletion, LLMToolCall, RAGRetrievedChunk, RAGToolClientResponse, ToolSourceReference
+from app.domain.chat_tools import (
+    LLMCompletion,
+    LLMToolCall,
+    RAGRetrievedChunk,
+    RAGToolClientResponse,
+    ToolSourceReference,
+)
 from app.infra.llm_adapter import FakeLLMAdapter
 from app.infra.memory_tool_client import FakeMemoryToolClient
 from app.infra.model_server_tools import FakeModelServerTools
@@ -30,7 +36,9 @@ class _DictConversationAdapter:
     async def write(self, user_id: str, conversation_id: str, messages, ttl_seconds: int):
         from app.domain.chat import ConversationState
 
-        state = ConversationState(user_id=user_id, conversation_id=conversation_id, messages=messages)
+        state = ConversationState(
+            user_id=user_id, conversation_id=conversation_id, messages=messages
+        )
         self.store[(user_id, conversation_id)] = state
         return state
 
@@ -69,10 +77,16 @@ def _build_chat_service(tool_call: LLMToolCall):
         rag_tool_client=FakeRAGToolClient(
             RAGToolClientResponse(
                 answer="Grounded answer.",
-                supporting_sources=[ToolSourceReference(source_id="chunk-1", source_path="docs/auth.md", score=0.9)],
+                supporting_sources=[
+                    ToolSourceReference(source_id="chunk-1", source_path="docs/auth.md", score=0.9)
+                ],
                 limitations=[],
                 retrieval_trace_id="rag-trace-1",
-                retrieved_chunks=[RAGRetrievedChunk(chunk_id="chunk-1", source_path="docs/auth.md", score=0.9, preview="preview")],
+                retrieved_chunks=[
+                    RAGRetrievedChunk(
+                        chunk_id="chunk-1", source_path="docs/auth.md", score=0.9, preview="preview"
+                    )
+                ],
             )
         ),
         memory_tool_client=FakeMemoryToolClient(),
@@ -80,10 +94,12 @@ def _build_chat_service(tool_call: LLMToolCall):
         per_tool_timeout_seconds=5,
     )
     graph_service = ChatbotGraphService(
-        llm_adapter=FakeLLMAdapter([
-            LLMCompletion(tool_calls=[tool_call]),
-            LLMCompletion(message="Here is the safe final answer."),
-        ]),
+        llm_adapter=FakeLLMAdapter(
+            [
+                LLMCompletion(tool_calls=[tool_call]),
+                LLMCompletion(message="Here is the safe final answer."),
+            ]
+        ),
         prompt_registry=PromptRegistry.from_settings(
             __import__("app.core.config", fromlist=["AppSettings"]).AppSettings(
                 vault_addr="http://fake",
@@ -110,7 +126,10 @@ def _build_chat_service(tool_call: LLMToolCall):
         LLMToolCall(name="extract_entities", arguments={"title": "auth service path"}),
         LLMToolCall(name="summarize_issue", arguments={"title": "summary please"}),
         LLMToolCall(name="answer_project_question", arguments={"question": "where is auth?"}),
-        LLMToolCall(name="write_memory", arguments={"content": "preferred editor is vim", "memory_type": "semantic"}),
+        LLMToolCall(
+            name="write_memory",
+            arguments={"content": "preferred editor is vim", "memory_type": "semantic"},
+        ),
     ],
 )
 async def test_supported_tool_calls_complete_successfully(tool_call):
@@ -133,9 +152,14 @@ class _CountingMemoryToolClient:
         self.calls: list[dict] = []
 
     async def write_memory(self, user_id, payload, *, request_id=None):
-        self.calls.append({"user_id": user_id, "content": payload.content, "request_id": request_id})
+        self.calls.append(
+            {"user_id": user_id, "content": payload.content, "request_id": request_id}
+        )
         import uuid as _uuid
-        return __import__("app.domain.chat_tools", fromlist=["WriteMemoryOutput"]).WriteMemoryOutput(
+
+        return __import__(
+            "app.domain.chat_tools", fromlist=["WriteMemoryOutput"]
+        ).WriteMemoryOutput(
             memory_id=_uuid.uuid4().hex,
             audit_log_id=_uuid.uuid4().hex,
             redaction_summary="no redaction changes",
@@ -171,10 +195,12 @@ async def test_write_memory_limited_to_one_call_per_request():
         per_tool_timeout_seconds=5,
     )
     graph_service = ChatbotGraphService(
-        llm_adapter=FakeLLMAdapter([
-            LLMCompletion(tool_calls=[tool_call, tool_call]),
-            LLMCompletion(message="Here is the safe final answer."),
-        ]),
+        llm_adapter=FakeLLMAdapter(
+            [
+                LLMCompletion(tool_calls=[tool_call, tool_call]),
+                LLMCompletion(message="Here is the safe final answer."),
+            ]
+        ),
         prompt_registry=PromptRegistry.from_settings(
             __import__("app.core.config", fromlist=["AppSettings"]).AppSettings(
                 vault_addr="http://fake",
@@ -239,15 +265,28 @@ async def test_write_memory_allowed_again_on_next_request():
             per_tool_timeout_seconds=5,
         )
         graph_svc = ChatbotGraphService(
-            llm_adapter=FakeLLMAdapter([
-                LLMCompletion(tool_calls=[
-                    LLMToolCall(name="write_memory", arguments={"content": "X", "memory_type": "semantic", "metadata": {}}),
-                ]),
-                LLMCompletion(message="Done."),
-            ]),
+            llm_adapter=FakeLLMAdapter(
+                [
+                    LLMCompletion(
+                        tool_calls=[
+                            LLMToolCall(
+                                name="write_memory",
+                                arguments={
+                                    "content": "X",
+                                    "memory_type": "semantic",
+                                    "metadata": {},
+                                },
+                            ),
+                        ]
+                    ),
+                    LLMCompletion(message="Done."),
+                ]
+            ),
             prompt_registry=PromptRegistry.from_settings(
                 __import__("app.core.config", fromlist=["AppSettings"]).AppSettings(
-                    vault_addr="http://fake", vault_token="fake-token", environment="test",
+                    vault_addr="http://fake",
+                    vault_token="fake-token",
+                    environment="test",
                 )
             ),
             tool_execution_service=tool_svc,

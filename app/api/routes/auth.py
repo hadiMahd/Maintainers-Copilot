@@ -3,12 +3,10 @@
 Thin HTTP mapping — no SQLAlchemy, Vault, or Redis access directly.
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 
-from app.api.dependencies.auth import get_current_user
 from app.core.config import AppSettings
 from app.domain.auth import (
-    AuthContext,
     RefreshRequest,
     TokenPair,
     UserCreate,
@@ -25,11 +23,6 @@ router = APIRouter()
 
 
 def _get_auth_service(request: Request):
-    from app.core.config import AppSettings
-    from app.infra.password_hasher import PasswordHasher
-    from app.infra.token_signer import TokenSigner
-    from app.repositories.token_session_repository import TokenSessionRepository
-    from app.repositories.user_repository import UserRepository
 
     settings: AppSettings = request.app.state.settings
     signer = TokenSigner(settings)
@@ -45,6 +38,7 @@ def _get_auth_service(request: Request):
 
 def _get_session_factory(request: Request):
     import app.infra.database as db_mod
+
     return db_mod.async_session_factory
 
 
@@ -67,4 +61,3 @@ async def refresh(body: RefreshRequest, request: Request) -> TokenPair:
     svc = _get_auth_service(request)
     request_id = getattr(request.state, "request_id", None)
     return await svc.refresh_token(body, request_id=request_id)
-

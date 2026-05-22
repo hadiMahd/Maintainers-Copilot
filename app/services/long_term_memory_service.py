@@ -17,7 +17,7 @@ from app.domain.memory import (
     WriteMemoryRequest,
 )
 from app.infra.redaction import redact_long_term_memory_content
-from app.services.audit_service import AuditService, MEMORY_WRITE_ACTION
+from app.services.audit_service import MEMORY_WRITE_ACTION, AuditService
 
 _log = structlog.get_logger
 
@@ -125,7 +125,7 @@ class LongTermMemoryService:
                 )
             except AuditError:
                 raise
-            except Exception as exc:
+            except Exception:
                 await session.rollback()
                 log.warning("long_term_memory_write_failed", user_id=user_id)
                 raise

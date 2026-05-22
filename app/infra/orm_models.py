@@ -1,8 +1,19 @@
 """SQLAlchemy ORM models for Phase 6 tables."""
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, JSON, String, Text, func
-from sqlalchemy.orm import DeclarativeBase, mapped_column
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy.orm import DeclarativeBase
 
 from app.infra.memory_embedding_client import DEFAULT_MEMORY_EMBEDDING_DIM
 
@@ -59,7 +70,9 @@ class AdminInvitation(Base):
 
     id = Column(String(36), primary_key=True)
     invitee_email = Column(String(255), nullable=False)
-    created_by_user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_by_user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     token_hash = Column(String(128), nullable=False)
     status = Column(String(12), nullable=False, server_default="pending")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -123,7 +136,9 @@ class WidgetConfig(Base):
     position = Column(String(20), nullable=False, server_default="bottom-right")
     enabled_tools = Column(JSON(), nullable=True)
     is_enabled = Column(Boolean(), nullable=False, server_default="true")
-    created_by_user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_by_user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     updated_by_user_id = Column(String(36), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())

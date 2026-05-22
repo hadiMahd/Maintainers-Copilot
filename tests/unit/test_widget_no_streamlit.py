@@ -11,12 +11,22 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 
 STREAMLIT_PATTERNS = [
     re.compile(r"streamlit", re.IGNORECASE),
-    re.compile(r"st\.(session_state|navigation|write|text|error|warning|info|success|sidebar|stop|cache|experimental_rerun)\b"),
+    re.compile(
+        r"st\.(session_state|navigation|write|text|error|warning|info|success|sidebar|stop|cache|experimental_rerun)\b"
+    ),
 ]
 
 RESIZE_CHANNEL = "maintainer-copilot-widget:resize"
 
-STREAMLIT_EXCLUDE_DIRS = {"streamlit_app", ".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache"}
+STREAMLIT_EXCLUDE_DIRS = {
+    "streamlit_app",
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+}
 
 WIDGET_DIRS = [ROOT / "widget", ROOT / "demo" / "host"]
 PUBLIC_WIDGET_ROUTES = [
@@ -31,7 +41,16 @@ def _iter_source_files(dirs):
         if not d.is_dir():
             continue
         for path in d.rglob("*"):
-            if path.is_file() and path.suffix in {".ts", ".tsx", ".js", ".jsx", ".py", ".html", ".css", ".mjs"}:
+            if path.is_file() and path.suffix in {
+                ".ts",
+                ".tsx",
+                ".js",
+                ".jsx",
+                ".py",
+                ".html",
+                ".css",
+                ".mjs",
+            }:
                 rel = path.relative_to(ROOT)
                 parts = set(rel.parts)
                 if not parts & STREAMLIT_EXCLUDE_DIRS:
@@ -47,7 +66,7 @@ def test_no_streamlit_in_widget_or_public_routes():
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in STREAMLIT_PATTERNS:
             for match in pattern.finditer(text):
-                line_no = text[:match.start()].count("\n") + 1
+                line_no = text[: match.start()].count("\n") + 1
                 violations.append(f"{path.relative_to(ROOT)}:{line_no}: {match.group()}")
 
     for path in PUBLIC_WIDGET_ROUTES:
@@ -56,10 +75,10 @@ def test_no_streamlit_in_widget_or_public_routes():
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in STREAMLIT_PATTERNS:
             for match in pattern.finditer(text):
-                line_no = text[:match.start()].count("\n") + 1
+                line_no = text[: match.start()].count("\n") + 1
                 violations.append(f"{path.relative_to(ROOT)}:{line_no}: {match.group()}")
 
-    assert not violations, f"Streamlit references found:\n" + "\n".join(violations)
+    assert not violations, "Streamlit references found:\n" + "\n".join(violations)
 
 
 def test_postmessage_limited_to_resize_channel():
@@ -83,7 +102,11 @@ def test_postmessage_limited_to_resize_channel():
                 continue
             if stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*"):
                 continue
-            if stripped.startswith("const ") or stripped.startswith("let ") or stripped.startswith("var "):
+            if (
+                stripped.startswith("const ")
+                or stripped.startswith("let ")
+                or stripped.startswith("var ")
+            ):
                 continue
             if "vi.fn()" in stripped or "mock" in stripped.lower():
                 continue
@@ -93,6 +116,6 @@ def test_postmessage_limited_to_resize_channel():
                 continue
             violations.append(f"{rel}:{i}: {stripped}")
 
-    assert not violations, (
-        f"postMessage usage found outside resize channel:\n" + "\n".join(violations)
+    assert not violations, "postMessage usage found outside resize channel:\n" + "\n".join(
+        violations
     )

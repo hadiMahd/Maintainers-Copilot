@@ -2,9 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "streamlit_app"))
 
@@ -40,6 +38,7 @@ def test_embed_snippet_view_fields():
 def test_embed_snippet_not_mutated():
     """Verify the snippet content is passed through as-is."""
     from streamlit_app.components.snippets import display_embed_snippet
+
     snippet = EmbedSnippetView(
         widget_config_id="cfg-x",
         snippet='<script src="widget/loader.js"></script>',

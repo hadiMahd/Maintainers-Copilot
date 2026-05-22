@@ -1,14 +1,10 @@
 """Integration test for stack smoke health check."""
 
-import json
 import os
-import subprocess
-import time
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import httpx
-import pytest
 
 
 class TestStackSmokeHealth:
@@ -32,6 +28,7 @@ class TestStackSmokeHealth:
     def test_backend_has_health_endpoint(self):
         """Backend application should have health check endpoints (/live, /ready)."""
         from app.api.routes.health import router
+
         routes = [r.path for r in router.routes]
         assert any("/live" in r for r in routes), "Backend should have /live endpoint"
         assert any("/ready" in r for r in routes), "Backend should have /ready endpoint"
@@ -58,6 +55,7 @@ class TestValidateStackHealth:
 
     def test_health_validator_imports_cleanly(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "validate_stack_health",
             "scripts/ci/validate_stack_health.py",
@@ -67,6 +65,7 @@ class TestValidateStackHealth:
 
     def test_health_polling_mocked(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "validate_stack_health",
             "scripts/ci/validate_stack_health.py",

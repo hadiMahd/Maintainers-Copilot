@@ -75,12 +75,8 @@ def main() -> None:
             present = set(counts.keys())
             missing = all_classes - present
             if missing:
-                limitations.append(
-                    f"Train split missing classes: {sorted(missing)}"
-                )
-                print(
-                    f"WARNING: Train split missing classes: {sorted(missing)}"
-                )
+                limitations.append(f"Train split missing classes: {sorted(missing)}")
+                print(f"WARNING: Train split missing classes: {sorted(missing)}")
 
     # Write limitations sidecar
     limitations_path = os.path.join(settings.splits_dir, "split_limitations.json")

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import math
-
 import pytest
 
 
@@ -80,6 +78,7 @@ class TestCosineToScore:
 
 
 # -- Helpers (mirror retrieval service logic) ---------------------------------
+
 
 def _normalize_scores(scores: list[float]) -> list[float]:
     if not scores:

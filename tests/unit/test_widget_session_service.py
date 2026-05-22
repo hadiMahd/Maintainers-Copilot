@@ -2,9 +2,6 @@
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
-from app.domain.errors import WidgetSessionError
 from app.services.widget_session_service import WidgetSessionService
 
 
@@ -59,29 +56,41 @@ class TestIssueToken:
 
 class TestValidateToken:
     def test_valid_token_returns_true(self):
-        assert WidgetSessionService.validate_token(
-            token="abc123",
-            widget_id="wid-1",
-            expected_origin="https://example.com",
-        ) is True
+        assert (
+            WidgetSessionService.validate_token(
+                token="abc123",
+                widget_id="wid-1",
+                expected_origin="https://example.com",
+            )
+            is True
+        )
 
     def test_missing_token_returns_false(self):
-        assert WidgetSessionService.validate_token(
-            token=None,
-            widget_id="wid-1",
-            expected_origin="https://example.com",
-        ) is False
+        assert (
+            WidgetSessionService.validate_token(
+                token=None,
+                widget_id="wid-1",
+                expected_origin="https://example.com",
+            )
+            is False
+        )
 
     def test_empty_token_returns_false(self):
-        assert WidgetSessionService.validate_token(
-            token="",
-            widget_id="wid-1",
-            expected_origin="https://example.com",
-        ) is False
+        assert (
+            WidgetSessionService.validate_token(
+                token="",
+                widget_id="wid-1",
+                expected_origin="https://example.com",
+            )
+            is False
+        )
 
     def test_missing_origin_returns_false(self):
-        assert WidgetSessionService.validate_token(
-            token="abc123",
-            widget_id="wid-1",
-            expected_origin=None,
-        ) is False
+        assert (
+            WidgetSessionService.validate_token(
+                token="abc123",
+                widget_id="wid-1",
+                expected_origin=None,
+            )
+            is False
+        )

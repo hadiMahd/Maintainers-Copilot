@@ -10,7 +10,6 @@ from scripts.ci.common import fail, pass_gate
 from scripts.ci.eval_report import read_report
 from scripts.ci.report_storage import store_report
 
-
 if __name__ == "__main__":
     current_path = Path("evals/reports/eval_report.json")
     if not current_path.exists():

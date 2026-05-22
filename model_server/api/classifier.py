@@ -26,7 +26,9 @@ router = APIRouter(prefix="/classifier", tags=["classifier"])
         503: {"model": ClassifierErrorResponse},
     },
 )
-async def predict(request_body: ClassifierRequest, request: Request) -> ClassifierPredictionResponse | ClassifierErrorResponse:
+async def predict(
+    request_body: ClassifierRequest, request: Request
+) -> ClassifierPredictionResponse | ClassifierErrorResponse:
     """Predict the issue label for the given title, body, or comments.
 
     Returns a typed label, optional confidence, and semantic model_version.

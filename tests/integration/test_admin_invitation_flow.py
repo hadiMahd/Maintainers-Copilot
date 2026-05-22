@@ -5,14 +5,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.domain.errors import InvitationError
-
 
 @pytest.fixture
 def mock_session_factory():
     @asynccontextmanager
     async def factory():
         yield AsyncMock()
+
     return factory
 
 
@@ -33,16 +32,21 @@ class TestAdminInvitationFlow:
         from app.services.admin_invitation_service import AdminInvitationService
 
         mock_inv = MagicMock(
-            id="inv1", invitee_email="target@t.com", status="pending",
-            created_by_user_id="admin1", token_hash="inv-hash-123",
+            id="inv1",
+            invitee_email="target@t.com",
+            status="pending",
+            created_by_user_id="admin1",
+            token_hash="inv-hash-123",
             expires_at="2027-01-01T00:00:00Z",
         )
         audit_create_mock = AsyncMock()
 
-        InvitationRepo = _make_mock_repo_cls({
-            "get_by_email_and_status": None,
-            "create": mock_inv,
-        })
+        InvitationRepo = _make_mock_repo_cls(
+            {
+                "get_by_email_and_status": None,
+                "create": mock_inv,
+            }
+        )
         AuditRepo = _make_mock_repo_cls({})
         AuditRepo.create = audit_create_mock
         UserRepo = _make_mock_repo_cls({"get_by_email": None})
@@ -55,7 +59,8 @@ class TestAdminInvitationFlow:
         )
 
         result = await svc.create_invitation(
-            invitee_email="target@t.com", created_by_user_id="admin1",
+            invitee_email="target@t.com",
+            created_by_user_id="admin1",
         )
         assert result.invitee_email == "target@t.com"
 
@@ -67,25 +72,32 @@ class TestAdminInvitationFlow:
         from app.services.admin_invitation_service import AdminInvitationService
 
         mock_inv = MagicMock(
-            id="inv1", invitee_email="target@t.com",
-            token_hash="inv-hash-456", status="pending",
+            id="inv1",
+            invitee_email="target@t.com",
+            token_hash="inv-hash-456",
+            status="pending",
             created_by_user_id="admin1",
             expires_at="2027-01-01T00:00:00Z",
-            accepted_at=None, accepted_by_user_id=None,
+            accepted_at=None,
+            accepted_by_user_id=None,
         )
         mock_user = MagicMock(id="target1", email="target@t.com", role="admin", is_active=True)
         audit_create_mock = AsyncMock()
 
-        InvitationRepo = _make_mock_repo_cls({
-            "get_by_token_hash": mock_inv,
-            "mark_accepted": None,
-        })
+        InvitationRepo = _make_mock_repo_cls(
+            {
+                "get_by_token_hash": mock_inv,
+                "mark_accepted": None,
+            }
+        )
         AuditRepo = _make_mock_repo_cls({})
         AuditRepo.create = audit_create_mock
-        UserRepo = _make_mock_repo_cls({
-            "update_role": None,
-            "get_by_id": mock_user,
-        })
+        UserRepo = _make_mock_repo_cls(
+            {
+                "update_role": None,
+                "get_by_id": mock_user,
+            }
+        )
 
         svc = AdminInvitationService(
             invitation_repo=InvitationRepo,
@@ -97,5 +109,7 @@ class TestAdminInvitationFlow:
         result = await svc.accept_invitation(token="valid-token", accepted_by_user_id="target1")
         assert result.role == "admin"
 
-        role_change_calls = [c for c in audit_create_mock.call_args_list if c.kwargs.get("action") == "role.change"]
+        role_change_calls = [
+            c for c in audit_create_mock.call_args_list if c.kwargs.get("action") == "role.change"
+        ]
         assert len(role_change_calls) >= 1

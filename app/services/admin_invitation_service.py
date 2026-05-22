@@ -15,7 +15,7 @@ from typing import Callable
 
 import structlog
 
-from app.domain.auth import AdminInvitationCreate, AdminInvitationRead, UserRead
+from app.domain.auth import AdminInvitationRead, UserRead
 from app.domain.errors import InvitationError
 
 _log = structlog.get_logger
@@ -62,7 +62,10 @@ class AdminInvitationService:
                 expires_at = datetime.now(timezone.utc) + timedelta(hours=48)
 
                 invitation = await inv_repo.create(
-                    invitee_email, created_by_user_id, token_hash, expires_at,
+                    invitee_email,
+                    created_by_user_id,
+                    token_hash,
+                    expires_at,
                 )
 
                 audit_repo = self._audit_repo_cls(session)
@@ -80,9 +83,11 @@ class AdminInvitationService:
                     id=invitation.id,
                     invitee_email=invitation.invitee_email,
                     status=invitation.status,
-                    expires_at=invitation.expires_at.isoformat()
-                    if isinstance(invitation.expires_at, datetime)
-                    else str(invitation.expires_at),
+                    expires_at=(
+                        invitation.expires_at.isoformat()
+                        if isinstance(invitation.expires_at, datetime)
+                        else str(invitation.expires_at)
+                    ),
                 )
             except InvitationError:
                 await session.rollback()

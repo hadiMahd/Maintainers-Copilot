@@ -5,17 +5,14 @@ from __future__ import annotations
 import logging
 
 from model_server.domain.issue_analysis import (
+    ExtractedEntity,
     IssueAnalysisRequest,
     NerResponse,
-    ExtractedEntity,
     SourceSpan,
-    EntityType,
-    SUPPORTED_ENTITY_TYPES,
     normalize_comments,
 )
 from model_server.infra.entity_ruler_pipeline import (
     EntityRulerPipeline,
-    EntityExtractionResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,31 +66,37 @@ def extract_entities_from_request(
 
     if request.title and request.title.strip():
         for result in pipeline.extract_entities(request.title):
-            entities.append(ExtractedEntity(
-                text=result.text,
-                type=result.type,
-                span=_build_span("title", result.start, result.end),
-                source_field="title",
-            ))
+            entities.append(
+                ExtractedEntity(
+                    text=result.text,
+                    type=result.type,
+                    span=_build_span("title", result.start, result.end),
+                    source_field="title",
+                )
+            )
 
     if request.body and request.body.strip():
         for result in pipeline.extract_entities(request.body):
-            entities.append(ExtractedEntity(
-                text=result.text,
-                type=result.type,
-                span=_build_span("body", result.start, result.end),
-                source_field="body",
-            ))
+            entities.append(
+                ExtractedEntity(
+                    text=result.text,
+                    type=result.type,
+                    span=_build_span("body", result.start, result.end),
+                    source_field="body",
+                )
+            )
 
     normalized = normalize_comments(request.comments)
     for idx, comment in enumerate(normalized):
         for result in pipeline.extract_entities(comment):
-            entities.append(ExtractedEntity(
-                text=result.text,
-                type=result.type,
-                span=_build_span("comments", result.start, result.end, comment_index=idx),
-                source_field="comments",
-            ))
+            entities.append(
+                ExtractedEntity(
+                    text=result.text,
+                    type=result.type,
+                    span=_build_span("comments", result.start, result.end, comment_index=idx),
+                    source_field="comments",
+                )
+            )
 
     return _deduplicate(entities)
 

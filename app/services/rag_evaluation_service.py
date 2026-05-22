@@ -6,22 +6,18 @@ import json
 import logging
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 
 from app.core.config import AppSettings
 from app.domain.rag import (
     EvalMetrics,
     EvalReport,
     EvalRun,
-    GroundedAnswer,
     RAGChunk,
-    RetrievalQuery,
     RetrievalResult,
     RetrievalResultSet,
 )
 from app.infra.rag_generation_client import BaseGenerationClient
 from app.infra.rag_judge_client import TokenOverlapJudge, resolve_judge
-from app.infra.redaction import redact_eval_report
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +86,7 @@ class RAGEvaluationService:
     ) -> float:
         if not per_example:
             return 0.0
-        hits = sum(
-            self.compute_hit_at_5(results, expected)
-            for _, results, expected in per_example
-        )
+        hits = sum(self.compute_hit_at_5(results, expected) for _, results, expected in per_example)
         return hits / len(per_example)
 
     def _aggregate_mrr(
@@ -103,12 +96,13 @@ class RAGEvaluationService:
         if not per_example:
             return 0.0
         total = sum(
-            self.compute_mrr_at_10(results, expected)
-            for _, results, expected in per_example
+            self.compute_mrr_at_10(results, expected) for _, results, expected in per_example
         )
         return total / len(per_example)
 
-    def _aggregate_latency_p50_p95(self, latencies_ms: list[float]) -> tuple[float | None, float | None]:
+    def _aggregate_latency_p50_p95(
+        self, latencies_ms: list[float]
+    ) -> tuple[float | None, float | None]:
         if not latencies_ms:
             return None, None
         s = sorted(latencies_ms)
@@ -120,7 +114,7 @@ class RAGEvaluationService:
         *,
         request_id: str | None = None,
     ) -> EvalRun:
-        rid = request_id or uuid.uuid4().hex
+        request_id or uuid.uuid4().hex
         retrieval_latencies: list[float] = []
         gen_latencies: list[float] = []
         per_example_hits: list[tuple[int, list[RetrievalResult], list[str]]] = []
@@ -141,7 +135,8 @@ class RAGEvaluationService:
             gen_latencies.append(answer.generation_latency_ms or 0.0)
             faith = self._judge.score_faithfulness(answer.answer, reference_answer)
             rel = self._judge.score_answer_relevancy(
-                answer.answer, question,
+                answer.answer,
+                question,
                 " ".join(r.chunk.content for r in fake_results.results),
             )
             faithfulness_scores.append(faith)
@@ -149,7 +144,9 @@ class RAGEvaluationService:
 
         r_p50, r_p95 = self._aggregate_latency_p50_p95(retrieval_latencies)
         g_p50, g_p95 = self._aggregate_latency_p50_p95(gen_latencies)
-        avg_faith = sum(faithfulness_scores) / len(faithfulness_scores) if faithfulness_scores else 0.0
+        avg_faith = (
+            sum(faithfulness_scores) / len(faithfulness_scores) if faithfulness_scores else 0.0
+        )
         avg_rel = sum(relevancy_scores) / len(relevancy_scores) if relevancy_scores else 0.0
 
         return EvalRun(
@@ -177,7 +174,7 @@ class RAGEvaluationService:
         *,
         request_id: str | None = None,
     ) -> EvalRun:
-        rid = request_id or uuid.uuid4().hex
+        request_id or uuid.uuid4().hex
         retrieval_latencies: list[float] = []
         gen_latencies: list[float] = []
         per_example_hits: list[tuple[int, list[RetrievalResult], list[str]]] = []
@@ -190,9 +187,7 @@ class RAGEvaluationService:
             expected = ex.get("expected_chunks", [])
             reference_answer = ex.get("answer", "")
             if ex.get("disagreement_note"):
-                disagreement_notes.append(
-                    f"[example {idx}] {ex['disagreement_note']}"
-                )
+                disagreement_notes.append(f"[example {idx}] {ex['disagreement_note']}")
 
             # Advanced: hybrid retrieval with parent-document chunking
             fake_results = self._fixture_retrieval_results(ex, mode="hybrid")
@@ -203,7 +198,8 @@ class RAGEvaluationService:
             gen_latencies.append(answer.generation_latency_ms or 0.0)
             faith = self._judge.score_faithfulness(answer.answer, reference_answer)
             rel = self._judge.score_answer_relevancy(
-                answer.answer, question,
+                answer.answer,
+                question,
                 " ".join(r.chunk.content for r in fake_results.results),
             )
             faithfulness_scores.append(faith)
@@ -211,7 +207,9 @@ class RAGEvaluationService:
 
         r_p50, r_p95 = self._aggregate_latency_p50_p95(retrieval_latencies)
         g_p50, g_p95 = self._aggregate_latency_p50_p95(gen_latencies)
-        avg_faith = sum(faithfulness_scores) / len(faithfulness_scores) if faithfulness_scores else 0.0
+        avg_faith = (
+            sum(faithfulness_scores) / len(faithfulness_scores) if faithfulness_scores else 0.0
+        )
         avg_rel = sum(relevancy_scores) / len(relevancy_scores) if relevancy_scores else 0.0
 
         return EvalRun(
@@ -264,13 +262,19 @@ class RAGEvaluationService:
             advanced=advanced,
             advanced_beats_baseline=advanced_beats,
             embedding_comparison=self.compare_embeddings(baseline, advanced),
-            limitations=[] if advanced_beats else [
-                "Advanced pipeline did not exceed baseline on required retrieval metrics",
-            ],
+            limitations=(
+                []
+                if advanced_beats
+                else [
+                    "Advanced pipeline did not exceed baseline on required retrieval metrics",
+                ]
+            ),
             created_at=datetime.now(timezone.utc),
         )
 
-    def enrich_advanced_run(self, run: EvalRun, *, query_transformation: bool = False, reranking: bool = False) -> EvalRun:
+    def enrich_advanced_run(
+        self, run: EvalRun, *, query_transformation: bool = False, reranking: bool = False
+    ) -> EvalRun:
         run.query_transformation_enabled = query_transformation
         run.reranking_enabled = reranking
         return run
@@ -296,7 +300,7 @@ class RAGEvaluationService:
         example: dict,
         mode: str = "dense",
     ) -> RetrievalResultSet:
-        expected = example.get("expected_chunks", [])
+        example.get("expected_chunks", [])
         chunks = _make_fixture_chunks_for_example(example)
         results = [
             RetrievalResult(
@@ -319,34 +323,54 @@ class RAGEvaluationService:
 def _make_fixture_chunks_for_example(example: dict) -> list[RAGChunk]:
     return [
         RAGChunk(
-            chunk_id="install-numpy", parent_id="doc-1", source_type="docs",
-            source_path="docs/install.md", title="Installation Guide",
+            chunk_id="install-numpy",
+            parent_id="doc-1",
+            source_type="docs",
+            source_path="docs/install.md",
+            title="Installation Guide",
             content="Install numpy with: pip install numpy. For pandas: pip install pandas.",
-            content_hash="abc111", token_count=14,
+            content_hash="abc111",
+            token_count=14,
         ),
         RAGChunk(
-            chunk_id="python-version", parent_id="doc-1", source_type="docs",
-            source_path="docs/install.md", title="Installation Guide",
+            chunk_id="python-version",
+            parent_id="doc-1",
+            source_type="docs",
+            source_path="docs/install.md",
+            title="Installation Guide",
             content="Use Python 3.11 or newer. Set up a virtual environment first.",
-            content_hash="abc222", token_count=12,
+            content_hash="abc222",
+            token_count=12,
         ),
         RAGChunk(
-            chunk_id="err-parser-42", parent_id="doc-2", source_type="docs",
-            source_path="docs/errors.md", title="Common Errors",
+            chunk_id="err-parser-42",
+            parent_id="doc-2",
+            source_type="docs",
+            source_path="docs/errors.md",
+            title="Common Errors",
             content="ERR_PARSER_42 means the parser encountered an unexpected token.",
-            content_hash="abc333", token_count=10,
+            content_hash="abc333",
+            token_count=10,
         ),
         RAGChunk(
-            chunk_id="typeerror-fix", parent_id="doc-3", source_type="docs",
-            source_path="docs/troubleshooting.md", title="Troubleshooting",
+            chunk_id="typeerror-fix",
+            parent_id="doc-3",
+            source_type="docs",
+            source_path="docs/troubleshooting.md",
+            title="Troubleshooting",
             content="Check input type to parse_issue. Ensure it matches function signature.",
-            content_hash="abc444", token_count=12,
+            content_hash="abc444",
+            token_count=12,
         ),
         RAGChunk(
-            chunk_id="logging-config", parent_id="doc-4", source_type="docs",
-            source_path="docs/logging.md", title="Logging Configuration",
+            chunk_id="logging-config",
+            parent_id="doc-4",
+            source_type="docs",
+            source_path="docs/logging.md",
+            title="Logging Configuration",
             content="Set log_level to INFO and use structlog with JSON renderer.",
-            content_hash="abc555", token_count=12,
+            content_hash="abc555",
+            token_count=12,
         ),
     ]
 

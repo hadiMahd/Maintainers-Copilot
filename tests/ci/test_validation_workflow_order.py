@@ -1,7 +1,8 @@
 """Test validation workflow order and no-paid-credentials enforcement."""
 
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 class TestValidationWorkflowOrder:
@@ -20,7 +21,7 @@ class TestValidationWorkflowOrder:
         positions = {name: content.find(keyword) for name, keyword in order}
         sorted_positions = sorted(positions.items(), key=lambda x: x[1])
         for i, (name, _) in enumerate(sorted_positions):
-            assert name in [item[0] for item in order[i:i+3]], f"Gate {name} out of order"
+            assert name in [item[0] for item in order[i : i + 3]], f"Gate {name} out of order"
 
     def test_run_all_does_fail_fast_pattern(self):
         content = Path("scripts/ci/run_all.sh").read_text()
@@ -57,7 +58,13 @@ class TestNoPaidCredentials:
     def test_no_paid_credentials_in_ci_scripts(self):
         ci_dir = Path("scripts/ci")
         for script in ci_dir.rglob("*.py"):
-            if script.name in ("__init__.py", "secret_scan.py", "common.py", "check_redaction_leaks.py", "check_static_secret_patterns.py"):
+            if script.name in (
+                "__init__.py",
+                "secret_scan.py",
+                "common.py",
+                "check_redaction_leaks.py",
+                "check_static_secret_patterns.py",
+            ):
                 continue
             content = script.read_text()
             assert "sk-" not in content, f"{script} contains sk- pattern"

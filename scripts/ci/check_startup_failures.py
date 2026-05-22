@@ -27,7 +27,6 @@ from scripts.ci.startup_checks import (
     check_vault_unreachable,
 )
 
-
 if __name__ == "__main__":
     checks = [
         ("vault-unreachable", check_vault_unreachable),

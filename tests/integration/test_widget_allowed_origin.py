@@ -1,17 +1,14 @@
 """Integration test for allowed-origin embed flow."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+import pytest
 from fastapi import FastAPI
 
 from app.api.routes.widget_loader import router as widget_loader_router
 from app.api.routes.widget_public import router as widget_public_router
-from app.api.dependencies.auth import get_current_user
-from app.domain.auth import AuthContext
-from app.domain.widget_config import WidgetSessionToken
 
 
 def _make_config_dict(widget_id="wid-1"):
@@ -54,7 +51,9 @@ async def test_allowed_origin_can_get_public_config():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.get(
                 "/public/widgets/wid-1/config",
                 headers={"Origin": "https://example.com"},
@@ -82,7 +81,9 @@ async def test_allowed_origin_can_get_session_token():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.post(
                 "/public/widgets/wid-1/session",
                 headers={"Origin": "https://example.com"},
@@ -98,7 +99,9 @@ async def test_allowed_origin_can_get_session_token():
 async def test_loader_js_is_served():
     """GET /widget/loader.js returns JavaScript."""
     app = _build_app()
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.get("/widget/loader.js")
         assert resp.status_code == 200
         assert "javascript" in resp.headers.get("content-type", "")
@@ -118,7 +121,9 @@ async def test_frame_serves_html():
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.get(
                 "/widget/frame/wid-1",
                 headers={"Origin": "https://example.com"},

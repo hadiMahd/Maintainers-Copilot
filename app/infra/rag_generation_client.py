@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import re
-
 from abc import ABC, abstractmethod
 
 from app.domain.rag import GroundedAnswer, RetrievalResult
@@ -133,12 +132,9 @@ class AzureGenerationClient(BaseGenerationClient):
         self._human_message_cls = HumanMessage
         self._system_message_cls = SystemMessage
 
-    def _build_evidence_prompt(
-        self, question: str, retrieved: list[RetrievalResult]
-    ) -> str:
+    def _build_evidence_prompt(self, question: str, retrieved: list[RetrievalResult]) -> str:
         chunks_text = "\n\n---\n\n".join(
-            f"[chunk_id: {r.chunk.chunk_id}]\n{r.chunk.content[:2000]}"
-            for r in retrieved[:10]
+            f"[chunk_id: {r.chunk.chunk_id}]\n{r.chunk.content[:2000]}" for r in retrieved[:10]
         )
         return (
             f"Question: {question}\n\n"
@@ -155,10 +151,12 @@ class AzureGenerationClient(BaseGenerationClient):
         evidence = self._build_evidence_prompt(question, retrieved)
         try:
             response = await asyncio.wait_for(
-                self._model.ainvoke([
-                    self._system_message_cls(content=_GENERATION_SYSTEM_PROMPT),
-                    self._human_message_cls(content=evidence),
-                ]),
+                self._model.ainvoke(
+                    [
+                        self._system_message_cls(content=_GENERATION_SYSTEM_PROMPT),
+                        self._human_message_cls(content=evidence),
+                    ]
+                ),
                 timeout=self._timeout_seconds,
             )
         except TimeoutError:
@@ -187,8 +185,7 @@ def _parse_generation_response(
             data = json.loads(json_match.group())
             answer = data.get("answer", content.strip()[:500])
             supporting_chunk_ids = [
-                cid for cid in data.get("supporting_chunk_ids", [])
-                if cid in available_chunk_ids
+                cid for cid in data.get("supporting_chunk_ids", []) if cid in available_chunk_ids
             ]
             return GroundedAnswer(
                 answer=answer,

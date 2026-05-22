@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from model_server.domain.issue_analysis import SUPPORTED_ENTITY_TYPES
 from model_server.infra.entity_ruler_pipeline import (
     EntityRulerPipeline,
 )
-from model_server.domain.issue_analysis import SUPPORTED_ENTITY_TYPES
 
 
 @pytest.fixture
@@ -110,9 +110,7 @@ class TestURLs:
 
 class TestStackTraces:
     def test_detects_file_line_pattern(self, pipeline):
-        results = pipeline.extract_entities(
-            'File "src/app/parser.py", line 12, in parse_issue'
-        )
+        results = pipeline.extract_entities('File "src/app/parser.py", line 12, in parse_issue')
         traces = [r for r in results if r.type == "stack_trace_marker"]
         assert len(traces) >= 1
 

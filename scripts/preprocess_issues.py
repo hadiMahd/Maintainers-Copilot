@@ -73,9 +73,7 @@ def main() -> None:
                 continue
 
             comments = raw.get("comments", [])
-            comments_text = "\n\n".join(
-                c.get("body", "") for c in comments if c.get("body")
-            )
+            comments_text = "\n\n".join(c.get("body", "") for c in comments if c.get("body"))
 
             body = raw.get("body") or ""
             title = raw.get("title") or ""
@@ -106,9 +104,7 @@ def main() -> None:
     os.makedirs(os.path.dirname(settings.processed_issues_path), exist_ok=True)
 
     # Atomic write
-    fd, tmp_path = tempfile.mkstemp(
-        dir=os.path.dirname(settings.processed_issues_path) or "."
-    )
+    fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(settings.processed_issues_path) or ".")
     try:
         with os.fdopen(fd, "w") as f:
             for record in processed:

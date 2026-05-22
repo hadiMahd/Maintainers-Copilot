@@ -75,6 +75,7 @@ async def main() -> None:
         password = args.password
         if not password:
             import getpass
+
             password = getpass.getpass("Admin password: ")
 
         from app.infra.password_hasher import PasswordHasher

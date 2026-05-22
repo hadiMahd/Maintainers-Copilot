@@ -8,7 +8,6 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 
 from model_server.api.classifier import router as classifier_router
 from model_server.api.issue_analysis import router as issue_analysis_router
@@ -39,7 +38,9 @@ async def lifespan(app: FastAPI):
     ner_pipeline = EntityRulerPipeline()
     try:
         ner_pipeline.initialize()
-        logger.info("EntityRuler pipeline initialized: types=%s", len(ner_pipeline.supported_entity_types))
+        logger.info(
+            "EntityRuler pipeline initialized: types=%s", len(ner_pipeline.supported_entity_types)
+        )
     except Exception as exc:
         logger.warning("EntityRuler pipeline initialization failed: %s", exc)
         ner_pipeline._configured = False

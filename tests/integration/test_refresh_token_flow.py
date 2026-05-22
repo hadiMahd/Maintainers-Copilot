@@ -52,11 +52,11 @@ def _make_settings(**kw):
 
 @pytest.fixture
 def auth_service(test_key_pair, mock_session_factory):
-    from app.repositories.user_repository import UserRepository
-    from app.repositories.token_session_repository import TokenSessionRepository
-    from app.services.auth_service import AuthService
     from app.infra.password_hasher import PasswordHasher
     from app.infra.token_signer import TokenSigner
+    from app.repositories.token_session_repository import TokenSessionRepository
+    from app.repositories.user_repository import UserRepository
+    from app.services.auth_service import AuthService
 
     signer = TokenSigner(_make_settings(**test_key_pair))
     hasher = PasswordHasher()
@@ -80,16 +80,24 @@ class TestRefreshTokenFlow:
         token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
 
         mock_session = MagicMock(
-            id="ts1", user_id="u1",
+            id="ts1",
+            user_id="u1",
             refresh_token_hash=token_hash,
             expires_at=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1),
-            rotated_at=None, revoked_at=None, reuse_detected_at=None,
+            rotated_at=None,
+            revoked_at=None,
+            reuse_detected_at=None,
         )
         svc._token_repo_cls.get_by_refresh_hash = AsyncMock(return_value=mock_session)
         svc._token_repo_cls.rotate = AsyncMock()
-        svc._user_repo_cls.get_by_id = AsyncMock(return_value=MagicMock(
-            id="u1", email="u@t.com", role="user", is_active=True,
-        ))
+        svc._user_repo_cls.get_by_id = AsyncMock(
+            return_value=MagicMock(
+                id="u1",
+                email="u@t.com",
+                role="user",
+                is_active=True,
+            )
+        )
 
         result = await svc.refresh_token(RefreshRequest(refresh_token=refresh_token))
         assert result.access_token
@@ -103,10 +111,13 @@ class TestRefreshTokenFlow:
         token_hash = hashlib.sha256("expired-token".encode()).hexdigest()
 
         mock_session = MagicMock(
-            id="ts1", user_id="u1",
+            id="ts1",
+            user_id="u1",
             refresh_token_hash=token_hash,
             expires_at=datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1),
-            rotated_at=None, revoked_at=None, reuse_detected_at=None,
+            rotated_at=None,
+            revoked_at=None,
+            reuse_detected_at=None,
         )
         svc._token_repo_cls.get_by_refresh_hash = AsyncMock(return_value=mock_session)
 
@@ -121,7 +132,8 @@ class TestRefreshTokenFlow:
         token_hash = hashlib.sha256("revoked-token".encode()).hexdigest()
 
         mock_session = MagicMock(
-            id="ts1", user_id="u1",
+            id="ts1",
+            user_id="u1",
             refresh_token_hash=token_hash,
             expires_at=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1),
             rotated_at=None,
@@ -141,11 +153,13 @@ class TestRefreshTokenFlow:
         token_hash = hashlib.sha256("rotated-token".encode()).hexdigest()
 
         mock_session = MagicMock(
-            id="ts1", user_id="u1",
+            id="ts1",
+            user_id="u1",
             refresh_token_hash=token_hash,
             expires_at=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1),
             rotated_at=datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=1),
-            revoked_at=None, reuse_detected_at=None,
+            revoked_at=None,
+            reuse_detected_at=None,
         )
         svc._token_repo_cls.get_by_refresh_hash = AsyncMock(return_value=mock_session)
         svc._token_repo_cls.mark_replay_detected = AsyncMock()

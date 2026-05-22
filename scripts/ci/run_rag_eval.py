@@ -9,7 +9,6 @@ real credentials and Vault bootstrap).
 
 import asyncio
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -22,14 +21,14 @@ def evaluate_rag(golden_path: str) -> dict[str, Any]:
     from app.infra.rag_judge_client import resolve_judge
     from app.services.rag_evaluation_service import RAGEvaluationService
 
-    settings = AppSettings(_env_file=None)
+    settings = AppSettings()  # type: ignore[call-arg]
     judge = resolve_judge()
     gen = FakeGenerationClient()
     service = RAGEvaluationService(settings=settings, generation_client=gen, judge=judge)
 
     examples = service.load_golden_set(golden_path)
 
-    async def _run():
+    async def _run() -> Any:
         baseline = await service.evaluate_baseline(examples)
         return baseline
 
@@ -90,8 +89,8 @@ if __name__ == "__main__":
 
     out_dir = Path("evals/reports")
     out_dir.mkdir(parents=True, exist_ok=True)
-    with open(out_dir / "rag_result.json", "w") as f:
-        json.dump(result, f, indent=2)
+    with open(out_dir / "rag_result.json", "w") as fh:
+        json.dump(result, fh, indent=2)
     print(f"RAG result saved to {out_dir / 'rag_result.json'}")
 
     if not passed:

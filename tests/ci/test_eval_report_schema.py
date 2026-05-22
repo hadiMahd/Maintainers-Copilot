@@ -1,10 +1,7 @@
 """Unit tests for eval report schema validation."""
 
-import json
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from scripts.ci.eval_report import (
     build_report,

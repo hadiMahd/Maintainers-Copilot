@@ -8,7 +8,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.rag import RAGChunk, RAGRetrievalError, RetrievalResult
+from app.domain.rag import RAGChunk, RetrievalResult
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,9 @@ class RAGChunkRepository:
             },
         )
 
-    async def insert_sparse_search(self, chunk_id: str, search_text: str, title_terms: str = "") -> None:
+    async def insert_sparse_search(
+        self, chunk_id: str, search_text: str, title_terms: str = ""
+    ) -> None:
         await self._session.execute(
             text(
                 "INSERT INTO rag_sparse_search (chunk_id, search_text, title_terms, metadata_terms, search_vector) "
@@ -120,14 +122,16 @@ class RAGChunkRepository:
         results: list[RetrievalResult] = []
         for idx, row in enumerate(rows.mappings(), start=1):
             chunk = _row_to_chunk(dict(row))
-            results.append(RetrievalResult(
-                rank=idx,
-                final_score=float(row.get("dense_score", 0.0)),
-                chunk=chunk,
-                content_preview=chunk.content[:200],
-                dense_score=float(row.get("dense_score", 0.0)),
-                retrieval_mode="dense",
-            ))
+            results.append(
+                RetrievalResult(
+                    rank=idx,
+                    final_score=float(row.get("dense_score", 0.0)),
+                    chunk=chunk,
+                    content_preview=chunk.content[:200],
+                    dense_score=float(row.get("dense_score", 0.0)),
+                    retrieval_mode="dense",
+                )
+            )
         return results
 
     async def search_sparse(
@@ -142,14 +146,16 @@ class RAGChunkRepository:
         results: list[RetrievalResult] = []
         for idx, row in enumerate(rows.mappings(), start=1):
             chunk = _row_to_chunk(dict(row))
-            results.append(RetrievalResult(
-                rank=idx,
-                final_score=float(row.get("sparse_score", 0.0)),
-                chunk=chunk,
-                content_preview=chunk.content[:200],
-                sparse_score=float(row.get("sparse_score", 0.0)),
-                retrieval_mode="sparse",
-            ))
+            results.append(
+                RetrievalResult(
+                    rank=idx,
+                    final_score=float(row.get("sparse_score", 0.0)),
+                    chunk=chunk,
+                    content_preview=chunk.content[:200],
+                    sparse_score=float(row.get("sparse_score", 0.0)),
+                    retrieval_mode="sparse",
+                )
+            )
         return results
 
     async def search_hybrid(

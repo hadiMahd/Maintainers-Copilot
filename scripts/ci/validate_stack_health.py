@@ -1,7 +1,6 @@
 """Backend health polling and safe log collection for smoke failures."""
 
 import time
-from typing import Any
 
 
 def check_health(url: str, max_retries: int = 30, interval: float = 2.0) -> bool:

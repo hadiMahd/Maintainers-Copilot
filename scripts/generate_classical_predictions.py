@@ -2,7 +2,6 @@
 
 import json
 import time
-from pathlib import Path
 
 import joblib
 
@@ -19,7 +18,7 @@ def generate_classical_predictions(
     artifact = joblib.load(model_path)
     vectorizer = artifact["vectorizer"]
     model = artifact["model"]
-    labels = artifact["labels"]  # ['bug', 'feature', 'docs', 'question']
+    artifact["labels"]  # ['bug', 'feature', 'docs', 'question']
 
     # Load test records
     test_records = []

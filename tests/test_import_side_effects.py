@@ -52,9 +52,9 @@ def test_import_no_network(module):
         env=env,
         timeout=10,
     )
-    assert result.returncode == 0, (
-        f"Import of {module} failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-    )
+    assert (
+        result.returncode == 0
+    ), f"Import of {module} failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
     stderr = result.stderr.lower()
     assert "connectionrefusederror" not in stderr
     assert "connection refused" not in stderr

@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -40,6 +40,7 @@ def patch_st():
 def test_page_roots_includes_admin_for_admin_role(patch_st):
     patch_st.session_state["role"] = "admin"
     from streamlit_app.app import _get_page_roots
+
     pages = _get_page_roots()
     titles = [p.title for p in pages]
     assert "Widget Config" in titles, f"Admin pages should include Widget Config, got: {titles}"
@@ -48,16 +49,18 @@ def test_page_roots_includes_admin_for_admin_role(patch_st):
 def test_page_roots_excludes_admin_for_user_role(patch_st):
     patch_st.session_state["role"] = "user"
     from streamlit_app.app import _get_page_roots
+
     pages = _get_page_roots()
     titles = [p.title for p in pages]
-    assert "Widget Config" not in titles, (
-        f"User pages should NOT include Widget Config, got: {titles}"
-    )
+    assert (
+        "Widget Config" not in titles
+    ), f"User pages should NOT include Widget Config, got: {titles}"
 
 
 def test_page_roots_always_includes_chat_and_memory(patch_st):
     patch_st.session_state["role"] = "user"
     from streamlit_app.app import _get_page_roots
+
     pages = _get_page_roots()
     titles = [p.title for p in pages]
     assert "Chat" in titles

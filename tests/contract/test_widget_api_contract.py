@@ -1,15 +1,14 @@
 """Contract tests for admin widget CRUD endpoints."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
+import pytest
 from fastapi import FastAPI
 
-from app.api.routes.widget_configs import router as widget_configs_router
 from app.api.dependencies.auth import get_current_user
-from app.api.dependencies.authorization import require_admin
+from app.api.routes.widget_configs import router as widget_configs_router
 from app.domain.auth import AuthContext
 
 
@@ -34,28 +33,40 @@ def _make_read_dict(id="cfg-1", name="Test", widget_id="wid-1", theme="dark"):
 def mock_widget_service():
     svc = MagicMock()
     svc.list_configs = AsyncMock(return_value=[])
-    svc.create_config = AsyncMock(return_value=MagicMock(
-        model_dump=lambda mode=None: _make_read_dict(),
-    ))
-    svc.get_config = AsyncMock(side_effect=lambda config_id, request_id=None: MagicMock(
-        model_dump=lambda mode=None: _make_read_dict(id=config_id),
-    ))
-    svc.update_config = AsyncMock(side_effect=lambda config_id, data, updated_by_user_id, audit_service, request_id=None: MagicMock(
-        model_dump=lambda mode=None: _make_read_dict(id=config_id, theme=data.theme if hasattr(data, 'theme') else "dark"),
-    ))
-    svc.delete_config = AsyncMock(return_value=MagicMock(
-        id="cfg-1",
-        widget_id="wid-1",
-        name="Test",
-        model_dump=lambda mode=None: _make_read_dict(),
-    ))
-    svc.generate_embed_snippet = AsyncMock(return_value=MagicMock(
-        model_dump=lambda mode=None: {
-            "widget_config_id": "cfg-1",
-            "snippet": '<!-- Maintainer Copilot Widget (id: wid-1) -->\n<script src="BASE_URL/widget/loader.js" data-widget-id="wid-1"></script>',
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-        },
-    ))
+    svc.create_config = AsyncMock(
+        return_value=MagicMock(
+            model_dump=lambda mode=None: _make_read_dict(),
+        )
+    )
+    svc.get_config = AsyncMock(
+        side_effect=lambda config_id, request_id=None: MagicMock(
+            model_dump=lambda mode=None: _make_read_dict(id=config_id),
+        )
+    )
+    svc.update_config = AsyncMock(
+        side_effect=lambda config_id, data, updated_by_user_id, audit_service, request_id=None: MagicMock(
+            model_dump=lambda mode=None: _make_read_dict(
+                id=config_id, theme=data.theme if hasattr(data, "theme") else "dark"
+            ),
+        )
+    )
+    svc.delete_config = AsyncMock(
+        return_value=MagicMock(
+            id="cfg-1",
+            widget_id="wid-1",
+            name="Test",
+            model_dump=lambda mode=None: _make_read_dict(),
+        )
+    )
+    svc.generate_embed_snippet = AsyncMock(
+        return_value=MagicMock(
+            model_dump=lambda mode=None: {
+                "widget_config_id": "cfg-1",
+                "snippet": '<!-- Maintainer Copilot Widget (id: wid-1) -->\n<script src="BASE_URL/widget/loader.js" data-widget-id="wid-1"></script>',
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+    )
     return svc
 
 
@@ -68,6 +79,7 @@ def mock_audit_service():
 
 def _build_app(mock_svc, mock_audit, user_role="admin"):
     import app.api.routes.widget_configs as wc_routes
+
     wc_routes._get_widget_config_service = lambda request: mock_svc
     wc_routes._get_audit_service = lambda request: mock_audit
 
@@ -87,11 +99,15 @@ def _build_app(mock_svc, mock_audit, user_role="admin"):
 @pytest.mark.asyncio
 async def test_list_configs_returns_items(mock_widget_service, mock_audit_service):
     mock_widget_service.list_configs.return_value = [
-        MagicMock(model_dump=lambda mode=None: _make_read_dict(id="cfg-1", name="Test", widget_id="wid-1")),
+        MagicMock(
+            model_dump=lambda mode=None: _make_read_dict(id="cfg-1", name="Test", widget_id="wid-1")
+        ),
     ]
 
     app = _build_app(mock_widget_service, mock_audit_service, user_role="admin")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.get("/admin/widget-configs/")
         assert resp.status_code == 200
         data = resp.json()
@@ -101,7 +117,9 @@ async def test_list_configs_returns_items(mock_widget_service, mock_audit_servic
 @pytest.mark.asyncio
 async def test_create_config_returns_201(mock_widget_service, mock_audit_service):
     app = _build_app(mock_widget_service, mock_audit_service, user_role="admin")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.post(
             "/admin/widget-configs/",
             json={"name": "Test", "allowed_origins": ["https://example.com"]},
@@ -125,7 +143,9 @@ async def test_update_config_returns_updated_theme(mock_widget_service, mock_aud
     mock_widget_service.update_config = AsyncMock(side_effect=_mock_update)
 
     app = _build_app(mock_widget_service, mock_audit_service, user_role="admin")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.patch(
             "/admin/widget-configs/cfg-1",
             json={"theme": "light"},
@@ -136,9 +156,13 @@ async def test_update_config_returns_updated_theme(mock_widget_service, mock_aud
 
 
 @pytest.mark.asyncio
-async def test_delete_config_returns_config_id_and_widget_id(mock_widget_service, mock_audit_service):
+async def test_delete_config_returns_config_id_and_widget_id(
+    mock_widget_service, mock_audit_service
+):
     app = _build_app(mock_widget_service, mock_audit_service, user_role="admin")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.delete("/admin/widget-configs/cfg-1")
         assert resp.status_code == 200
         data = resp.json()
@@ -150,7 +174,9 @@ async def test_delete_config_returns_config_id_and_widget_id(mock_widget_service
 @pytest.mark.asyncio
 async def test_embed_snippet_uses_widget_id(mock_widget_service, mock_audit_service):
     app = _build_app(mock_widget_service, mock_audit_service, user_role="admin")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.get("/admin/widget-configs/cfg-1/embed-snippet")
         assert resp.status_code == 200
         data = resp.json()
@@ -162,7 +188,9 @@ async def test_embed_snippet_uses_widget_id(mock_widget_service, mock_audit_serv
 @pytest.mark.asyncio
 async def test_non_admin_cannot_create_config(mock_widget_service, mock_audit_service):
     app = _build_app(mock_widget_service, mock_audit_service, user_role="user")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.post(
             "/admin/widget-configs/",
             json={"name": "Test", "allowed_origins": ["https://example.com"]},
@@ -173,7 +201,9 @@ async def test_non_admin_cannot_create_config(mock_widget_service, mock_audit_se
 @pytest.mark.asyncio
 async def test_non_admin_cannot_update_config(mock_widget_service, mock_audit_service):
     app = _build_app(mock_widget_service, mock_audit_service, user_role="user")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.patch(
             "/admin/widget-configs/cfg-1",
             json={"theme": "light"},
@@ -184,6 +214,8 @@ async def test_non_admin_cannot_update_config(mock_widget_service, mock_audit_se
 @pytest.mark.asyncio
 async def test_non_admin_cannot_delete_config(mock_widget_service, mock_audit_service):
     app = _build_app(mock_widget_service, mock_audit_service, user_role="user")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         resp = await ac.delete("/admin/widget-configs/cfg-1")
         assert resp.status_code == 403

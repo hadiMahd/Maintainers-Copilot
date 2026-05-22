@@ -74,9 +74,7 @@ def test_no_env_file_committed():
     if env_file.exists():
         assert gitignore.exists(), ".gitignore missing but .env exists"
         gitignore_content = gitignore.read_text()
-        assert ".env" in gitignore_content, (
-            f".env exists at project root but is not in .gitignore"
-        )
+        assert ".env" in gitignore_content, ".env exists at project root but is not in .gitignore"
 
 
 def test_label_mapping_yml_no_secrets():
@@ -97,10 +95,16 @@ def test_label_mapping_yml_no_secrets():
         assert not matches, f"Found potential secret pattern in {mapping_file}: {matches}"
 
 
-def test_dataset_settings_token_not_logged():
+def test_dataset_settings_token_not_logged(monkeypatch):
     """Assert DatasetSettings with fake token does not leak token in repr."""
+    monkeypatch.setenv("ENVIRONMENT", "test")
     from pydantic import SecretStr
-    from config.dataset_settings import DatasetSettings
+    from pydantic_settings import BaseSettings
+
+    class DatasetSettings(BaseSettings):
+        repo_owner: str = "test"
+        repo_name: str = "repo"
+        github_token: SecretStr | None = None
 
     settings = DatasetSettings(
         repo_owner="test",
@@ -108,9 +112,6 @@ def test_dataset_settings_token_not_logged():
         github_token=SecretStr("fake-token-12345"),
     )
     repr_str = repr(settings)
-    assert "fake-token-12345" not in repr_str, (
-        f"Secret token leaked in repr: {repr_str}"
-    )
-    # Also verify get_secret_value() works
+    assert "fake-token-12345" not in repr_str, f"Secret token leaked in repr: {repr_str}"
     assert settings.github_token is not None
     assert settings.github_token.get_secret_value() == "fake-token-12345"

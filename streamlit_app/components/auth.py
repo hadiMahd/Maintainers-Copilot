@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 from streamlit_cookies_manager import CookieManager
 
-from streamlit_app.models import CurrentUserView, LoginCredentials
+from streamlit_app.models import CurrentUserView
 
 TOKEN_COOKIE = "mc_access_token"
 

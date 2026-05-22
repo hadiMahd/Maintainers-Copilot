@@ -3,7 +3,6 @@
 
 import json
 import os
-import sys
 import tempfile
 from datetime import datetime
 
@@ -55,9 +54,7 @@ def main() -> None:
 
     # Load limitations
     limitations = []
-    limitations_path = os.path.join(
-        settings.splits_dir, "split_limitations.json"
-    )
+    limitations_path = os.path.join(settings.splits_dir, "split_limitations.json")
     if os.path.exists(limitations_path):
         with open(limitations_path, "r") as f:
             data = json.load(f)

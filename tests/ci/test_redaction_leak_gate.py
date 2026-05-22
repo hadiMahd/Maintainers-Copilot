@@ -1,10 +1,6 @@
 """Tests for redaction leak gate — fake secrets must not appear unredacted."""
 
-import os
-import tempfile
 from pathlib import Path
-
-import pytest
 
 FAKE_PROBES = [
     "sk-fake-test-key-12345",

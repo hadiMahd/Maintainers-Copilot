@@ -6,8 +6,8 @@ import uuid
 
 import structlog
 
-from app.domain.memory import ShortTermMemoryRead, ShortTermMemoryWrite
 from app.domain.errors import MemoryError
+from app.domain.memory import ShortTermMemoryRead, ShortTermMemoryWrite
 from app.infra.redaction import redact_short_term_memory_value
 
 _log = structlog.get_logger

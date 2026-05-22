@@ -19,7 +19,6 @@ from pathlib import Path
 from scripts.ci.common import fail, pass_gate
 from scripts.ci.model_artifacts import verify_model_card
 
-
 if __name__ == "__main__":
     card_dir = Path("artifacts/evals")
     card_path = card_dir / "model_card.json"
@@ -41,6 +40,4 @@ if __name__ == "__main__":
         fail(f"Model artifact: {len(errors)} error(s): {safe}")
         sys.exit(1)
 
-    pass_gate(
-        f"Model artifacts: verified against {card_path} — all hashes match"
-    )
+    pass_gate(f"Model artifacts: verified against {card_path} — all hashes match")

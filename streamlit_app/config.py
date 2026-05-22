@@ -25,7 +25,12 @@ class StreamlitSettings(BaseSettings):
                 "MAINTAINER_COPILOT_UI_BASE_URL is required (e.g. http://localhost:8000). "
                 "Set it as an environment variable or in a .env file."
             )
-        for field_name in ("rest_timeout_seconds", "sse_timeout_seconds", "connect_timeout_seconds", "read_timeout_seconds"):
+        for field_name in (
+            "rest_timeout_seconds",
+            "sse_timeout_seconds",
+            "connect_timeout_seconds",
+            "read_timeout_seconds",
+        ):
             value = getattr(self, field_name)
             if value <= 0:
                 raise StreamlitSettingsError(

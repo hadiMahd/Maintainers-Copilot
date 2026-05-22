@@ -3,17 +3,14 @@
 import json
 from pathlib import Path
 
-import pytest
-
 
 class TestRAGEvalGate:
     """Verify RAG eval adapter runs against golden set and checks thresholds."""
 
     def test_rag_eval_module_imports(self):
         import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "run_rag_eval", "scripts/ci/run_rag_eval.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("run_rag_eval", "scripts/ci/run_rag_eval.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
@@ -22,12 +19,12 @@ class TestRAGEvalGate:
 
     def test_rag_golden_set_has_minimum_items(self):
         lines = Path("evals/rag/golden.jsonl").read_text().strip().split("\n")
-        items = [json.loads(l) for l in lines if l.strip()]
+        items = [json.loads(ln) for ln in lines if ln.strip()]
         assert len(items) >= 5, "RAG golden set should have at least 5 items"
 
     def test_rag_golden_set_has_required_fields(self):
         lines = Path("evals/rag/golden.jsonl").read_text().strip().split("\n")
-        items = [json.loads(l) for l in lines if l.strip()]
+        items = [json.loads(ln) for ln in lines if ln.strip()]
         for item in items:
             assert "question" in item
             assert "answer" in item
@@ -35,9 +32,8 @@ class TestRAGEvalGate:
 
     def test_run_rag_eval_with_golden_set(self):
         import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "run_rag_eval", "scripts/ci/run_rag_eval.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("run_rag_eval", "scripts/ci/run_rag_eval.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
@@ -82,7 +78,9 @@ class TestRAGEvalGate:
 
     def test_rag_eval_uses_fake_providers(self):
         content = Path("scripts/ci/run_rag_eval.py").read_text()
-        assert "FakeGenerationClient" in content or "Fake" in content or "fixture" in content.lower()
+        assert (
+            "FakeGenerationClient" in content or "Fake" in content or "fixture" in content.lower()
+        )
 
     def test_rag_eval_no_paid_credentials(self):
         content = Path("scripts/ci/run_rag_eval.py").read_text()
@@ -91,9 +89,8 @@ class TestRAGEvalGate:
 
     def test_run_rag_eval_main_passes(self):
         import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "run_rag_eval", "scripts/ci/run_rag_eval.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("run_rag_eval", "scripts/ci/run_rag_eval.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 

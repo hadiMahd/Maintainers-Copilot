@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.domain.memory_inspector import MemoryInspectionQuery
-from app.services.memory_inspector_service import MemoryInspectorService
 from app.infra.orm_models import LongTermMemory
+from app.services.memory_inspector_service import MemoryInspectorService
 
 
 @pytest.fixture
@@ -33,9 +33,14 @@ def mock_session_factory(mock_repo):
 
 def _make_row(owner="u1", mem_type="semantic", content="[REDACTED]", source="chat"):
     return LongTermMemory(
-        id="mem-1", owner_user_id=owner, memory_type=mem_type,
-        redacted_content=content, content_hash="abc", source=source,
-        created_by_user_id="u1", created_at=datetime.now(timezone.utc),
+        id="mem-1",
+        owner_user_id=owner,
+        memory_type=mem_type,
+        redacted_content=content,
+        content_hash="abc",
+        source=source,
+        created_by_user_id="u1",
+        created_at=datetime.now(timezone.utc),
     )
 
 

@@ -1,12 +1,11 @@
 """Tests for eval report storage adapter."""
 
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from scripts.ci.eval_report import build_report, read_report, write_report
+from scripts.ci.eval_report import build_report, read_report
 from scripts.ci.report_storage import (
     ReportStorageError,
     find_previous_green_report,
@@ -63,13 +62,26 @@ class TestReportStorage:
         assert result is None
 
     def test_find_previous_green_finds_passing(self):
-        report = build_report(run_id="find-test", classifier_metrics={
-            "accuracy": 0.9, "macro_f1": 0.85, "per_class_f1": {}, "threshold": 0.55,
-            "passed": True, "failures": [],
-        }, rag_metrics={
-            "hit_at_5": 0.5, "mrr_at_10": 0.4, "faithfulness": 0.9, "answer_relevancy": 0.85,
-            "threshold": 0.1, "passed": True, "failures": [],
-        })
+        report = build_report(
+            run_id="find-test",
+            classifier_metrics={
+                "accuracy": 0.9,
+                "macro_f1": 0.85,
+                "per_class_f1": {},
+                "threshold": 0.55,
+                "passed": True,
+                "failures": [],
+            },
+            rag_metrics={
+                "hit_at_5": 0.5,
+                "mrr_at_10": 0.4,
+                "faithfulness": 0.9,
+                "answer_relevancy": 0.85,
+                "threshold": 0.1,
+                "passed": True,
+                "failures": [],
+            },
+        )
         rp = Path("evals/reports/test_find_green_pass.json")
         try:
             store_report_local(report, rp)
@@ -83,12 +95,21 @@ class TestReportStorage:
         report = build_report(
             run_id="roundtrip-001",
             classifier_metrics={
-                "accuracy": 0.88, "macro_f1": 0.82, "per_class_f1": {"bug": 0.88},
-                "threshold": 0.55, "passed": True, "failures": [],
+                "accuracy": 0.88,
+                "macro_f1": 0.82,
+                "per_class_f1": {"bug": 0.88},
+                "threshold": 0.55,
+                "passed": True,
+                "failures": [],
             },
             rag_metrics={
-                "hit_at_5": 0.35, "mrr_at_10": 0.28, "faithfulness": 0.82,
-                "answer_relevancy": 0.78, "threshold": 0.10, "passed": True, "failures": [],
+                "hit_at_5": 0.35,
+                "mrr_at_10": 0.28,
+                "faithfulness": 0.82,
+                "answer_relevancy": 0.78,
+                "threshold": 0.10,
+                "passed": True,
+                "failures": [],
             },
         )
         rp = Path("evals/reports/test_roundtrip.json")

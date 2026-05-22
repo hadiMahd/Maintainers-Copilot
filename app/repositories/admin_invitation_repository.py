@@ -29,6 +29,7 @@ class AdminInvitationRepository:
         expires_at: datetime.datetime,
     ) -> AdminInvitation:
         import uuid
+
         invitation = AdminInvitation(
             id=uuid.uuid4().hex,
             invitee_email=invitee_email,
@@ -52,15 +53,11 @@ class AdminInvitationRepository:
 
     async def get_by_token_hash(self, token_hash: str) -> AdminInvitation | None:
         result = await self._session.execute(
-            select(AdminInvitation).where(
-                AdminInvitation.token_hash == token_hash
-            )
+            select(AdminInvitation).where(AdminInvitation.token_hash == token_hash)
         )
         return result.scalar_one_or_none()
 
-    async def mark_accepted(
-        self, invitation_id: str, accepted_by_user_id: str
-    ) -> None:
+    async def mark_accepted(self, invitation_id: str, accepted_by_user_id: str) -> None:
         inv = await self._session.get(AdminInvitation, invitation_id)
         if inv:
             inv.status = "accepted"
@@ -74,8 +71,8 @@ class AdminInvitationRepository:
 
     async def list_by_creator(self, created_by_user_id: str) -> Sequence[AdminInvitation]:
         result = await self._session.execute(
-            select(AdminInvitation).where(
-                AdminInvitation.created_by_user_id == created_by_user_id
-            ).order_by(AdminInvitation.created_at.desc())
+            select(AdminInvitation)
+            .where(AdminInvitation.created_by_user_id == created_by_user_id)
+            .order_by(AdminInvitation.created_at.desc())
         )
         return result.scalars().all()

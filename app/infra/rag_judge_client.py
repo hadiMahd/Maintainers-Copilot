@@ -13,7 +13,6 @@ import logging
 import uuid
 from typing import Any
 
-
 logger = logging.getLogger(__name__)
 
 _DEFAULT_JUDGE_ID = "token-overlap-f1-v1"
@@ -82,11 +81,13 @@ class TokenOverlapJudge:
                 questions[i],
                 retrieved_contents[i] if retrieved_contents else "",
             )
-            scores.append({
-                "index": i,
-                "faithfulness": faith,
-                "answer_relevancy": rel,
-            })
+            scores.append(
+                {
+                    "index": i,
+                    "faithfulness": faith,
+                    "answer_relevancy": rel,
+                }
+            )
         logger.info(
             "Judge batch complete",
             extra={

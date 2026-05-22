@@ -151,7 +151,9 @@ class ClassifierRequest(BaseModel):
                 if not comment.strip():
                     raise ValueError(f"Comment at index {i} must not be empty")
                 if len(comment) > 4000:
-                    raise ValueError(f"Comment at index {i} exceeds 4000 characters: {len(comment)} chars")
+                    raise ValueError(
+                        f"Comment at index {i} exceeds 4000 characters: {len(comment)} chars"
+                    )
         return v
 
     @model_validator(mode="after")

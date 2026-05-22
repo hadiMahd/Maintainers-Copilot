@@ -1,9 +1,6 @@
 """Tests for startup failure gates — Vault, model, tracing, threshold negative cases."""
 
-import tempfile
 from pathlib import Path
-
-import pytest
 
 from scripts.ci.startup_checks import (
     check_disabled_thresholds,

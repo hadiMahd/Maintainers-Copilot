@@ -18,7 +18,6 @@ from pathlib import Path
 from scripts.ci.common import fail, pass_gate, safe_summary
 from scripts.ci.secret_scan import UNSAFE_PATTERNS, is_allowlisted, scan_directory
 
-
 if __name__ == "__main__":
     print(f"Scanning repository for {len(UNSAFE_PATTERNS)} unsafe patterns...")
     hits = scan_directory(Path("."))

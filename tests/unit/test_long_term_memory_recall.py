@@ -11,7 +11,9 @@ def _make_mock_repo_cls(rows: list):
         def __init__(self, session):
             self._session = session
 
-        async def search_same_user_semantic(self, owner_user_id: str, query_embedding: list[float], limit: int = 5):
+        async def search_same_user_semantic(
+            self, owner_user_id: str, query_embedding: list[float], limit: int = 5
+        ):
             return [row for row in rows if row.owner_user_id == owner_user_id][:limit]
 
     return MockRepo
@@ -43,18 +45,26 @@ class TestLongTermMemoryRecall:
         from app.domain.memory import LongTermMemoryRecallRequest
 
         row1 = MagicMock(
-            id="m1", owner_user_id="u1", memory_type="semantic",
-            redacted_content="favorite color is [REDACTED]", extra_data={"audit_log_id": "a1"},
+            id="m1",
+            owner_user_id="u1",
+            memory_type="semantic",
+            redacted_content="favorite color is [REDACTED]",
+            extra_data={"audit_log_id": "a1"},
         )
         row2 = MagicMock(
-            id="m2", owner_user_id="u2", memory_type="semantic",
-            redacted_content="other user private memory", extra_data={"audit_log_id": "a2"},
+            id="m2",
+            owner_user_id="u2",
+            memory_type="semantic",
+            redacted_content="other user private memory",
+            extra_data={"audit_log_id": "a2"},
         )
         service = await _build_service([row1, row2])
 
         result = await service.recall_memory(
             user_id="u1",
-            data=LongTermMemoryRecallRequest(query="favorite color", conversation_id="later-c1", limit=5),
+            data=LongTermMemoryRecallRequest(
+                query="favorite color", conversation_id="later-c1", limit=5
+            ),
         )
 
         assert len(result.items) == 1
@@ -65,14 +75,19 @@ class TestLongTermMemoryRecall:
         from app.domain.memory import LongTermMemoryRecallRequest
 
         row = MagicMock(
-            id="m2", owner_user_id="u2", memory_type="semantic",
-            redacted_content="other user private memory", extra_data={"audit_log_id": "a2"},
+            id="m2",
+            owner_user_id="u2",
+            memory_type="semantic",
+            redacted_content="other user private memory",
+            extra_data={"audit_log_id": "a2"},
         )
         service = await _build_service([row])
 
         result = await service.recall_memory(
             user_id="u1",
-            data=LongTermMemoryRecallRequest(query="private memory", conversation_id="later-c1", limit=5),
+            data=LongTermMemoryRecallRequest(
+                query="private memory", conversation_id="later-c1", limit=5
+            ),
         )
 
         assert result.items == []

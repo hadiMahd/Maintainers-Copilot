@@ -1,8 +1,5 @@
 """Test Makefile target definitions and behavior."""
 
-import os
-import subprocess
-import tempfile
 from pathlib import Path
 
 

@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.domain.widget_config import WidgetConfigCreate, WidgetConfigUpdate
-from app.services.widget_config_service import WidgetConfigService
 from app.infra.orm_models import WidgetConfig as WC
+from app.services.widget_config_service import WidgetConfigService
 
 
 @pytest.fixture
@@ -41,13 +41,24 @@ def mock_audit_service():
     return svc
 
 
-def _make_row(id="cfg-1", name="Test", origins='["https://example.com"]', greeting="Hi", widget_id="wid-1"):
+def _make_row(
+    id="cfg-1", name="Test", origins='["https://example.com"]', greeting="Hi", widget_id="wid-1"
+):
     return WC(
-        id=id, widget_id=widget_id, name=name, allowed_origins=origins,
-        theme="dark", welcome_message="Hello", greeting=greeting,
-        position="bottom-right", enabled_tools='["classify_issue"]', is_enabled=True,
-        created_by_user_id="u1", updated_by_user_id="u1",
-        created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc),
+        id=id,
+        widget_id=widget_id,
+        name=name,
+        allowed_origins=origins,
+        theme="dark",
+        welcome_message="Hello",
+        greeting=greeting,
+        position="bottom-right",
+        enabled_tools='["classify_issue"]',
+        is_enabled=True,
+        created_by_user_id="u1",
+        updated_by_user_id="u1",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
 
 

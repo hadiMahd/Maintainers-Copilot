@@ -3,10 +3,10 @@
 import logging
 import uuid
 
+import structlog
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-import structlog
 
 from app.core.config import AppSettings
 from app.domain.errors import DomainError

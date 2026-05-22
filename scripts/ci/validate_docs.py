@@ -3,7 +3,6 @@
 from scripts.ci.common import fail, pass_gate
 from scripts.ci.docs_check import validate_all_docs
 
-
 if __name__ == "__main__":
     passed, results = validate_all_docs()
     for name, status in results.items():

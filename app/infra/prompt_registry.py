@@ -23,7 +23,9 @@ class PromptBundle(BaseModel):
 class PromptRegistry:
     """Load and validate prompt files from disk."""
 
-    def __init__(self, system_path: Path, tool_policy_path: Path, untrusted_context_path: Path) -> None:
+    def __init__(
+        self, system_path: Path, tool_policy_path: Path, untrusted_context_path: Path
+    ) -> None:
         self._system_path = system_path
         self._tool_policy_path = tool_policy_path
         self._untrusted_context_path = untrusted_context_path

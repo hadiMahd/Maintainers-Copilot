@@ -1,17 +1,15 @@
 """Pytest configuration and shared fixtures."""
 
 import os
+from unittest.mock import MagicMock
 
 import pytest
-from unittest.mock import MagicMock
 
 # Set required env vars BEFORE importing any app modules that create AppSettings
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("VAULT_ADDR", "http://fake-vault:8200")
 os.environ.setdefault("VAULT_TOKEN", "fake-token")
 
-import pytest
-from unittest.mock import MagicMock
 
 from app.core.config import AppSettings
 from app.domain.models import ReadinessCheck
@@ -66,8 +64,10 @@ def mock_vault(monkeypatch, mock_vault_client):
 @pytest.fixture
 def mock_db(monkeypatch):
     """Mock database probe."""
+
     async def mock_probe(*args, **kwargs):
         return ReadinessCheck(name="postgres", status="ok")
+
     monkeypatch.setattr("app.infra.database.probe_database", mock_probe)
     monkeypatch.setattr("app.services.health_service.probe_database", mock_probe)
 
@@ -75,8 +75,10 @@ def mock_db(monkeypatch):
 @pytest.fixture
 def mock_redis(monkeypatch):
     """Mock Redis probe."""
+
     async def mock_probe(*args, **kwargs):
         return ReadinessCheck(name="redis", status="ok")
+
     monkeypatch.setattr("app.infra.redis_client.probe_redis", mock_probe)
     monkeypatch.setattr("app.services.health_service.probe_redis", mock_probe)
 
@@ -84,8 +86,10 @@ def mock_redis(monkeypatch):
 @pytest.fixture
 def mock_minio(monkeypatch):
     """Mock MinIO probe."""
+
     async def mock_probe(*args, **kwargs):
         return ReadinessCheck(name="minio", status="ok")
+
     monkeypatch.setattr("app.infra.minio_client.probe_minio", mock_probe)
     monkeypatch.setattr("app.services.health_service.probe_minio", mock_probe)
 
@@ -93,8 +97,10 @@ def mock_minio(monkeypatch):
 @pytest.fixture
 def mock_pgvector(monkeypatch):
     """Mock pgvector probe."""
+
     async def mock_probe(*args, **kwargs):
         return ReadinessCheck(name="pgvector", status="ok")
+
     monkeypatch.setattr("app.services.health_service.probe_pgvector", mock_probe)
 
 
@@ -102,7 +108,9 @@ def mock_pgvector(monkeypatch):
 async def app(settings, mock_vault, mock_db, mock_redis, mock_minio, mock_vault_client):
     """Return an httpx.AsyncClient for the test app."""
     from contextlib import AsyncExitStack, asynccontextmanager
+
     import httpx
+
     from app.core.application import app as fastapi_app
 
     @asynccontextmanager
@@ -252,7 +260,9 @@ def evaluation_report(approach_metrics_completed, approach_metrics_skipped):
         dataset_test_hash="abc123",
         approaches=[approach_metrics_completed],
         skipped_approaches=[
-            SkippedApproach(name="llm_baseline", skip_reason="Azure OpenAI credentials not available")
+            SkippedApproach(
+                name="llm_baseline", skip_reason="Azure OpenAI credentials not available"
+            )
         ],
         generated_at="2026-05-19T00:00:00Z",
     )

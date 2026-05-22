@@ -49,7 +49,13 @@ def test_login_callback_fetches_profile_with_fresh_token(monkeypatch):
             login_client if token_provider is None else _FakeProfileClient(token_provider)
         ),
     )
-    monkeypatch.setattr(app, "set_authenticated", lambda user, token, cookie_manager: captured.update({"user": user, "token": token, "cookies": cookie_manager}))
+    monkeypatch.setattr(
+        app,
+        "set_authenticated",
+        lambda user, token, cookie_manager: captured.update(
+            {"user": user, "token": token, "cookies": cookie_manager}
+        ),
+    )
     monkeypatch.setattr(app.st, "rerun", lambda: captured.update({"rerun": True}))
     monkeypatch.setattr(app.st, "error", lambda message: captured.update({"error": message}))
 

@@ -1,7 +1,5 @@
 """Tests for redaction before telemetry/artifact persistence."""
 
-import pytest
-
 from app.infra.redaction import (
     redact_dict,
     redact_model_card,

@@ -1,8 +1,9 @@
 """Unit tests for threshold helper validation."""
 
-import pytest
 import tempfile
 from pathlib import Path
+
+import pytest
 
 from scripts.ci.thresholds import (
     ThresholdError,
@@ -137,7 +138,6 @@ class TestThresholdValidation:
         assert len(errors) >= 1
 
     def test_empty_yaml_file(self):
-        import yaml
 
         with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w") as f:
             f.write("")

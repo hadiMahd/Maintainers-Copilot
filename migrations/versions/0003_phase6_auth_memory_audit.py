@@ -4,10 +4,11 @@ Revision ID: 0003_phase6_auth_memory_audit
 Revises: 0002_phase5_rag
 Create Date: 2026-05-20 00:00:00.000000
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from pgvector.sqlalchemy import Vector
 
 revision = "0003_phase6_auth_memory_audit"
@@ -34,9 +35,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
     op.create_index("ix_users_email", "users", ["email"])
-    op.create_check_constraint(
-        "ck_users_role", "users", "role IN ('user', 'admin')"
-    )
+    op.create_check_constraint("ck_users_role", "users", "role IN ('user', 'admin')")
 
     op.create_table(
         "token_sessions",
@@ -52,12 +51,14 @@ def upgrade() -> None:
         sa.Column("ip_hash", sa.String(128), nullable=True),
     )
     op.create_index("ix_token_sessions_user_id", "token_sessions", ["user_id"])
-    op.create_index(
-        "ix_token_sessions_refresh_hash", "token_sessions", ["refresh_token_hash"]
-    )
+    op.create_index("ix_token_sessions_refresh_hash", "token_sessions", ["refresh_token_hash"])
     op.create_foreign_key(
-        "fk_token_sessions_user", "token_sessions", "users",
-        ["user_id"], ["id"], ondelete="CASCADE",
+        "fk_token_sessions_user",
+        "token_sessions",
+        "users",
+        ["user_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
 
     op.create_table(
@@ -79,12 +80,17 @@ def upgrade() -> None:
     )
     op.create_index("ix_admin_invitations_status", "admin_invitations", ["status"])
     op.create_check_constraint(
-        "ck_admin_invitations_status", "admin_invitations",
+        "ck_admin_invitations_status",
+        "admin_invitations",
         "status IN ('pending', 'accepted', 'revoked', 'expired')",
     )
     op.create_foreign_key(
-        "fk_admin_inv_created_by", "admin_invitations", "users",
-        ["created_by_user_id"], ["id"], ondelete="CASCADE",
+        "fk_admin_inv_created_by",
+        "admin_invitations",
+        "users",
+        ["created_by_user_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
 
     op.create_table(
@@ -107,12 +113,17 @@ def upgrade() -> None:
     )
     op.create_index("ix_long_term_memory_owner", "long_term_memory", ["owner_user_id"])
     op.create_check_constraint(
-        "ck_long_term_memory_type", "long_term_memory",
+        "ck_long_term_memory_type",
+        "long_term_memory",
         "memory_type IN ('episodic', 'semantic', 'procedural')",
     )
     op.create_foreign_key(
-        "fk_long_term_memory_owner", "long_term_memory", "users",
-        ["owner_user_id"], ["id"], ondelete="CASCADE",
+        "fk_long_term_memory_owner",
+        "long_term_memory",
+        "users",
+        ["owner_user_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
 
     op.create_table(
@@ -128,8 +139,12 @@ def upgrade() -> None:
     op.create_index("ix_audit_logs_actor", "audit_logs", ["actor_user_id"])
     op.create_index("ix_audit_logs_timestamp", "audit_logs", ["timestamp"])
     op.create_foreign_key(
-        "fk_audit_logs_actor", "audit_logs", "users",
-        ["actor_user_id"], ["id"], ondelete="SET NULL",
+        "fk_audit_logs_actor",
+        "audit_logs",
+        "users",
+        ["actor_user_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
 

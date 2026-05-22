@@ -1,6 +1,5 @@
 """Tests for README command coverage."""
 
-import re
 from pathlib import Path
 
 

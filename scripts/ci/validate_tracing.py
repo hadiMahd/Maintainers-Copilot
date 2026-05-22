@@ -16,7 +16,6 @@ import sys
 from scripts.ci.common import fail, pass_gate
 from scripts.ci.tracing_checks import check_tracing_enabled_warning, validate_tracing_config
 
-
 if __name__ == "__main__":
     passed, errors = validate_tracing_config()
 

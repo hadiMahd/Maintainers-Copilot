@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import contextlib
 import json
-import tempfile
 import os
+import tempfile
 from datetime import datetime, timezone
 from typing import Any
 
@@ -82,6 +82,7 @@ def is_mlflow_available() -> bool:
     """Check if mlflow package is available."""
     try:
         import mlflow  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -119,6 +120,7 @@ def finalize_run(
 
     if is_mlflow_available():
         import mlflow
+
         try:
             mlflow.log_metrics(metrics or {}, run_id=run_id)
             mlflow.log_params(parameters or {}, run_id=run_id)
