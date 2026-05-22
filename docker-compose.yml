@@ -147,6 +147,9 @@ services:
       VAULT_ADDR: http://vault:8200
       VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
       CHAT_MODEL_SERVER_BASE_URL: http://model_server:8001
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
+      HF_TOKEN: ${HUGGINGFACE_TOKEN:-}
+      HUGGING_FACE_HUB_TOKEN: ${HUGGINGFACE_TOKEN:-}
     ports:
       - "8000:8000"
 

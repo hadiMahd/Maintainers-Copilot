@@ -39,6 +39,15 @@ class TestTokenOverlapJudge:
         )
         assert 0.0 < score <= 1.0
 
+    def test_answer_relevancy_not_diluted_by_long_context(self):
+        judge = TokenOverlapJudge()
+        score = judge.score_answer_relevancy(
+            "install numpy with pip",
+            "how to install numpy",
+            " ".join(f"irrelevant-{i}" for i in range(1000)),
+        )
+        assert score > 0.3
+
     def test_judge_id_stable(self):
         judge = TokenOverlapJudge()
         assert judge.judge_id == _DEFAULT_JUDGE_ID

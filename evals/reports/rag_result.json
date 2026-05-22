@@ -1,0 +1,11 @@
+{
+  "dataset_id": "rag_golden_set",
+  "hit_at_5": 1.0,
+  "mrr_at_10": 0.8733333333333333,
+  "faithfulness": 0.3572058318390697,
+  "answer_relevancy": 0.23442048850742586,
+  "provider_backend": "azure_openai",
+  "embedding_model": "text-embedding-3-small",
+  "passed": true,
+  "failures": []
+}

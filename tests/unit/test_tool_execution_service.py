@@ -51,13 +51,14 @@ def _service(model_server_tools=None, memory_tool_client=None):
     )
 
 
-def test_registered_tool_schemas_cover_all_five_tools():
+def test_registered_tool_schemas_cover_all_six_tools():
     service = _service()
     assert {tool.name for tool in service.registered_tools()} == {
         "classify_issue",
         "extract_entities",
         "summarize_issue",
         "answer_project_question",
+        "recall_memory",
         "write_memory",
     }
 

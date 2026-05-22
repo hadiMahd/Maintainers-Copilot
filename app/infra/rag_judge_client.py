@@ -58,8 +58,8 @@ class TokenOverlapJudge:
         question: str,
         retrieved_content: str,
     ) -> float:
-        combined = f"{question} {retrieved_content}"
-        return compute_unigram_f1(candidate_answer, combined)
+        del retrieved_content
+        return compute_unigram_f1(candidate_answer, question)
 
     def judge_batch(
         self,

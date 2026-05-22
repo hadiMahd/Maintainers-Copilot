@@ -12,7 +12,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 def evaluate_rag(golden_path: str) -> dict[str, Any]:
@@ -49,7 +49,7 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
     """Run RAG eval against live Postgres retrieval and Azure generation."""
     from app.core.config import AppSettings
     from app.core.lifespan import _apply_optional_provider_settings
-    from app.domain.rag import RetrievalQuery
+    from app.domain.rag import EmbeddingModelName, RetrievalQuery
     from app.infra.database import create_engine, create_session_factory
     from app.infra.embedding_client import resolve_embedding_client
     from app.infra.rag_generation_client import resolve_generation_client
@@ -61,7 +61,8 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
     from app.services.rag_retrieval_service import RAGRetrievalService
     from scripts.build_rag_index import _resolve_database_url
 
-    settings = AppSettings()
+    settings = AppSettings()  # type: ignore[call-arg]
+    _configure_huggingface_token(settings)
     _apply_optional_provider_settings(
         settings,
         resolve_classifier_secrets(init_vault_client(settings), settings),
@@ -81,6 +82,7 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
         engine = create_engine(_resolve_database_url())
         session_factory = create_session_factory(engine)
         generation_service = RAGGenerationService(generation_client)
+        reranker = resolve_reranker(settings)
         hits: list[float] = []
         mrrs: list[float] = []
         faithfulness: list[float] = []
@@ -95,14 +97,17 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
                         RAGChunkRepository(session),
                         sparse_weight=settings.rag_hybrid_sparse_weight,
                         dense_weight=settings.rag_hybrid_dense_weight,
-                        reranker=resolve_reranker(settings),
+                        reranker=reranker,
                         embedding_client=embedding_client,
                     )
                     retrieved = await retrieval_service.retrieve(
                         RetrievalQuery(
                             query=question,
                             retrieval_mode="hybrid",
-                            embedding_model=embedding_client.model_name,
+                            embedding_model=cast(
+                                EmbeddingModelName,
+                                embedding_client.model_name,
+                            ),
                             top_k=10,
                             reranking_enabled=True,
                             query_transformation_enabled=True,
@@ -128,6 +133,18 @@ def evaluate_real_rag(golden_path: str) -> dict[str, Any]:
         }
 
     return asyncio.run(_run())
+
+
+def _configure_huggingface_token(settings: Any) -> None:
+    token = getattr(settings, "huggingface_token", None)
+    if token is None:
+        return
+    token_value = token.get_secret_value()
+    if not token_value:
+        return
+    os.environ.setdefault("HF_TOKEN", token_value)
+    os.environ.setdefault("HUGGING_FACE_HUB_TOKEN", token_value)
+    os.environ.setdefault("HUGGINGFACE_HUB_TOKEN", token_value)
 
 
 def _hit_at_5(results: list[Any], expected_chunks: list[str]) -> float:

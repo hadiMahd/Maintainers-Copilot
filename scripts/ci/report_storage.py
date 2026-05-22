@@ -28,6 +28,14 @@ def load_report_local(path: Path) -> dict[str, Any]:
 def store_report(report: dict[str, Any], bucket: str, key: str) -> bool:
     """Store report. Uses MinIO when available, falls back to local."""
     payload = json.dumps(report, indent=2).encode()
+    local_path = Path(f"evals/reports/{key}")
+    local_ok = False
+    try:
+        store_report_local(report, local_path)
+        local_ok = True
+    except Exception:
+        local_ok = False
+
     try:
         from minio import Minio
 
@@ -48,14 +56,7 @@ def store_report(report: dict[str, Any], bucket: str, key: str) -> bool:
         )
         return True
     except Exception:
-        pass
-
-    local_path = Path(f"evals/reports/{key}")
-    try:
-        store_report_local(report, local_path)
-        return True
-    except Exception:
-        return False
+        return local_ok
 
 
 def try_load_minio(bucket: str, key: str) -> Optional[dict[str, Any]]:

@@ -79,18 +79,28 @@ class RAGEmbeddingRepository:
 
 
 def _row_to_embedding(row) -> RAGEmbedding:
-    vec = row.get("vector")
-    if vec is not None and not isinstance(vec, list):
-        vec = list(vec)
     return RAGEmbedding(
         embedding_id=str(row["embedding_id"]),
         chunk_id=str(row["chunk_id"]),
         content_hash=str(row["content_hash"]),
         embedding_model=row["embedding_model"],
         embedding_dim=int(row["embedding_dim"]),
-        vector=vec or [],
+        vector=_parse_vector(row.get("vector")),
         created_at=row.get("created_at"),
     )
+
+
+def _parse_vector(value) -> list[float]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            stripped = stripped[1:-1]
+        if not stripped:
+            return []
+        return [float(part) for part in stripped.split(",")]
+    return [float(part) for part in value]
 
 
 def _vector_literal(vector: list[float]) -> str:

@@ -88,7 +88,12 @@ def upgrade() -> None:
         sa.Column("search_vector", sa.dialects.postgresql.TSVECTOR(), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
-    op.create_index("ix_rag_sparse_search_chunk_id", "rag_sparse_search", ["chunk_id"])
+    op.create_index(
+        "ix_rag_sparse_search_chunk_id",
+        "rag_sparse_search",
+        ["chunk_id"],
+        unique=True,
+    )
 
     op.create_table(
         "rag_snapshots",
