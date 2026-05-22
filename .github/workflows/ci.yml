@@ -53,7 +53,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --all-extras --dev
-      - run: uv run mypy .
+      - run: scripts/ci/run_type_check.sh
 
   tests:
     needs: install

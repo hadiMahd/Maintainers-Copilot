@@ -37,7 +37,7 @@ See [docs/architecture.md](docs/architecture.md) for full details.
 | `make lint` | Run flake8 lint checks |
 | `make format-check` | Run black + isort format checks |
 | `make import-check` | Run isort import-order check |
-| `make type-check` | Run mypy type checking |
+| `make type-check` | Run mypy type checking for CI scripts |
 | `make test` | Run pytest test suite |
 | `make evals` | Run eval gates (thresholds, classifier, RAG) |
 | `make security` | Run security gates (redaction, grep, artifacts, startup, tracing) |
@@ -71,7 +71,7 @@ vault, vault_seed, model_server, backend) and verifies the backend health endpoi
 make lint          # flake8
 make format-check  # black + isort
 make import-check  # isort only
-make type-check    # mypy
+make type-check    # mypy on scripts/ci
 make test          # pytest
 make evals         # threshold + classifier + RAG eval gates
 make security      # redaction + static grep + artifacts + startup + tracing

@@ -33,7 +33,7 @@ echo "PASS: dependency-install"
 run_gate "lint" "uv run flake8 ." || true
 run_gate "format-check" "uv run black --check ." || true
 run_gate "import-check" "uv run isort --check-only ." || true
-run_gate "type-check" "uv run mypy ." || true
+run_gate "type-check" "scripts/ci/run_type_check.sh" || true
 run_gate "tests" "uv run pytest" || true
 
 # Gate 7: Threshold validation

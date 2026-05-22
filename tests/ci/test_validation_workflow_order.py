@@ -15,7 +15,7 @@ class TestValidationWorkflowOrder:
             ("lint", "flake8"),
             ("format-check", "black"),
             ("import-check", "isort"),
-            ("type-check", "mypy"),
+            ("type-check", "run_type_check.sh"),
             ("tests", "pytest"),
         ]
         positions = {name: content.find(keyword) for name, keyword in order}
