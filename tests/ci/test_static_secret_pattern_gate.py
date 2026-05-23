@@ -91,6 +91,20 @@ class TestStaticSecretPatternGate:
         """secret_scan.py itself is allowlisted (defines scan patterns)."""
         assert is_allowlisted(Path("scripts/ci/secret_scan.py"), "sk-", "") is True
 
+    def test_is_allowlisted_docs_examples(self):
+        """Docs can name blocked patterns without failing committed-file scans."""
+        assert is_allowlisted(Path("docs/runbook.md"), "password=", "`password=`") is True
+
+    def test_scan_file_ignores_hashed_password_identifier(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write("user.hashed_password=hashed_password\n")
+            tmp = Path(f.name)
+        try:
+            hits = scan_file(tmp)
+            assert hits == []
+        finally:
+            tmp.unlink(missing_ok=True)
+
     def test_is_allowlisted_not_allowlisted_generic(self):
         """Random file with sk- pattern is NOT allowlisted."""
         assert is_allowlisted(Path("src/leaked.py"), "sk-", "api_key=sk-real") is False

@@ -20,6 +20,13 @@ def test_redact_string_removes_sk_keys():
     assert "[REDACTED]" in result
 
 
+def test_redact_string_removes_fake_sk_probe_with_hyphens():
+    """CI fake sk- probes with hyphens are replaced."""
+    result = redact_string("key=sk-fake-test-key-12345")
+    assert "sk-fake-test-key-12345" not in result
+    assert "[REDACTED]" in result
+
+
 def test_redact_string_removes_explicit_secrets():
     """Explicit secret/key/password patterns are replaced."""
     result = redact_string("api_key=my-secret-value")

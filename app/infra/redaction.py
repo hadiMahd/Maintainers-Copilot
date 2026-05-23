@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 _SECRET_PATTERNS = [
-    re.compile(r"sk-[A-Za-z0-9]{20,}", re.IGNORECASE),
+    re.compile(r"sk-[A-Za-z0-9_-]{10,}", re.IGNORECASE),
     re.compile(r"(?:api[_\-]?key|token|secret|password|credential)\s*[:=]\s*\S+", re.IGNORECASE),
 ]
 
@@ -19,7 +19,7 @@ _MEMORY_KEY_VALUE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_RAW_TOKEN_PATTERN = re.compile(r"sk-[A-Za-z0-9]{20,}", re.IGNORECASE)
+_RAW_TOKEN_PATTERN = re.compile(r"sk-[A-Za-z0-9_-]{10,}", re.IGNORECASE)
 
 _MAX_TEXT_FIELD_LENGTH = 500
 

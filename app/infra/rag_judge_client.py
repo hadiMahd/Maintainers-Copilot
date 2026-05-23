@@ -9,7 +9,6 @@ as a proxy for faithfulness / answer relevancy.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import math
 import os
@@ -384,11 +383,13 @@ def resolve_ragas_judge(settings: object) -> RagasJudgeClient:
         api_key=api_key,
         azure_endpoint=endpoint,
         api_version=api_version,
+        timeout=timeout,
     )
     embeddings_client = AsyncAzureOpenAI(
         api_key=embedding_api_key,
         azure_endpoint=embedding_endpoint,
         api_version=api_version,
+        timeout=timeout,
     )
     noise_llm = InstructorLLM(
         client=instructor.from_openai(noise_client, mode=instructor.Mode.JSON),

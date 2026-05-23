@@ -20,7 +20,7 @@ from scripts.ci.secret_scan import UNSAFE_PATTERNS, is_allowlisted, scan_directo
 
 if __name__ == "__main__":
     print(f"Scanning repository for {len(UNSAFE_PATTERNS)} unsafe patterns...")
-    hits = scan_directory(Path("."))
+    hits = scan_directory(Path("."), tracked_only=True)
 
     non_allowlisted: list[tuple[Path, int, str, str]] = []
     allowlisted_hits: list[tuple[Path, int, str, str]] = []

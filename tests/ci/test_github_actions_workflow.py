@@ -95,6 +95,11 @@ class TestGitHubActionsWorkflow:
         needs = job.get("needs", [])
         assert "docker-build" in needs
 
+    def test_model_server_dockerfile_does_not_require_untracked_artifacts(self):
+        content = Path("model_server/Dockerfile").read_text()
+        assert "COPY artifacts/" not in content
+        assert "ci-smoke-classifier" in content
+
     def test_no_paid_credentials_in_workflow(self):
         content = Path(".github/workflows/ci.yml").read_text()
         assert "AZURE_OPENAI_KEY" not in content
