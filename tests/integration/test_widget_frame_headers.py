@@ -39,6 +39,19 @@ def _build_app():
     return app
 
 
+def _patch_widget_frame_assets():
+    return (
+        patch(
+            "app.api.routes.widget_loader.get_widget_main_asset_path",
+            return_value="/widget/assets/widget-test.js",
+        ),
+        patch(
+            "app.api.routes.widget_loader.get_widget_stylesheet_asset_paths",
+            return_value=[],
+        ),
+    )
+
+
 @pytest.mark.asyncio
 async def test_frame_includes_csp_frame_ancestors():
     """The widget frame response must include CSP frame-ancestors header."""
@@ -47,7 +60,12 @@ async def test_frame_includes_csp_frame_ancestors():
     async def _mock_get_by_widget_id(widget_id, request_id=None):
         return _make_config_dict(widget_id=widget_id)
 
-    with patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc:
+    asset_patches = _patch_widget_frame_assets()
+    with (
+        patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc,
+        asset_patches[0],
+        asset_patches[1],
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
@@ -74,7 +92,12 @@ async def test_frame_csp_includes_allowed_origins():
             widget_id=widget_id, origins=["https://example.com", "https://other.com"]
         )
 
-    with patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc:
+    asset_patches = _patch_widget_frame_assets()
+    with (
+        patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc,
+        asset_patches[0],
+        asset_patches[1],
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
@@ -102,7 +125,12 @@ async def test_frame_available_from_alias_router():
     async def _mock_get_by_widget_id(widget_id, request_id=None):
         return _make_config_dict(widget_id=widget_id)
 
-    with patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc:
+    asset_patches = _patch_widget_frame_assets()
+    with (
+        patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc,
+        asset_patches[0],
+        asset_patches[1],
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc

@@ -116,7 +116,17 @@ async def test_frame_serves_html():
     async def _mock_get_by_widget_id(widget_id, request_id=None):
         return config
 
-    with patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc:
+    with (
+        patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc,
+        patch(
+            "app.api.routes.widget_loader.get_widget_main_asset_path",
+            return_value="/widget/assets/widget-test.js",
+        ),
+        patch(
+            "app.api.routes.widget_loader.get_widget_stylesheet_asset_paths",
+            return_value=[],
+        ),
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
