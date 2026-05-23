@@ -2,8 +2,8 @@
 
 from fastapi import FastAPI
 
-from app.api.routes import api_router
 from app.api.error_handlers import register_error_handlers
+from app.api.routes import api_router
 from app.core.config import AppSettings
 from app.core.lifespan import lifespan
 from app.core.middleware import RequestIDMiddleware

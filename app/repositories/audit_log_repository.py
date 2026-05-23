@@ -29,6 +29,7 @@ class AuditLogRepository:
         extra_data: dict | None = None,
     ) -> AuditLog:
         import uuid
+
         entry = AuditLog(
             id=uuid.uuid4().hex,
             actor_user_id=actor_user_id,
@@ -40,13 +41,8 @@ class AuditLogRepository:
         self._session.add(entry)
         return entry
 
-    async def list_all(
-        self, limit: int = 100, offset: int = 0
-    ) -> Sequence[AuditLog]:
+    async def list_all(self, limit: int = 100, offset: int = 0) -> Sequence[AuditLog]:
         result = await self._session.execute(
-            select(AuditLog)
-            .order_by(AuditLog.timestamp.desc())
-            .offset(offset)
-            .limit(limit)
+            select(AuditLog).order_by(AuditLog.timestamp.desc()).offset(offset).limit(limit)
         )
         return result.scalars().all()

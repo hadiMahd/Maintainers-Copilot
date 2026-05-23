@@ -6,7 +6,6 @@ with mocked httpx transport.
 """
 
 import json
-from unittest.mock import MagicMock
 
 import httpx
 import pytest
@@ -54,6 +53,7 @@ def _build_test_client(response_fn):
 
 # ── Route dispatchers ──────────────────────────────────────────────
 
+
 def _make_dispatcher(routes: dict):
     """Factory: return a handler that dispatches by method+path."""
 
@@ -67,6 +67,7 @@ def _make_dispatcher(routes: dict):
 
 
 # ── Full-flow test ────────────────────────────────────────────────
+
 
 def test_full_login_chat_widget_memory_flow(settings):
     """End-to-end: login, get profile, chat stream, widget CRUD, snippet,
@@ -84,10 +85,14 @@ def test_full_login_chat_widget_memory_flow(settings):
             body = json.loads(request.content) if request.content else {}
             if body.get("email") == "user@test.com" and body.get("password") == "secret":
                 call_log.append("login_ok")
-                return httpx.Response(200, json={
-                    "access_token": "tok-integration", "refresh_token": "rt",
-                    "token_type": "bearer",
-                })
+                return httpx.Response(
+                    200,
+                    json={
+                        "access_token": "tok-integration",
+                        "refresh_token": "rt",
+                        "token_type": "bearer",
+                    },
+                )
             call_log.append("login_fail")
             return httpx.Response(401, json={"message": "Invalid credentials"})
 
@@ -95,9 +100,15 @@ def test_full_login_chat_widget_memory_flow(settings):
         if method == "GET" and path == "/users/me":
             if request.headers.get("Authorization") == "Bearer tok-integration":
                 call_log.append("profile_ok")
-                return httpx.Response(200, json={
-                    "id": "u1", "email": "user@test.com", "role": "admin", "is_active": True,
-                })
+                return httpx.Response(
+                    200,
+                    json={
+                        "id": "u1",
+                        "email": "user@test.com",
+                        "role": "admin",
+                        "is_active": True,
+                    },
+                )
             call_log.append("profile_unauth")
             return httpx.Response(401, json={"message": "Unauthenticated"})
 
@@ -111,8 +122,9 @@ def test_full_login_chat_widget_memory_flow(settings):
                     'data: {"event_type":"message_delta","content":" world","sequence":2}\n\n'
                     'data: {"event_type":"done","content":"","sequence":3,"trace_id":"tr-1"}\n\n'
                 )
-                return httpx.Response(200, content=stream_body.encode(),
-                    headers={"content-type": "text/event-stream"})
+                return httpx.Response(
+                    200, content=stream_body.encode(), headers={"content-type": "text/event-stream"}
+                )
             return httpx.Response(422, json={"message": "Empty message"})
 
         # ── Widget Configs ──
@@ -125,7 +137,8 @@ def test_full_login_chat_widget_memory_flow(settings):
             body = json.loads(request.content) if request.content else {}
             wid = f"wc-{len(widget_store) + 1}"
             cfg = {
-                "name": body.get("name", ""), "allowed_origins": body.get("allowed_origins", []),
+                "name": body.get("name", ""),
+                "allowed_origins": body.get("allowed_origins", []),
                 "theme": body.get("theme", "light"),
                 "greeting": body.get("greeting"),
                 "position": body.get("position", "bottom-right"),
@@ -134,12 +147,16 @@ def test_full_login_chat_widget_memory_flow(settings):
             }
             widget_store[wid] = cfg
             call_log.append("widget_create")
-            return httpx.Response(201, json={
-                "id": wid, "widget_id": f"wid-{wid}",
-                "created_at": "2026-01-01T00:00:00Z",
-                "updated_at": "2026-01-01T00:00:00Z",
-                **cfg,
-            })
+            return httpx.Response(
+                201,
+                json={
+                    "id": wid,
+                    "widget_id": f"wid-{wid}",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "updated_at": "2026-01-01T00:00:00Z",
+                    **cfg,
+                },
+            )
 
         if method == "PATCH" and path.startswith("/admin/widget-configs/"):
             wid = path.split("/")[-1]
@@ -148,12 +165,16 @@ def test_full_login_chat_widget_memory_flow(settings):
             body = json.loads(request.content) if request.content else {}
             widget_store[wid].update({k: v for k, v in body.items() if v is not None})
             call_log.append("widget_update")
-            return httpx.Response(200, json={
-                "id": wid, "widget_id": f"wid-{wid}",
-                "created_at": "2026-01-01T00:00:00Z",
-                "updated_at": "2026-01-01T00:00:00Z",
-                **widget_store[wid],
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "id": wid,
+                    "widget_id": f"wid-{wid}",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "updated_at": "2026-01-01T00:00:00Z",
+                    **widget_store[wid],
+                },
+            )
 
         if method == "DELETE" and path.startswith("/admin/widget-configs/"):
             wid = path.split("/")[-1]
@@ -161,10 +182,14 @@ def test_full_login_chat_widget_memory_flow(settings):
                 return httpx.Response(404, json={"message": "Not found"})
             del widget_store[wid]
             call_log.append("widget_delete")
-            return httpx.Response(200, json={
-                "id": wid, "widget_id": f"wid-{wid}",
-                "deleted_at": "2026-01-01T00:00:00Z",
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "id": wid,
+                    "widget_id": f"wid-{wid}",
+                    "deleted_at": "2026-01-01T00:00:00Z",
+                },
+            )
 
         # ── Embed Snippet ──
         if method == "GET" and "/embed-snippet" in path:
@@ -172,26 +197,42 @@ def test_full_login_chat_widget_memory_flow(settings):
             if wid not in widget_store:
                 return httpx.Response(404, json={"message": "Not found"})
             call_log.append("embed_snippet")
-            return httpx.Response(200, json={
-                "widget_config_id": wid,
-                "snippet": f'<!-- Maintainer Copilot Widget (id: wid-{wid}) -->\n<script src="BASE_URL/widget/loader.js" data-widget-id="wid-{wid}"></script>',
-                "generated_at": "2026-01-01T00:00:00Z",
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "widget_config_id": wid,
+                    "snippet": f'<!-- Maintainer Copilot Widget (id: wid-{wid}) -->\n<script src="BASE_URL/widget.js" data-widget-id="wid-{wid}"></script>',
+                    "generated_at": "2026-01-01T00:00:00Z",
+                },
+            )
 
         # ── Memory Inspector ──
         if method == "GET" and path == "/memory/long-term":
             call_log.append("memory_inspect")
-            return httpx.Response(200, json={
-                "items": [
-                    {"id": "mem-1", "owner_user_id": "u1", "memory_type": "semantic",
-                     "redacted_content": "[REDACTED]", "source": "chat",
-                     "created_at": "2026-01-01T00:00:00Z"},
-                    {"id": "mem-2", "owner_user_id": "u2", "memory_type": "episodic",
-                     "redacted_content": "[REDACTED]", "source": "issue",
-                     "created_at": "2026-01-01T00:00:00Z"},
-                ],
-                "scope": "own",
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "items": [
+                        {
+                            "id": "mem-1",
+                            "owner_user_id": "u1",
+                            "memory_type": "semantic",
+                            "redacted_content": "[REDACTED]",
+                            "source": "chat",
+                            "created_at": "2026-01-01T00:00:00Z",
+                        },
+                        {
+                            "id": "mem-2",
+                            "owner_user_id": "u2",
+                            "memory_type": "episodic",
+                            "redacted_content": "[REDACTED]",
+                            "source": "issue",
+                            "created_at": "2026-01-01T00:00:00Z",
+                        },
+                    ],
+                    "scope": "own",
+                },
+            )
 
         return httpx.Response(500, json={"message": "Unexpected"})
 
@@ -253,7 +294,7 @@ def test_full_login_chat_widget_memory_flow(settings):
     # 8. Get embed snippet
     snippet = c.get_embed_snippet(cfg.id)
     assert "wid-" + cfg.id in snippet.snippet
-    assert "loader.js" in snippet.snippet
+    assert "/widget.js" in snippet.snippet
     assert "data-widget-id" in snippet.snippet
     assert "embed_snippet" in call_log
 
@@ -292,7 +333,13 @@ def test_chat_stream_error_event_yields_error_event(settings):
     """Non-200 SSE response yields a single error ChatEventView."""
 
     def handler(request):
-        return httpx.Response(422, json={"error_code": "invalid_chat_input", "message": "Conversation ID and message must be non-empty"})
+        return httpx.Response(
+            422,
+            json={
+                "error_code": "invalid_chat_input",
+                "message": "Conversation ID and message must be non-empty",
+            },
+        )
 
     c, token_store, _ = _build_test_client(handler)
     token_store["token"] = "t"

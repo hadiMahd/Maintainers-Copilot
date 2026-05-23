@@ -12,7 +12,11 @@ from typing import Callable
 
 import structlog
 
-from app.domain.memory_inspector import MemoryInspectionQuery, MemoryInspectionResult, MemoryRecordRead
+from app.domain.memory_inspector import (
+    MemoryInspectionQuery,
+    MemoryInspectionResult,
+    MemoryRecordRead,
+)
 
 _log = structlog.get_logger
 

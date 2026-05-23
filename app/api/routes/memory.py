@@ -30,14 +30,13 @@ def _get_short_term_memory_service(request: Request):
 
 
 def _get_long_term_memory_service(request: Request):
-    from app.infra.memory_embedding_client import MemoryEmbeddingClient
+    import app.infra.database as db_mod
+    from app.infra.memory_embedding_client import resolve_memory_embedding_client
     from app.repositories.audit_log_repository import AuditLogRepository
     from app.repositories.memory_repository import MemoryRepository
     from app.services.long_term_memory_service import LongTermMemoryService
 
-    import app.infra.database as db_mod
-
-    embedding_client = MemoryEmbeddingClient()
+    embedding_client = resolve_memory_embedding_client(request.app.state.settings)
     return LongTermMemoryService(
         memory_repo=MemoryRepository,
         audit_repo=AuditLogRepository,

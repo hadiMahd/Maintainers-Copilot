@@ -10,7 +10,7 @@
 ### Session 2026-05-18
 
 - Q: How does the embedded widget authenticate chat requests to the backend? → A: Widget-scoped anonymous session token issued by the backend at widget load time, validated against the widget's allowed origin; expires with the session.
-- Q: Where is the loader script served from? → A: FastAPI backend route (`GET /widget/loader.js`) — one origin, no CDN or separate static host required.
+- Q: Where is the loader script served from? → A: FastAPI backend route (`GET /widget.js`) — one origin, no CDN or separate static host required.
 - Q: How should the widget iframe consume the backend SSE chat stream? → A: Native `EventSource` API — built-in, no library, auto-reconnect; session token passed as query parameter, while raw user messages are submitted separately so chat text never appears in the SSE URL.
 - Q: What is the maximum acceptable widget bundle size? → A: 150 KB gzipped — covers React + lean chat UI; any exception must be documented with measured size and rationale.
 - Q: What format should the public widget identifier use? → A: UUID4 — random, non-enumerable, generated at config creation time.
@@ -162,12 +162,12 @@ no widget code references the internal Streamlit app.
 - **FR-004**: Regular users MUST NOT be able to create, edit, or view admin-only
   widget configuration capabilities.
 - **FR-005**: Host pages MUST be able to embed a widget using one script tag
-  whose `src` points to `GET /widget/loader.js` on the FastAPI backend, with
+  whose `src` points to `GET /widget.js` on the FastAPI backend, with
   the widget identifier supplied as a `data-widget-id` attribute on the script
   tag.
 - **FR-006**: The loader MUST create an isolated widget frame using the widget
   identifier from the host page. The FastAPI backend MUST serve the loader
-  JavaScript at `GET /widget/loader.js` with appropriate `Cache-Control` and
+  JavaScript at `GET /widget.js` with appropriate `Cache-Control` and
   `Content-Type` headers.
 - **FR-007**: The widget MUST read its current public configuration at load time
   and MUST request a widget-scoped anonymous session token from the backend.
@@ -261,7 +261,7 @@ no widget code references the internal Streamlit app.
 - **Widget Configuration**: Admin-managed configuration containing UUID4 public widget identifier (generated at creation), allowed origins, theme, greeting, enabled tools, enabled status, creator, creation timestamp, and update timestamp.
 - **Widget Config Audit Entry**: Audit row created by backend services for
   widget configuration create, update, or delete actions.
-- **Widget Script Snippet**: The admin-visible installation snippet — a single `<script src="{backend}/widget/loader.js" data-widget-id="{id}">` tag — that a host page owner places on an allowed page to load a specific widget.
+- **Widget Script Snippet**: The admin-visible installation snippet — a single `<script src="{backend}/widget.js" data-widget-id="{id}">` tag — that a host page owner places on an allowed page to load a specific widget.
 - **Widget Anonymous Session Token**: Short-lived backend-issued token scoped
   to one widget identifier and one approved host origin, used to authenticate
   visitor chat requests without requiring user registration.

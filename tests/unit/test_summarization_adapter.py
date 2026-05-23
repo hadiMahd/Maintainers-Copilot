@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from model_server.infra.summarization_adapter import (
-    FakeSummarizationAdapter,
     AzureOpenAISummarizationAdapter,
+    FakeSummarizationAdapter,
     SummarizationTimeout,
     SummarizerUnavailable,
 )

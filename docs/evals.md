@@ -100,7 +100,8 @@ Two modes compared on the same golden set:
 
 - **CI judge**: `TokenOverlapJudge` with `judge_id` = `token-overlap-f1-v1` (frozen, deterministic, zero-dependency)
 - **Method**: Unigram F1 token-overlap between candidate and reference answers
-- **Optional RAGAS**: `NonCIJudgeStub` — config seam, raises `NotImplementedError` when no real RAGAS provider is available
+- **Optional RAGAS**: `RagasJudgeClient` runs with real Azure OpenAI evals when `USE_RAGAS_EVALS=1`
+- **RAGAS metrics**: context precision, context recall, context entity recall, noise sensitivity, faithfulness, response relevancy
 - **Disagreement notes**: 5 hand-labeled examples with explicit disagreement annotations recorded in the eval report
 
 ### Threshold Gate
@@ -137,3 +138,112 @@ Regression thresholds set in `evals/eval_thresholds.yaml`. Currently baseline-pe
 ### Regression Criteria
 
 CI regression fails when advanced hit@5 or MRR@10 falls below baseline on the UPDATED golden set with real corpus data. Current fixture-backed values are exploratory only.
+
+## Phase 10: Production Readiness Eval Gates
+
+### Compact Golden Sets
+
+Phase 10 uses compact committed golden sets for CI validation, distinct from the larger Phase 3/5 evaluation datasets:
+
+| Set | Path | Items | Labels |
+|---|---|---|---|
+| Classifier golden | `evals/classification/golden.jsonl` | 25 | bug, feature, docs, question |
+| RAG golden | `evals/rag/golden.jsonl` | 10 | docs, issue |
+
+These compact sets are optimized for fast CI runs (< 15 minutes total).
+
+### Eval Thresholds (Phase 10)
+
+Stored in `evals/eval_thresholds.yaml` with non-zero, enabled values:
+
+```yaml
+classifier:
+  accuracy_min: 0.55
+  macro_f1_min: 0.50
+
+rag:
+  hit_at_5_min: 0.10
+  mrr_at_10_min: 0.10
+  faithfulness_min: 0.10
+  answer_relevancy_min: 0.10
+```
+
+All thresholds must be present, numeric, finite, and greater than zero. Zero, missing,
+NaN, negative, or non-numeric thresholds cause the validation workflow to fail before
+eval runs begin.
+
+### Eval Adapters
+
+Two CI-specific eval adapters run against the compact golden sets:
+
+- **`scripts/ci/run_classifier_eval.py`**: Loads `evals/classification/golden.jsonl`,
+  classifies each item with a deterministic keyword-based classifier (no model loading,
+  no training, no paid APIs). Computes accuracy and macro-F1, compares against
+  thresholds, and writes intermediate results to `evals/reports/classifier_result.json`.
+
+- **`scripts/ci/run_rag_eval.py`**: Loads `evals/rag/golden.jsonl`, evaluates using
+  the project's `RAGEvaluationService` with `FakeGenerationClient` and
+  `TokenOverlapJudge`. Computes hit@5, MRR@10, faithfulness, and answer relevancy,
+  compares against thresholds, and writes intermediate results to
+  `evals/reports/rag_result.json`.
+
+Both adapters default to fake/local providers for CI speed and zero paid
+credentials. Set `USE_REAL_AZURE_EVALS=1` to enable real Azure OpenAI RAG
+evaluation against the live Postgres RAG index. That path resolves Azure
+generation and embedding settings from Vault, uses hybrid sparse+dense
+retrieval with reranking and query transformation, and fails if Azure generation
+is not configured.
+
+Set `USE_RAGAS_EVALS=1` together with `USE_REAL_AZURE_EVALS=1` to add RAGAS
+judge metrics to `evals/reports/rag_result.json` and the combined
+`eval_report.json`. These are recorded under `rag.ragas`; the existing manual
+metrics remain the threshold-gated CI values.
+
+Real RAG eval command:
+
+```bash
+USE_REAL_AZURE_EVALS=1 USE_RAGAS_EVALS=1 uv run python scripts/ci/run_rag_eval.py
+```
+
+### Combined Eval Report
+
+`scripts/ci/build_eval_report.py` consumes the intermediate classifier and RAG result
+files and produces `evals/reports/eval_report.json` matching the schema in
+`specs/010-production-readiness/contracts/eval-report.schema.json`.
+
+Required report fields:
+- `run_id`, `timestamp`
+- `classifier`: `accuracy`, `macro_f1`, `per_class_f1`, `threshold`, `passed`, `failures`
+- `rag`: `hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`, `threshold`, `passed`, `failures`
+- `rag.ragas` when enabled: `context_precision`, `context_recall`, `context_entity_recall`, `noise_sensitivity`, `faithfulness`, `response_relevancy`, `failures`
+- `storage`: `bucket`, `key`
+- `passed` (boolean — overall gating result)
+
+### MinIO Report Storage
+
+`scripts/ci/store_eval_report.py` stores the combined report to MinIO in CI
+environments with a local filesystem fallback (`evals/reports/`) for dev/test.
+The storage adapter (`scripts/ci/report_storage.py`) provides:
+- `store_report()`: MinIO with local fallback
+- `find_previous_green_report()`: Finds most recent passing report
+- `try_load_minio()`: Optional MinIO retrieval with safe None fallback
+
+### Previous-Green Regression Diffing
+
+`scripts/ci/compare_previous_green_report.py` compares the current eval report
+against the most recent passing "green" report. Any tracked metric that drops by
+more than 2 absolute percentage points triggers a workflow failure with a safe
+comparison summary naming the regressing metric(s) and their values.
+
+Tracked metrics compared:
+- Classifier: `accuracy`, `macro_f1`
+- RAG: `hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`
+
+### Eval Gate Order in Validation Workflow
+
+1. `check_eval_thresholds.py` — thresholds exist, are enabled, and are non-zero
+2. `run_evals.sh classifier` — classifier eval against compact golden set
+3. `run_evals.sh rag` — RAG eval against compact golden set
+4. `build_eval_report.py` — combined report generation
+5. `compare_previous_green_report.py` — regression diffing
+6. `store_eval_report.py` — MinIO storage

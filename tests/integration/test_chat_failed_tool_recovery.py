@@ -27,7 +27,9 @@ class _DictConversationAdapter:
     async def write(self, user_id: str, conversation_id: str, messages, ttl_seconds: int):
         from app.domain.chat import ConversationState
 
-        return ConversationState(user_id=user_id, conversation_id=conversation_id, messages=messages)
+        return ConversationState(
+            user_id=user_id, conversation_id=conversation_id, messages=messages
+        )
 
 
 class _FakeSnapshotService:
@@ -69,13 +71,17 @@ async def test_failed_tool_after_successful_tool_returns_partial_answer():
         per_tool_timeout_seconds=5,
     )
     graph_service = ChatbotGraphService(
-        llm_adapter=FakeLLMAdapter([
-            LLMCompletion(tool_calls=[
-                LLMToolCall(name="classify_issue", arguments={"title": "bug"}),
-                LLMToolCall(name="summarize_issue", arguments={"title": "bug"}),
-            ]),
-            LLMCompletion(message="Partial answer despite one failed tool."),
-        ]),
+        llm_adapter=FakeLLMAdapter(
+            [
+                LLMCompletion(
+                    tool_calls=[
+                        LLMToolCall(name="classify_issue", arguments={"title": "bug"}),
+                        LLMToolCall(name="summarize_issue", arguments={"title": "bug"}),
+                    ]
+                ),
+                LLMCompletion(message="Partial answer despite one failed tool."),
+            ]
+        ),
         prompt_registry=PromptRegistry.from_settings(
             __import__("app.core.config", fromlist=["AppSettings"]).AppSettings(
                 vault_addr="http://fake",
@@ -87,7 +93,9 @@ async def test_failed_tool_after_successful_tool_returns_partial_answer():
         tracing_service=tracing_service,
     )
     service = ChatbotService(
-        conversation_state_service=ConversationStateService(_DictConversationAdapter(), 1800, 12000),
+        conversation_state_service=ConversationStateService(
+            _DictConversationAdapter(), 1800, 12000
+        ),
         chatbot_graph_service=graph_service,
         tracing_service=tracing_service,
         limits=limits,
@@ -100,4 +108,8 @@ async def test_failed_tool_after_successful_tool_returns_partial_answer():
     tool_events = [event.content for event in result.events if event.event_type == "tool_status"]
     assert any("completed" in content for content in tool_events)
     assert any("failed safely" in content for content in tool_events)
-    assert any("Partial answer" in (event.content or "") for event in result.events if event.event_type == "message_delta")
+    assert any(
+        "Partial answer" in (event.content or "")
+        for event in result.events
+        if event.event_type == "message_delta"
+    )

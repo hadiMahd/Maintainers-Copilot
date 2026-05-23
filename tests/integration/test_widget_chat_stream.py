@@ -1,15 +1,15 @@
 """Integration test for widget chat submission plus EventSource stream."""
 
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+import pytest
 from fastapi import FastAPI
 
-from app.api.routes.widget_public import router as widget_public_router
 from app.api.error_handlers import register_error_handlers
+from app.api.routes.widget_public import router as widget_public_router
 
 
 def _make_config_dict(widget_id="wid-1"):
@@ -30,6 +30,7 @@ def _make_config_dict(widget_id="wid-1"):
 
 def _make_chat_events():
     from app.domain.chat import ChatStreamEvent
+
     return [
         ChatStreamEvent(
             event_type="message_delta",
@@ -74,14 +75,18 @@ async def test_submit_message_returns_conversation_id():
     mock_chat_svc = MagicMock()
     mock_chat_svc.submit_message = AsyncMock(return_value="conv-1")
 
-    with patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc, \
-         patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat:
+    with (
+        patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc,
+        patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat,
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
         mock_get_chat.return_value = mock_chat_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.post(
                 "/public/widgets/wid-1/chat/messages",
                 json={"message": "Hello", "session_token": "tok-1"},
@@ -111,14 +116,18 @@ async def test_submit_message_does_not_put_text_on_url():
     mock_chat_svc = MagicMock()
     mock_chat_svc.submit_message = AsyncMock(return_value="conv-1")
 
-    with patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc, \
-         patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat:
+    with (
+        patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc,
+        patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat,
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
         mock_get_chat.return_value = mock_chat_svc
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             resp = await ac.post(
                 "/public/widgets/wid-1/chat/messages",
                 json={"message": "secret message content", "session_token": "tok-1"},
@@ -151,16 +160,21 @@ async def test_stream_chat_reuses_phase7_event_shape():
     mock_chat_svc.execute_chat = AsyncMock(return_value=result)
 
     from app.services.widget_chat_service import WidgetChatService
+
     widget_chat = WidgetChatService(chatbot_service=mock_chat_svc)
 
-    with patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc, \
-         patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat:
+    with (
+        patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc,
+        patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat,
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
         mock_get_chat.return_value = widget_chat
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             wp_mod._pending_messages["conv-1"] = "test message"
             resp = await ac.get(
                 "/public/widgets/wid-1/chat/stream",
@@ -170,7 +184,7 @@ async def test_stream_chat_reuses_phase7_event_shape():
             assert resp.status_code == 200
             text = resp.text
 
-            lines = [l for l in text.split('\n') if l.startswith('data: ')]
+            lines = [ln for ln in text.split("\n") if ln.startswith("data: ")]
             assert len(lines) >= 3
 
             first_event = json.loads(lines[0][6:])
@@ -202,16 +216,21 @@ async def test_stream_events_include_trace_id_when_safe():
     mock_chat_svc.execute_chat = AsyncMock(return_value=result)
 
     from app.services.widget_chat_service import WidgetChatService
+
     widget_chat = WidgetChatService(chatbot_service=mock_chat_svc)
 
-    with patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc, \
-         patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat:
+    with (
+        patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc,
+        patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat,
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
         mock_get_chat.return_value = widget_chat
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             wp_mod._pending_messages["conv-1"] = "test"
             resp = await ac.get(
                 "/public/widgets/wid-1/chat/stream",
@@ -221,7 +240,7 @@ async def test_stream_events_include_trace_id_when_safe():
             assert resp.status_code == 200
             text = resp.text
 
-            lines = [l for l in text.split('\n') if l.startswith('data: ')]
+            lines = [ln for ln in text.split("\n") if ln.startswith("data: ")]
             first_event = json.loads(lines[0][6:])
             assert "trace_id" in first_event
             assert first_event["trace_id"] == "tr-abc123"
@@ -246,16 +265,21 @@ async def test_stream_url_does_not_contain_raw_message():
     mock_chat_svc.execute_chat = AsyncMock(return_value=result)
 
     from app.services.widget_chat_service import WidgetChatService
+
     widget_chat = WidgetChatService(chatbot_service=mock_chat_svc)
 
-    with patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc, \
-         patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat:
+    with (
+        patch("app.api.routes.widget_public._get_widget_config_service") as mock_get_svc,
+        patch("app.api.routes.widget_public._get_widget_chat_service") as mock_get_chat,
+    ):
         mock_svc = MagicMock()
         mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
         mock_get_svc.return_value = mock_svc
         mock_get_chat.return_value = widget_chat
 
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
             wp_mod._pending_messages["conv-1"] = "secret content"
             resp = await ac.get(
                 "/public/widgets/wid-1/chat/stream",

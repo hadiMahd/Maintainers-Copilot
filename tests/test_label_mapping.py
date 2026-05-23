@@ -1,7 +1,5 @@
 """Tests for label mapping logic."""
 
-import pytest
-
 
 def _map_label(labels, mapping):
     """Apply label mapping logic."""

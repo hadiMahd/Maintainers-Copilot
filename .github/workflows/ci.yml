@@ -1,0 +1,213 @@
+name: Maintainer Copilot CI
+
+on:
+  push:
+    branches: [main, "feature/**", "fix/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  UV_SYSTEM_PYTHON: "1"
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python -c "from app.domain import DomainError; print('install OK')"
+
+  lint:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run flake8 .
+
+  format-check:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run black --check .
+      - run: uv run isort --check-only .
+
+  type-check:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: scripts/ci/run_type_check.sh
+
+  tests:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run pytest
+
+  threshold-validation:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/check_eval_thresholds.py
+
+  classifier-eval:
+    needs: [threshold-validation, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: scripts/ci/run_evals.sh classifier
+
+  rag-eval:
+    needs: [threshold-validation, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: scripts/ci/run_evals.sh rag
+
+  redaction-leak:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/check_redaction_leaks.py
+
+  static-secret-grep:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/check_static_secret_patterns.py
+
+  model-artifacts:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/check_model_artifacts.py
+
+  startup-failures:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/check_startup_failures.py
+
+  tracing-config:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/validate_tracing.py
+
+  docker-build:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build
+
+  stack-smoke:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/ci/smoke_stack.sh
+
+  eval-report:
+    needs: [classifier-eval, rag-eval]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/build_eval_report.py
+
+  previous-green-diff:
+    needs: eval-report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/compare_previous_green_report.py
+
+  report-storage:
+    needs: [eval-report, previous-green-diff]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/store_eval_report.py
+
+  docs-validation:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --dev
+      - run: uv run python scripts/ci/validate_docs.py

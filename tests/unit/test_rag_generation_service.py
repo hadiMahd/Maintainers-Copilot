@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from app.domain.rag import (
-    GroundedAnswer,
     RAGChunk,
     RetrievalResult,
     RetrievalResultSet,
-    RetrievalQuery,
 )
-from app.infra.rag_generation_client import FakeGenerationClient, BaseGenerationClient
+from app.infra.rag_generation_client import FakeGenerationClient
 from app.services.rag_generation_service import RAGGenerationService
 
 
@@ -29,14 +25,18 @@ def service(client) -> RAGGenerationService:
 
 def _make_result_set() -> RetrievalResultSet:
     chunk = RAGChunk(
-        chunk_id="c1", parent_id="p1", source_type="docs",
+        chunk_id="c1",
+        parent_id="p1",
+        source_type="docs",
         content="pip install numpy installs the numpy package",
-        content_hash="abc", token_count=8,
+        content_hash="abc",
+        token_count=8,
     )
     return RetrievalResultSet(
         results=[
-            RetrievalResult(rank=1, final_score=0.95, chunk=chunk,
-                          content_preview="pip install numpy..."),
+            RetrievalResult(
+                rank=1, final_score=0.95, chunk=chunk, content_preview="pip install numpy..."
+            ),
         ],
     )
 
@@ -58,7 +58,9 @@ class TestGroundedAnswerShaping:
     async def test_generate_sets_request_id(self, service):
         result_set = _make_result_set()
         answer = await service.generate(
-            "question", result_set, request_id="req-test-1",
+            "question",
+            result_set,
+            request_id="req-test-1",
         )
         assert answer.request_id == "req-test-1"
 
@@ -66,6 +68,7 @@ class TestGroundedAnswerShaping:
 class TestRedactedPromptHandling:
     async def test_service_logs_safely(self, service):
         from app.infra.redaction import redact_rag_prompt
+
         payload = {
             "question": "test question",
             "content": "secret chunk content with sk-abcdefghijklmnopqrstuvwxyzxtoken",
@@ -77,6 +80,7 @@ class TestRedactedPromptHandling:
 
     async def test_service_preserves_safe_metadata(self, service):
         from app.infra.redaction import redact_rag_prompt
+
         payload = {
             "chunk_id": "c1",
             "top_k": 5,

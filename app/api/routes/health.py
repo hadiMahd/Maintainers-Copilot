@@ -23,11 +23,9 @@ async def ready(request: Request, settings: AppSettings = Depends(get_settings))
     minio_endpoint = request.app.state.settings.minio_endpoint
     vault_client = request.app.state.vault_client
 
-    status = await check_readiness(
-        db_engine, redis_client, minio_endpoint, vault_client, settings
-    )
-    from starlette.responses import JSONResponse
+    status = await check_readiness(db_engine, redis_client, minio_endpoint, vault_client, settings)
     from fastapi.encoders import jsonable_encoder
+    from starlette.responses import JSONResponse
 
     if status.status == "ok":
         return status

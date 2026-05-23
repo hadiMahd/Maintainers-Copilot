@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import pytest
 from langchain_core.messages import AIMessage
 from pydantic import SecretStr
-import pytest
 
 from app.core.config import AppSettings
 from app.domain.chat import ConversationMessage

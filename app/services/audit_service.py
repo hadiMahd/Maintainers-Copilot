@@ -70,7 +70,7 @@ class AuditService:
         request_id: str | None = None,
     ) -> list[AuditLogEntry]:
         t = self._trace(request_id)
-        log = _log().bind(**t)
+        _log().bind(**t)
         async with self._session_factory() as session:
             repo = self._audit_repo_cls(session)
             rows = await repo.list_all(limit=limit, offset=offset)
@@ -81,9 +81,11 @@ class AuditService:
                     action=r.action,
                     target_type=r.target_type,
                     target_id=r.target_id,
-                    timestamp=r.timestamp.isoformat()
-                    if hasattr(r.timestamp, "isoformat")
-                    else str(r.timestamp),
+                    timestamp=(
+                        r.timestamp.isoformat()
+                        if hasattr(r.timestamp, "isoformat")
+                        else str(r.timestamp)
+                    ),
                     metadata=r.extra_data,
                 )
                 for r in rows
@@ -99,7 +101,7 @@ class AuditService:
         extra_data: dict | None = None,
         request_id: str | None = None,
     ) -> None:
-        t = self._trace(request_id)
+        self._trace(request_id)
         safe_data = redact_audit_metadata(extra_data or {})
         async with self._session_factory() as session:
             repo = self._audit_repo_cls(session)

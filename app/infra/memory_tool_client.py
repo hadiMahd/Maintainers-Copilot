@@ -2,12 +2,28 @@
 
 from __future__ import annotations
 
-from app.domain.chat_tools import WriteMemoryInput, WriteMemoryOutput
-from app.domain.memory import WriteMemoryRequest
+from app.domain.chat_tools import (
+    RecalledMemoryItem,
+    RecallMemoryInput,
+    RecallMemoryOutput,
+    WriteMemoryInput,
+    WriteMemoryOutput,
+)
+from app.domain.memory import LongTermMemoryRecallRequest, WriteMemoryRequest
 
 
 class BaseMemoryToolClient:
-    """Abstract write-memory tool seam."""
+    """Abstract long-term memory tool seam."""
+
+    async def recall_memory(
+        self,
+        user_id: str,
+        conversation_id: str,
+        payload: RecallMemoryInput,
+        *,
+        request_id: str | None = None,
+    ) -> RecallMemoryOutput:
+        raise NotImplementedError
 
     async def write_memory(
         self,
@@ -20,14 +36,30 @@ class BaseMemoryToolClient:
 
 
 class FakeMemoryToolClient(BaseMemoryToolClient):
-    """Deterministic memory-write fake for tests."""
+    """Deterministic memory fake for tests."""
 
-    def __init__(self, result: WriteMemoryOutput | None = None) -> None:
+    def __init__(
+        self,
+        result: WriteMemoryOutput | None = None,
+        recall_result: RecallMemoryOutput | None = None,
+    ) -> None:
         self._result = result or WriteMemoryOutput(
             memory_id="memory-001",
             audit_log_id="audit-001",
             redaction_summary="no redaction changes",
         )
+        self._recall_result = recall_result or RecallMemoryOutput(items=[])
+
+    async def recall_memory(
+        self,
+        user_id: str,
+        conversation_id: str,
+        payload: RecallMemoryInput,
+        *,
+        request_id: str | None = None,
+    ) -> RecallMemoryOutput:
+        _ = (user_id, conversation_id, payload, request_id)
+        return self._recall_result
 
     async def write_memory(
         self,
@@ -45,6 +77,35 @@ class MemoryToolClient(BaseMemoryToolClient):
 
     def __init__(self, service) -> None:
         self._service = service
+
+    async def recall_memory(
+        self,
+        user_id: str,
+        conversation_id: str,
+        payload: RecallMemoryInput,
+        *,
+        request_id: str | None = None,
+    ) -> RecallMemoryOutput:
+        recalled = await self._service.recall_memory(
+            user_id=user_id,
+            data=LongTermMemoryRecallRequest(
+                query=payload.query,
+                conversation_id=conversation_id,
+                limit=payload.limit,
+            ),
+            request_id=request_id,
+        )
+        return RecallMemoryOutput(
+            items=[
+                RecalledMemoryItem(
+                    id=item.id,
+                    memory_type=item.memory_type,
+                    content=item.content,
+                    audit_log_id=item.audit_log_id,
+                )
+                for item in recalled.items
+            ]
+        )
 
     async def write_memory(
         self,

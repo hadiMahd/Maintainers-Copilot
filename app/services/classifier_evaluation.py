@@ -6,17 +6,16 @@ golden set validation used by all three classification approaches.
 
 from __future__ import annotations
 
-import json
-import hashlib
-import tempfile
-import os
 import contextlib
+import hashlib
+import json
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from app.domain.classifier import (
-    APPROACH_NAMES,
     LABEL_ORDER,
     VALID_LABELS,
     ApproachMetrics,
@@ -44,7 +43,9 @@ def compute_metrics(
 
     order = label_order or LABEL_ORDER
     acc = accuracy_score(labels_true, labels_predicted)
-    macro_f1 = f1_score(labels_true, labels_predicted, average="macro", labels=list(order), zero_division=0)
+    macro_f1 = f1_score(
+        labels_true, labels_predicted, average="macro", labels=list(order), zero_division=0
+    )
     per_class = f1_score(
         labels_true,
         labels_predicted,

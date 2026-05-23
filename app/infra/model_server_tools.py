@@ -9,9 +9,9 @@ import httpx
 from app.domain.chat_tools import (
     ClassifyIssueInput,
     ClassifyIssueOutput,
+    ExtractedEntity,
     ExtractEntitiesInput,
     ExtractEntitiesOutput,
-    ExtractedEntity,
     SummarizeIssueInput,
     SummarizeIssueOutput,
 )
@@ -77,7 +77,9 @@ class FakeModelServerTools(BaseModelServerTools):
         _ = payload
         return self.classify_output
 
-    async def extract_entities(self, payload: ExtractEntitiesInput, **_: Any) -> ExtractEntitiesOutput:
+    async def extract_entities(
+        self, payload: ExtractEntitiesInput, **_: Any
+    ) -> ExtractEntitiesOutput:
         _ = payload
         return self.entities_output
 
@@ -151,7 +153,9 @@ class HTTPModelServerTools(BaseModelServerTools):
             headers["X-Request-ID"] = request_id
         if trace_id:
             headers["X-Trace-ID"] = trace_id
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout_seconds) as client:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout_seconds
+        ) as client:
             response = await client.post(path, json=payload, headers=headers)
         response.raise_for_status()
         return response.json()

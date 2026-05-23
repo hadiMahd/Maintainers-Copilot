@@ -15,11 +15,13 @@ async def read_current_user(
 ) -> UserRead:
     import app.infra.database as db_mod
     from app.repositories.user_repository import UserRepository
+
     async with db_mod.async_session_factory() as session:
         repo = UserRepository(session)
         user = await repo.get_by_id(current_user.user_id)
         if not user:
             from app.domain.errors import AuthenticationError
+
             raise AuthenticationError("User not found")
         return UserRead(
             id=user.id,

@@ -7,9 +7,9 @@ and reports p50/p95 latency values.
 from __future__ import annotations
 
 import json
-import time
 import statistics
 import sys
+import time
 from typing import Any
 
 import httpx
@@ -29,7 +29,10 @@ def measure_latency(
             {"title": "App crashes on startup"},
             {"title": "Add dark mode support", "body": "Requesting dark mode for night usage"},
             {"title": "Typo in documentation", "body": "Fix typo in API docs"},
-            {"title": "How do I configure the database?", "body": "Can't find database config info"},
+            {
+                "title": "How do I configure the database?",
+                "body": "Can't find database config info",
+            },
             {"title": "Memory leak in worker process"},
         ]
 
@@ -44,11 +47,15 @@ def measure_latency(
                 response = client.post(endpoint, json=payload)
                 elapsed_ms = (time.monotonic() - start) * 1000
                 if response.status_code != 200:
-                    print(f"Request {i+1} failed with status {response.status_code}: {response.text}")
+                    print(
+                        f"Request {i+1} failed with status {response.status_code}: {response.text}"
+                    )
                     continue
             except httpx.ConnectError:
                 print(f"Error: Cannot connect to model server at {base_url}")
-                print("Make sure the model server is running: uvicorn model_server.main:app --port 8001")
+                print(
+                    "Make sure the model server is running: uvicorn model_server.main:app --port 8001"
+                )
                 sys.exit(1)
             latencies.append(elapsed_ms)
 
@@ -92,6 +99,7 @@ def main() -> None:
 
     output_path = "evals/latency_report.json"
     import os
+
     os.makedirs("evals", exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(result, f, indent=2)

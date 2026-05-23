@@ -31,7 +31,7 @@
 
 ## Phase 2 Data Source Decision
 
-**Decision**: Use `fastapi/fastapi` as the public repository for the Phase 2 dataset pipeline.
+**Decision**: Use `pandas-dev/pandas` as the public repository for the Week 7 dataset.
 
 **Selection Criteria**:
 - Public open-source repository with permissive license (MIT)
@@ -45,12 +45,13 @@
 **Fetch Limit**: 1000 closed issues (configurable via `DatasetSettings.max_issues`).
 
 **Alternatives Rejected**:
+- `fastapi/fastapi`: initially considered, but rejected in favor of the final pandas dataset used for training/evaluation.
 - `pytorch/pytorch`: rejected because labels are more complex and less consistent.
 - PyGithub library: rejected to keep dependencies minimal and control pagination explicitly.
 
 ## Phase 2 Label Mapping Decision
 
-**Chosen Repository Labels**: `fastapi/fastapi` uses labels such as `bug`, `feature`, `documentation`, `question`.
+**Chosen Repository Labels**: `pandas-dev/pandas` labels are mapped into `bug`, `feature`, `docs`, and `question`.
 
 **Label Mapping**:
 - `bug` → `bug` (exact match)
@@ -236,10 +237,10 @@ Runners-up and rationale:
 - **Disagreement notes**: 5 hand-labeled examples with disagreement annotations recorded in the report.
 - **Metrics**: hit@5, MRR@10, faithfulness, answer relevancy, retrieval latency (p50/p95), generation latency (p50/p95).
 - **Judge**: `TokenOverlapJudge` — frozen unigram-F1 scorer, zero-dependency, deterministic, records stable `judge_id` = `token-overlap-f1-v1`.
-- **Optional RAGAS**: `NonCIJudgeStub` — config seam for RAGAS-style metrics, raises `NotImplementedError` in this pass.
+- **Optional RAGAS**: `RagasJudgeClient` — enabled for real Azure evals with `USE_RAGAS_EVALS=1`, records context precision, context recall, context entity recall, noise sensitivity, faithfulness, and response relevancy under `rag.ragas`.
 - **Threshold gate**: Advanced must beat baseline on hit@5 and MRR@10. Gate bypassed with `--exploratory` flag.
 - **Report**: `evals/rag_eval_report.json` — redacted before persistence.
-- **Alternatives Rejected**: LLM judge (adds cost/non-determinism), no gate (constitution requires evals), single-mode evaluation (spec requires baseline comparison).
+- **Alternatives Rejected**: RAGAS as the default CI gate (adds paid API cost and judge variability), no gate (constitution requires evals), single-mode evaluation (spec requires baseline comparison).
 
 ### Duplicate Embedding Prevention
 
@@ -458,11 +459,109 @@ Runners-up and rationale:
 
 **Rationale**: The widget loader lives in Phase 9; Phase 8 needs only enough backend support to display a generated snippet in the admin UI.
 
-## Phase 9 Embeddable Widget Decisions
+## Phase 10 Production Readiness Decisions
+
+### Validation Workflow: GitHub Actions + Makefile Parity
+
+**Decision**: Implement the validation workflow as both a GitHub Actions YAML workflow (`.github/workflows/ci.yml`) and a `Makefile` that exposes the same gates for local runs. Both paths produce equivalent pass/fail results.
+
+**Rationale**:
+- Reviewers can run `make validate` without GitHub Actions access.
+- CI and local validation cannot drift if they share the same `scripts/ci/` commands.
+- Docker build is a required non-skippable gate in both paths.
+
+**Alternatives Rejected**:
+- CI-only workflow: rejected because local validation is required for review.
+- Separate CI and local scripts: rejected because drift would be inevitable.
+
+### Eval Report Schema (eval-report.schema.json)
+
+**Decision**: Adopt `specs/010-production-readiness/contracts/eval-report.schema.json` as the canonical eval report format. Every CI run produces `evals/reports/eval_report.json` matching this schema.
+
+Required fields: `run_id`, `timestamp`, `classifier` (with `accuracy`, `macro_f1`, `per_class_f1`, `threshold`), `rag` (with `hit_at_5`, `mrr_at_10`, `faithfulness`, `answer_relevancy`, `threshold`, and optional `ragas` metrics), `storage` (with `bucket`, `key`), and `passed` (boolean).
+
+All numeric metric fields are floats in [0, 1].
+
+**Alternatives Rejected**:
+- Reusing Phase 3/5 report formats: rejected because they don't include combined gating, security gates, or storage metadata.
+- JSON-only without schema: rejected because schema validation catches drift.
+
+### Regression Threshold: 2 Absolute Percentage Points
+
+**Decision**: Any tracked metric that drops more than 2 absolute percentage points from the previous green build triggers a workflow failure.
+
+**Rationale**:
+- 2pp is sensitive enough to catch meaningful regressions while tolerating noise from compact golden sets (10-15 items).
+- Matches constitution requirement (Principle IX: "Evals Are Release Gates").
+- The first successful CI run records that no previous green report exists — no regression is detected.
+
+**Alternatives Rejected**:
+- 1pp threshold: too noisy for small golden sets.
+- 5pp threshold: too permissive.
+- Relative percentage: confusing with small absolute values (e.g., hit@5 dropping from 0.10 to 0.05 is a 50% relative drop but only 5pp absolute).
+
+### Eval Report Storage: MinIO with Local Fallback
+
+**Decision**: CI stores `eval_report.json` in MinIO. Local dev/test uses a filesystem fallback (`evals/reports/`). The storage adapter (`scripts/ci/report_storage.py`) abstracts both paths.
+
+**Rationale**:
+- MinIO is the project's artifact store (already used for MLflow and model artifacts).
+- Local fallback means evals work without infrastructure in dev/test.
+- Previous-green report diffing reads from the same storage adapter.
+
+**Alternatives Rejected**:
+- Local-only storage: rejected because CI reports need to persist across runs.
+- S3 directly: rejected because MinIO is already the project convention.
+
+### Deterministic CI Eval Adapters
+
+**Decision**: CI eval adapters use deterministic local classifiers (keyword-based for classifier eval, fixture-backed fake generation for RAG eval). Real Azure OpenAI evals are gated behind `USE_REAL_AZURE_EVALS=1`.
+
+**Rationale**:
+- Default `make evals` and CI must never require paid API credentials (spec FR-031).
+- Deterministic adapter results are repeatable — same golden set always produces same metrics.
+- The real-Azure flag allows manual verification without breaking CI.
+- Missing Azure credentials only fail in explicit real-Azure mode.
+
+**Alternatives Rejected**:
+- Always use real Azure OpenAI: violates no-paid-credentials requirement.
+- Skip eval gates when credentials absent: violates constitution (evals are release gates).
+
+### Python Quality Toolchain
+
+**Decision**: Use `flake8` for lint, `black` for formatting, `isort` for import ordering, and `mypy` for type checking. All configured at line length 100.
+
+**Rationale**:
+- These are the tools specified in the Phase 10 spec clarifications.
+- Ruff is already configured for IDE support; flake8 is added as the CI lint gate.
+- Line length 100 matches existing `pyproject.toml` conventions.
+
+**Alternatives Rejected**:
+- Ruff-only: rejected because spec requires flake8 specifically.
+- Pylint: rejected as heavier-weight than needed.
+- Line length 88 (black default): rejected to match existing 100-line convention.
+
+### Compact Golden Sets for CI
+
+**Decision**: CI uses committed compact golden sets (15-item classifier, 10-item RAG) distinct from the larger Phase 3/5 evaluation datasets (25-item each).
+
+**Rationale**:
+- CI must complete in under 15 minutes.
+- Small sets produce enough metric signal for regression detection.
+- Larger datasets remain available for full evaluation via `scripts/evaluate_classifiers.py` and `scripts/evaluate_rag.py`.
+
+### Previous-Green Report Diffing Contract
+
+**Decision**: Compare all tracked metrics (classifier accuracy, macro_f1; RAG hit@5, mrr@10, faithfulness, answer_relevancy) against the most recent passing report. First run records no comparison. Malformed or unavailable previous reports fail the diff gate after at least one green report has been stored.
+
+**Rationale**:
+- All metrics must be tracked to prevent silent single-metric regressions.
+- First-run exemption prevents false failures before any baseline exists.
+- Malformed report failure prevents silent bypass.
 
 ### Loader Serving Strategy
 
-**Decision**: The widget loader (`loader.js`) is served by the FastAPI backend at `GET /widget/loader.js` with `Cache-Control: no-cache` headers. The loader is a vanilla TypeScript file built by Vite as a separate entry point.
+**Decision**: The public embed snippet uses `GET /widget.js`. The same loader asset is also available at `GET /widget/loader.js` for backward compatibility. The loader is a vanilla TypeScript file built by Vite as a separate entry point.
 
 **Rationale**:
 - Single origin for all widget assets simplifies CORS and CSP.

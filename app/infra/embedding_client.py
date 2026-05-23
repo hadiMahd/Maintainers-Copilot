@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 from abc import ABC, abstractmethod
 
 from app.core.config import AppSettings
@@ -114,15 +115,22 @@ def _fake_component(seed: int, idx: int) -> float:
     return ((seed * (idx + 1) * 2654435761) & 0xFFFFFFFF) / 0xFFFFFFFF * 2.0 - 1.0
 
 
-class AzureEmbeddingStub(BaseEmbeddingClient):
-    """Azure OpenAI text-embedding-3-small stub.
+class AzureEmbeddingClient(BaseEmbeddingClient):
+    """Azure OpenAI embedding client for RAG query/corpus embeddings."""
 
-    Config seam only — wired when ``rag_azure_embedding_endpoint`` is set.
-    Actual Azure calls are out of scope for the US1 pass.
-    """
-
-    def __init__(self, model_name: str = "text-embedding-3-small", dim: int = 1536) -> None:
+    def __init__(
+        self,
+        *,
+        endpoint: str,
+        api_key: str,
+        model_name: str = "text-embedding-3-small",
+        api_version: str = "2024-02-01",
+        dim: int = 1536,
+    ) -> None:
+        self._endpoint = endpoint.rstrip("/")
+        self._api_key = api_key
         self._model_name = model_name
+        self._api_version = api_version
         self._dim = dim
 
     @property
@@ -134,7 +142,26 @@ class AzureEmbeddingStub(BaseEmbeddingClient):
         return self._dim
 
     def encode(self, texts: list[str]) -> list[list[float]]:
-        raise NotImplementedError("Azure embedding calls are not implemented in this pass")
+        try:
+            import httpx
+        except ImportError as exc:
+            raise RuntimeError("Azure embeddings require httpx") from exc
+
+        url = (
+            f"{self._endpoint}/openai/deployments/{self._model_name}/embeddings"
+            f"?api-version={self._api_version}"
+        )
+        headers = {"api-key": self._api_key, "Content-Type": "application/json"}
+        vectors: list[list[float]] = []
+        with httpx.Client(timeout=30.0) as client:
+            for text in texts:
+                response = client.post(url, json={"input": text}, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                embedding = data["data"][0]["embedding"]
+                self._dim = len(embedding)
+                vectors.append([float(value) for value in embedding])
+        return vectors
 
 
 def resolve_embedding_client(settings: AppSettings) -> BaseEmbeddingClient:
@@ -143,7 +170,15 @@ def resolve_embedding_client(settings: AppSettings) -> BaseEmbeddingClient:
     Uses local ``all-MiniLM-L6-v2`` when Azure credentials are absent.
     """
     if settings.rag_azure_embedding_endpoint and settings.rag_azure_embedding_api_key:
-        return AzureEmbeddingStub()
+        return AzureEmbeddingClient(
+            endpoint=settings.rag_azure_embedding_endpoint,
+            api_key=settings.rag_azure_embedding_api_key,
+            model_name=(
+                settings.azure_openai_embedding_model
+                or os.environ.get("AZURE_EMBEDDING_MODEL")
+                or "text-embedding-3-small"
+            ),
+        )
     return LocalEmbeddingClient(model_name=settings.rag_embedding_model)
 
 
@@ -151,6 +186,6 @@ __all__ = [
     "BaseEmbeddingClient",
     "LocalEmbeddingClient",
     "FakeEmbeddingClient",
-    "AzureEmbeddingStub",
+    "AzureEmbeddingClient",
     "resolve_embedding_client",
 ]

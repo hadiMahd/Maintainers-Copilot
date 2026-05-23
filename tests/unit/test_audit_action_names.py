@@ -2,7 +2,6 @@
 
 from app.domain.audit import AuditAction
 
-
 RESERVED_ACTIONS = {
     "memory.write",
     "role.change",
@@ -17,6 +16,7 @@ RESERVED_ACTIONS = {
 class TestAuditActionNames:
     def test_all_seven_reserved_actions_defined(self):
         import typing
+
         args = typing.get_args(AuditAction)
         assert set(args) == RESERVED_ACTIONS
 

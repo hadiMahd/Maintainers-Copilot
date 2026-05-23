@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+
 import structlog
 
 from app.domain.chat import (
@@ -15,8 +16,8 @@ from app.domain.chat import (
     new_message_id,
 )
 from app.domain.errors import (
-    ChatValidationError,
     ChatbotTimeoutError,
+    ChatValidationError,
     ContextLimitExceededError,
     LLMUnavailableError,
     MaxToolCallsExceededError,
@@ -66,7 +67,10 @@ class ChatbotService:
             state=state,
             latest_user_message=body.message,
         )
-        if sum(len(message.content) for message in context_messages) > self._limits.context_size_limit_chars:
+        if (
+            sum(len(message.content) for message in context_messages)
+            > self._limits.context_size_limit_chars
+        ):
             raise ContextLimitExceededError("Chat context exceeds the configured limit")
 
         trace_handle = await self._tracing_service.start_chat_trace(
@@ -80,7 +84,9 @@ class ChatbotService:
         if trimmed:
             warnings.append("Older short-term context was trimmed to fit the configured limit.")
         if state.degraded:
-            warnings.append("Short-term conversation state was unavailable; continuing without prior context.")
+            warnings.append(
+                "Short-term conversation state was unavailable; continuing without prior context."
+            )
 
         try:
             graph_state = await asyncio.wait_for(
@@ -126,7 +132,7 @@ class ChatbotService:
                 message=exc.message,
                 details=exc.details,
             )
-        except asyncio.TimeoutError as exc:
+        except asyncio.TimeoutError:
             await self._tracing_service.finish(
                 trace_handle,
                 "failed",
@@ -158,7 +164,11 @@ class ChatbotService:
         )
         await self._tracing_service.finish(
             trace_handle,
-            "partial" if any(result.status == "failed" for result in graph_state.tool_results) else "success",
+            (
+                "partial"
+                if any(result.status == "failed" for result in graph_state.tool_results)
+                else "success"
+            ),
             {
                 "request_id": request_id,
                 "trace_id": graph_state.trace_id,
@@ -273,7 +283,7 @@ class ChatbotService:
     def _split_message(message: str) -> list[str]:
         if not message:
             return [""]
-        return [message[index:index + 120] for index in range(0, len(message), 120)]
+        return [message[index : index + 120] for index in range(0, len(message), 120)]
 
     @staticmethod
     def _error_result(

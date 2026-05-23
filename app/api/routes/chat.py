@@ -12,6 +12,7 @@ from app.domain.auth import AuthContext
 from app.domain.chat import ChatLimits, ChatRequest
 from app.infra.conversation_state_adapter import ConversationStateAdapter
 from app.infra.llm_adapter import FakeLLMAdapter
+from app.infra.memory_embedding_client import resolve_memory_embedding_client
 from app.infra.memory_tool_client import FakeMemoryToolClient, MemoryToolClient
 from app.infra.model_server_tools import FakeModelServerTools
 from app.infra.prompt_registry import PromptRegistry
@@ -28,7 +29,6 @@ from app.services.conversation_state_service import ConversationStateService
 from app.services.long_term_memory_service import LongTermMemoryService
 from app.services.rag_snapshot_service import RAGSnapshotService
 from app.services.tool_execution_service import ToolExecutionService
-from app.infra.memory_embedding_client import resolve_memory_embedding_client
 
 router = APIRouter()
 
@@ -77,7 +77,7 @@ def _get_memory_tool_client(request: Request):
     service = LongTermMemoryService(
         memory_repo=MemoryRepository,
         audit_repo=AuditLogRepository,
-        embedding_client=resolve_memory_embedding_client(),
+        embedding_client=resolve_memory_embedding_client(request.app.state.settings),
         session_factory=session_factory,
     )
     return MemoryToolClient(service)
@@ -87,6 +87,7 @@ def _get_rag_snapshot_coordinator(request: Request) -> ChatRAGSnapshotCoordinato
     session_factory = getattr(request.app.state, "db_session_factory", db_mod.async_session_factory)
 
     if session_factory is None:
+
         class _FakeSnapshotService:
             async def store_snapshot(self, **kwargs):
                 from app.domain.rag import SnapshotRecord
@@ -126,8 +127,12 @@ def _get_rag_snapshot_coordinator(request: Request) -> ChatRAGSnapshotCoordinato
 
 def _get_tool_execution_service(request: Request) -> ToolExecutionService:
     settings: AppSettings = request.app.state.settings
-    model_server_tools = getattr(request.app.state, "chat_model_server_tools", None) or FakeModelServerTools()
-    rag_tool_client = getattr(request.app.state, "chat_rag_tool_client", None) or FakeRAGToolClient()
+    model_server_tools = (
+        getattr(request.app.state, "chat_model_server_tools", None) or FakeModelServerTools()
+    )
+    rag_tool_client = (
+        getattr(request.app.state, "chat_rag_tool_client", None) or FakeRAGToolClient()
+    )
     return ToolExecutionService(
         model_server_tools=model_server_tools,
         rag_tool_client=rag_tool_client,

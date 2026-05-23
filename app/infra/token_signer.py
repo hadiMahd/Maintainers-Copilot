@@ -7,7 +7,6 @@ refresh tokens are opaque random strings stored hashed in the database.
 
 from __future__ import annotations
 
-import datetime
 import secrets
 import time
 import uuid

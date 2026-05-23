@@ -40,9 +40,7 @@ class TokenSessionRepository:
 
     async def get_by_refresh_hash(self, refresh_token_hash: str) -> TokenSession | None:
         result = await self._session.execute(
-            select(TokenSession).where(
-                TokenSession.refresh_token_hash == refresh_token_hash
-            )
+            select(TokenSession).where(TokenSession.refresh_token_hash == refresh_token_hash)
         )
         return result.scalar_one_or_none()
 

@@ -150,7 +150,9 @@ def run_llm_classifier_baseline(
         os.unlink(tmp_path) if os.path.exists(tmp_path) else None
         raise
 
-    print(f"LLM baseline complete. Metrics: accuracy={metrics['accuracy']:.4f}, macro_f1={metrics['macro_f1']:.4f}")
+    print(
+        f"LLM baseline complete. Metrics: accuracy={metrics['accuracy']:.4f}, macro_f1={metrics['macro_f1']:.4f}"
+    )
     print(f"Artifacts saved to {artifact_dir}")
 
 

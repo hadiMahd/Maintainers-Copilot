@@ -15,7 +15,6 @@ from typing import Any
 import numpy as np
 
 from app.domain.classifier import (
-    LABEL_ORDER,
     TRANSFORMER_ALPHABETICAL_LABEL_IDS,
     ModelCard,
     PredictionRecord,
@@ -113,7 +112,9 @@ def train_transformer_classifier(
 
     run_id = f"transformer-{uuid.uuid4().hex[:12]}"
     started_at = datetime.now(UTC).isoformat()
-    tracking_uri = mlflow_tracking_uri or os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    tracking_uri = mlflow_tracking_uri or os.environ.get(
+        "MLFLOW_TRACKING_URI", "http://localhost:5000"
+    )
     artifact_uri = str(artifact_path.resolve())
 
     train_started = time.monotonic()
@@ -237,7 +238,8 @@ def train_transformer_classifier(
                 "accuracy": float(metrics["accuracy"]),
                 "macro_f1": float(metrics["macro_f1"]),
             },
-            artifact_references=plot_paths + ["metrics.json", "predictions.jsonl", "artifact.sha256"],
+            artifact_references=plot_paths
+            + ["metrics.json", "predictions.jsonl", "artifact.sha256"],
         )
         save_run_metadata(run_metadata, str(artifact_path / "run_metadata.json"))
 
@@ -327,10 +329,7 @@ def _build_dataset(dataset_cls: Any, examples: list[dict[str, Any]], tokenizer: 
     # (sklearn LabelEncoder sorts alphabetically).
     label_to_id = TRANSFORMER_ALPHABETICAL_LABEL_IDS
     dataset = dataset_cls.from_list(
-        [
-            {"text": example["text"], "labels": label_to_id[example["label"]]}
-            for example in examples
-        ]
+        [{"text": example["text"], "labels": label_to_id[example["label"]]} for example in examples]
     )
     # Match dump tokenization: padding=True (not "max_length"),
     # truncation=True, max_length=512.

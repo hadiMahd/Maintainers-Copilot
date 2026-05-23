@@ -2,23 +2,16 @@
 
 from __future__ import annotations
 
-import json
-import sys
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
-
 from app.domain.rag import (
-    EvalReport,
-    EvalRun,
     EvalMetrics,
     EvalReport,
-    RAGChunk,
+    EvalRun,
 )
 
 
-def _make_fixture_eval_run(mode: str, hit: float, mrr: float, judge_id: str = "token-overlap-f1-v1") -> EvalRun:
+def _make_fixture_eval_run(
+    mode: str, hit: float, mrr: float, judge_id: str = "token-overlap-f1-v1"
+) -> EvalRun:
     return EvalRun(
         mode=mode,
         metrics=EvalMetrics(hit_at_5=hit, mrr_at_10=mrr, faithfulness=0.8, answer_relevancy=0.7),

@@ -4,8 +4,8 @@
 
 **Rationale**: The project has no existing committed CI provider in scope, and
 GitHub Actions is the expected default for a GitHub-hosted bootcamp repository.
-It can run uv, ruff, pytest, Docker build validation, compact evals, and Docker
-Compose smoke checks on Linux runners.
+It can run uv, flake8, black, isort, mypy, pytest, Docker build validation,
+compact evals, and Docker Compose smoke checks on Linux runners.
 
 **Alternatives considered**:
 
@@ -25,16 +25,18 @@ locally and in CI reduces drift and makes validation commands reproducible.
 - Use poetry or pipenv: rejected because they are not part of the selected
   project stack.
 
-## Decision: Use ruff for lint and format checks
+## Decision: Use flake8, black, and isort for lint, format, and import-order checks
 
-**Rationale**: Ruff is already part of the project stack and provides fast lint
-and formatting validation. Separate lint and format-check gates make failures
-clear.
+**Rationale**: The Phase 10 spec explicitly locks the Python quality toolchain
+to flake8 for lint, black for format checks, and isort for import-order checks.
+Keeping these tools explicit in CI and local validation makes the release gate
+match the accepted spec instead of relying on a substitute tool.
 
 **Alternatives considered**:
 
-- Add flake8, black, and isort separately: rejected because ruff covers the
-  required checks with less configuration.
+- Replace them with a substitute all-in-one linter/formatter: rejected because
+  the Phase 10 spec already fixed the required tools and task generation should
+  not drift from that contract.
 - Skip format checks: rejected because format is an explicit Phase 10 gate.
 
 ## Decision: Use pytest for gate and integration tests
@@ -49,18 +51,31 @@ gates, tracing validation, docs completeness, and smoke-test assertions.
   pytest.
 - Add a new test framework: rejected because it adds unnecessary complexity.
 
-## Decision: Add a type-check gate with pyright as the default fallback
+## Decision: Use mypy for the type-check gate
 
-**Rationale**: The project brief requires type-checking in CI. If the
-implementation has already selected mypy or another checker, use that existing
-tool; otherwise pyright gives a practical default that can run in CI without
-changing runtime behavior.
+**Rationale**: The Phase 10 spec explicitly locks type-checking to mypy.
+Using mypy in CI and local validation keeps the gate aligned with the accepted
+feature contract and avoids ambiguous fallback behavior during task generation.
 
 **Alternatives considered**:
 
 - Skip type-checking: rejected because the project brief explicitly requires it.
-- Pick a checker during implementation ad hoc: rejected because CI gate behavior
-  must be decision-complete.
+- Use another checker or choose later during implementation: rejected because CI
+  gate behavior must already be decision-complete and spec-aligned.
+
+## Decision: Use Makefile targets for local gate orchestration
+
+**Rationale**: The Phase 10 spec requires GitHub Actions plus a Makefile so the
+same validation gates are easy to run from a clean local checkout. The Makefile
+should wrap the underlying `scripts/ci/` commands instead of duplicating gate
+logic.
+
+**Alternatives considered**:
+
+- Only expose shell scripts: rejected because the accepted spec requires local
+  `make` entry points.
+- Put all gate logic directly in Makefile recipes: rejected because reusable
+  scripts are easier to test and call from GitHub Actions.
 
 ## Decision: Keep CI independent of real paid APIs
 
@@ -93,7 +108,8 @@ main CI path.
 
 **Rationale**: A single report gives reviewers one place to inspect classifier
 metrics, RAG metrics, thresholds, pass/fail decisions, artifact metadata, and
-storage details. It also supports final `DECISIONS.md` and `EVALS.md`.
+storage details. It also supports final `docs/decisions.md` and
+`docs/evals.md`.
 
 **Alternatives considered**:
 

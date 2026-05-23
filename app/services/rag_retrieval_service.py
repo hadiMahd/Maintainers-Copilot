@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-import math
 import uuid
 
 from app.domain.rag import (
+    RAGRetrievalError,
     RetrievalQuery,
     RetrievalResult,
     RetrievalResultSet,
-    RAGRetrievalError,
 )
-from app.infra.reranker_client import BaseRerankerClient, FakeRerankerClient, resolve_reranker
+from app.infra.reranker_client import BaseRerankerClient, FakeRerankerClient
 from app.repositories.rag_chunk_repository import RAGChunkRepository
 
 logger = logging.getLogger(__name__)
@@ -86,11 +86,13 @@ class RAGRetrievalService:
         sparse_weight: float = 0.3,
         dense_weight: float = 0.7,
         reranker: BaseRerankerClient | None = None,
+        embedding_client=None,
     ) -> None:
         self._repo = repo
         self._sparse_weight = sparse_weight
         self._dense_weight = dense_weight
         self._reranker = reranker or FakeRerankerClient()
+        self._embedding_client = embedding_client
 
     async def retrieve(
         self,
@@ -115,21 +117,29 @@ class RAGRetrievalService:
             elif query.retrieval_mode == "dense":
                 if not query.embedding_model:
                     raise RAGRetrievalError("embedding_model is required for dense retrieval")
-                results = await self._repo.search_dense(q_text, query.embedding_model, query.top_k)
+                query_embedding = await self._embed_query(q_text)
+                results = await self._repo.search_dense(
+                    query_embedding, query.embedding_model, query.top_k
+                )
                 mode = "dense"
             else:
                 if not query.embedding_model:
                     raise RAGRetrievalError("embedding_model is required for hybrid retrieval")
+                query_embedding = await self._embed_query(q_text)
                 dense_results = await self._repo.search_dense(
-                    q_text, query.embedding_model, query.top_k * 2,
+                    query_embedding,
+                    query.embedding_model,
+                    query.top_k * 2,
                 )
                 sparse_results = await self._repo.search_sparse(q_text, query.top_k * 2)
                 scored = _normalize_hybrid_merge(
-                    dense_results, sparse_results,
-                    self._sparse_weight, self._dense_weight,
+                    dense_results,
+                    sparse_results,
+                    self._sparse_weight,
+                    self._dense_weight,
                 )
                 results = sorted(scored.values(), key=lambda x: x.final_score, reverse=True)
-                results = results[:query.top_k]
+                results = results[: query.top_k]
                 mode = "hybrid"
 
             for idx, r in enumerate(results, start=1):
@@ -139,7 +149,12 @@ class RAGRetrievalService:
                 results = _apply_metadata_filters(results, query.metadata_filters)
 
             if query.reranking_enabled and results:
-                results = self._reranker.rerank(query.query, results, query.top_k)
+                results = await asyncio.to_thread(
+                    self._reranker.rerank,
+                    query.query,
+                    results,
+                    query.top_k,
+                )
 
             if not results:
                 mode_explanation = "No results match the query and filters"
@@ -160,6 +175,12 @@ class RAGRetrievalService:
                 extra={"request_id": rid, "trace_id": tid, "error": str(exc)},
             )
             raise RAGRetrievalError(f"Retrieval failed: {exc}") from exc
+
+    async def _embed_query(self, query_text: str) -> list[float]:
+        if self._embedding_client is None:
+            raise RAGRetrievalError("embedding_client is required for dense retrieval")
+        embeddings = await asyncio.to_thread(self._embedding_client.encode, [query_text])
+        return embeddings[0]
 
 
 def _transform_query(query: str) -> str:
@@ -191,4 +212,9 @@ def _transform_query(query: str) -> str:
     return query
 
 
-__all__ = ["RAGRetrievalService", "_apply_metadata_filters", "_transform_query", "_normalize_hybrid_merge"]
+__all__ = [
+    "RAGRetrievalService",
+    "_apply_metadata_filters",
+    "_transform_query",
+    "_normalize_hybrid_merge",
+]

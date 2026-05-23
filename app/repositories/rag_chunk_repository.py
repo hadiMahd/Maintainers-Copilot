@@ -8,7 +8,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.rag import RAGChunk, RAGRetrievalError, RetrievalResult
+from app.domain.rag import RAGChunk, RetrievalResult
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +17,11 @@ SELECT
     c.chunk_id, c.parent_id, c.source_type, c.source_path, c.issue_number,
     c.source_url, c.title, c.labels, c.created_at, c.updated_at,
     c.chunk_index, c.content, c.content_hash, c.token_count, c.metadata,
-    1.0 - (e.vector <=> query_c.vector) AS dense_score
+    1.0 - (e.vector <=> CAST(:query_vector AS vector)) AS dense_score
 FROM rag_chunks c
 JOIN rag_embeddings e ON e.chunk_id = c.chunk_id
-CROSS JOIN (SELECT vector::vector AS vector FROM rag_embeddings WHERE chunk_id = :query_chunk_id LIMIT 1) query_c
 WHERE e.embedding_model = :embedding_model
-ORDER BY e.vector <=> query_c.vector
+ORDER BY e.vector <=> CAST(:query_vector AS vector)
 LIMIT :top_k
 """
 
@@ -88,7 +87,9 @@ class RAGChunkRepository:
             },
         )
 
-    async def insert_sparse_search(self, chunk_id: str, search_text: str, title_terms: str = "") -> None:
+    async def insert_sparse_search(
+        self, chunk_id: str, search_text: str, title_terms: str = ""
+    ) -> None:
         await self._session.execute(
             text(
                 "INSERT INTO rag_sparse_search (chunk_id, search_text, title_terms, metadata_terms, search_vector) "
@@ -109,25 +110,31 @@ class RAGChunkRepository:
 
     async def search_dense(
         self,
-        query_text: str,
+        query_embedding: list[float],
         embedding_model: str,
         top_k: int = 10,
     ) -> list[RetrievalResult]:
         rows = await self._session.execute(
             text(_DENSE_SEARCH_SQL),
-            {"query_text": query_text, "embedding_model": embedding_model, "top_k": top_k},
+            {
+                "query_vector": _vector_literal(query_embedding),
+                "embedding_model": embedding_model,
+                "top_k": top_k,
+            },
         )
         results: list[RetrievalResult] = []
         for idx, row in enumerate(rows.mappings(), start=1):
             chunk = _row_to_chunk(dict(row))
-            results.append(RetrievalResult(
-                rank=idx,
-                final_score=float(row.get("dense_score", 0.0)),
-                chunk=chunk,
-                content_preview=chunk.content[:200],
-                dense_score=float(row.get("dense_score", 0.0)),
-                retrieval_mode="dense",
-            ))
+            results.append(
+                RetrievalResult(
+                    rank=idx,
+                    final_score=float(row.get("dense_score", 0.0)),
+                    chunk=chunk,
+                    content_preview=chunk.content[:200],
+                    dense_score=float(row.get("dense_score", 0.0)),
+                    retrieval_mode="dense",
+                )
+            )
         return results
 
     async def search_sparse(
@@ -142,25 +149,28 @@ class RAGChunkRepository:
         results: list[RetrievalResult] = []
         for idx, row in enumerate(rows.mappings(), start=1):
             chunk = _row_to_chunk(dict(row))
-            results.append(RetrievalResult(
-                rank=idx,
-                final_score=float(row.get("sparse_score", 0.0)),
-                chunk=chunk,
-                content_preview=chunk.content[:200],
-                sparse_score=float(row.get("sparse_score", 0.0)),
-                retrieval_mode="sparse",
-            ))
+            results.append(
+                RetrievalResult(
+                    rank=idx,
+                    final_score=float(row.get("sparse_score", 0.0)),
+                    chunk=chunk,
+                    content_preview=chunk.content[:200],
+                    sparse_score=float(row.get("sparse_score", 0.0)),
+                    retrieval_mode="sparse",
+                )
+            )
         return results
 
     async def search_hybrid(
         self,
         query_text: str,
+        query_embedding: list[float],
         embedding_model: str,
         sparse_weight: float = 0.3,
         dense_weight: float = 0.7,
         top_k: int = 10,
     ) -> list[RetrievalResult]:
-        dense_results = await self.search_dense(query_text, embedding_model, top_k * 2)
+        dense_results = await self.search_dense(query_embedding, embedding_model, top_k * 2)
         sparse_results = await self.search_sparse(query_text, top_k * 2)
         return _merge_hybrid(dense_results, sparse_results, sparse_weight, dense_weight, top_k)
 
@@ -183,6 +193,10 @@ def _row_to_chunk(row: dict) -> RAGChunk:
         token_count=int(row.get("token_count", 0)),
         metadata=dict(row["metadata"]) if row.get("metadata") else {},
     )
+
+
+def _vector_literal(vector: list[float]) -> str:
+    return "[" + ",".join(str(float(value)) for value in vector) + "]"
 
 
 def _merge_hybrid(

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.domain.rag import SnapshotRecord
 from app.infra.redaction import redact_snapshot_row
 
@@ -36,12 +34,18 @@ class TestSnapshotServiceLogic:
         assert result["chunk_ids"] == ["a", "b"]
 
     def test_snapshot_query_is_bounded(self):
-        row = {"snapshot_id": "s1", "conversation_id": "c1", "message_id": "m1", "query": "x" * 1000}
+        row = {
+            "snapshot_id": "s1",
+            "conversation_id": "c1",
+            "message_id": "m1",
+            "query": "x" * 1000,
+        }
         result = redact_snapshot_row(row)
         assert "query" in result
 
     def test_multiple_snapshots_per_conversation_not_pruned(self):
         from app.domain.rag import SnapshotRecord
+
         snaps = [
             SnapshotRecord(conversation_id="c1", message_id="m1"),
             SnapshotRecord(conversation_id="c1", message_id="m2"),
@@ -74,6 +78,7 @@ class TestRetentionPolicy:
 
 
 # -- Helpers -----------------------------------------------------------------
+
 
 def _make_snap(conv_id: str) -> SnapshotRecord:
     return SnapshotRecord(conversation_id=conv_id, message_id=f"{conv_id}-msg")

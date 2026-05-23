@@ -10,12 +10,14 @@ def _make_fake_records(count=100):
         year = 2020 + (i // 25)
         month = 1 + ((i % 25) // 2)
         day = 1 + (i % 28)
-        records.append({
-            "id": f"test/repo#{i+1}",
-            "issue_number": i + 1,
-            "mapped_label": ["bug", "feature", "docs", "question"][i % 4],
-            "closed_at": f"{year:04d}-{month:02d}-{day:02d}T00:00:00Z",
-        })
+        records.append(
+            {
+                "id": f"test/repo#{i+1}",
+                "issue_number": i + 1,
+                "mapped_label": ["bug", "feature", "docs", "question"][i % 4],
+                "closed_at": f"{year:04d}-{month:02d}-{day:02d}T00:00:00Z",
+            }
+        )
     return records
 
 

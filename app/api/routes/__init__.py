@@ -10,6 +10,7 @@ from app.api.routes.memory import router as memory_router
 from app.api.routes.memory_inspector import router as memory_inspector_router
 from app.api.routes.users import router as users_router
 from app.api.routes.widget_configs import router as widget_configs_router
+from app.api.routes.widget_loader import loader_alias_router
 from app.api.routes.widget_loader import router as widget_loader_router
 from app.api.routes.widget_public import router as widget_public_router
 
@@ -25,4 +26,5 @@ api_router.include_router(memory_inspector_router, prefix="/memory")
 api_router.include_router(chat_router)
 api_router.include_router(widget_configs_router, prefix="/admin/widget-configs")
 api_router.include_router(widget_loader_router)
+api_router.include_router(loader_alias_router)
 api_router.include_router(widget_public_router)

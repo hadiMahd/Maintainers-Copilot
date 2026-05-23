@@ -30,9 +30,7 @@ class MemoryInspectorRepository:
         limit: int = 25,
         cursor: str | None = None,
     ) -> Sequence[LongTermMemory]:
-        stmt = select(LongTermMemory).where(
-            LongTermMemory.owner_user_id == owner_user_id
-        )
+        stmt = select(LongTermMemory).where(LongTermMemory.owner_user_id == owner_user_id)
         if memory_type:
             stmt = stmt.where(LongTermMemory.memory_type == memory_type)
         if cursor:

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 
 async def test_default_memory_embedding_client_matches_long_term_memory_schema():
-    from app.infra.memory_embedding_client import DEFAULT_MEMORY_EMBEDDING_DIM, MemoryEmbeddingClient
+    from app.infra.memory_embedding_client import (
+        DEFAULT_MEMORY_EMBEDDING_DIM,
+        MemoryEmbeddingClient,
+    )
     from app.infra.orm_models import LongTermMemory
 
     client = MemoryEmbeddingClient()
@@ -16,8 +19,8 @@ async def test_default_memory_embedding_client_matches_long_term_memory_schema()
 
 def test_azure_memory_embedding_client_reports_schema_dimension():
     from app.infra.memory_embedding_client import (
-        AzureMemoryEmbeddingClient,
         DEFAULT_MEMORY_EMBEDDING_DIM,
+        AzureMemoryEmbeddingClient,
     )
 
     client = AzureMemoryEmbeddingClient(

@@ -10,7 +10,7 @@ loader script and iframe isolation.
 ## Installation
 
 ```html
-<script src="{backend}/widget/loader.js" data-widget-id="{widget_id}"></script>
+<script src="{backend}/widget.js" data-widget-id="{widget_id}"></script>
 ```
 
 ## Configuration

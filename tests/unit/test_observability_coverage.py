@@ -49,11 +49,13 @@ def session_factory():
 
 
 class TestObservabilityCoverage:
-    async def test_auth_failure_logs_request_and_trace_without_password(self, monkeypatch, session_factory):
-        from app.infra.password_hasher import PasswordHasher
-        from app.services.auth_service import AuthService
+    async def test_auth_failure_logs_request_and_trace_without_password(
+        self, monkeypatch, session_factory
+    ):
         from app.domain.auth import UserLogin
         from app.domain.errors import AuthenticationError
+        from app.infra.password_hasher import PasswordHasher
+        from app.services.auth_service import AuthService
 
         fake_logger = FakeLogger()
         monkeypatch.setattr("app.services.auth_service._log", _make_log_factory(fake_logger))
@@ -92,11 +94,15 @@ class TestObservabilityCoverage:
         assert payload["email"] == "user@t.com"
         assert "wrong-password" not in str(payload)
 
-    async def test_role_change_logs_request_and_trace_without_invitation_token(self, monkeypatch, session_factory):
+    async def test_role_change_logs_request_and_trace_without_invitation_token(
+        self, monkeypatch, session_factory
+    ):
         from app.services.admin_invitation_service import AdminInvitationService
 
         fake_logger = FakeLogger()
-        monkeypatch.setattr("app.services.admin_invitation_service._log", _make_log_factory(fake_logger))
+        monkeypatch.setattr(
+            "app.services.admin_invitation_service._log", _make_log_factory(fake_logger)
+        )
 
         invitation = MagicMock(
             id="inv1",
@@ -146,7 +152,9 @@ class TestObservabilityCoverage:
         from app.services.short_term_memory_service import ShortTermMemoryService
 
         fake_logger = FakeLogger()
-        monkeypatch.setattr("app.services.short_term_memory_service._log", _make_log_factory(fake_logger))
+        monkeypatch.setattr(
+            "app.services.short_term_memory_service._log", _make_log_factory(fake_logger)
+        )
 
         class Adapter:
             async def set(self, **kwargs):
@@ -178,7 +186,9 @@ class TestObservabilityCoverage:
         from app.services.long_term_memory_service import LongTermMemoryService
 
         fake_logger = FakeLogger()
-        monkeypatch.setattr("app.services.long_term_memory_service._log", _make_log_factory(fake_logger))
+        monkeypatch.setattr(
+            "app.services.long_term_memory_service._log", _make_log_factory(fake_logger)
+        )
 
         row = MagicMock(
             id="m1",
@@ -187,9 +197,7 @@ class TestObservabilityCoverage:
             redacted_content="favorite editor=vim",
             extra_data={"audit_log_id": "a1"},
         )
-        memory_repo = _make_repo_cls(
-            {"search_same_user_semantic": AsyncMock(return_value=[row])}
-        )
+        memory_repo = _make_repo_cls({"search_same_user_semantic": AsyncMock(return_value=[row])})
 
         class EmbeddingClient:
             async def embed(self, text: str):
@@ -219,13 +227,17 @@ class TestObservabilityCoverage:
         assert event == "long_term_memory_recalled"
         assert payload["result_count"] == 1
 
-    async def test_long_term_audit_failure_logs_without_raw_secret(self, monkeypatch, session_factory):
+    async def test_long_term_audit_failure_logs_without_raw_secret(
+        self, monkeypatch, session_factory
+    ):
         from app.domain.errors import AuditError
         from app.domain.memory import WriteMemoryRequest
         from app.services.long_term_memory_service import LongTermMemoryService
 
         fake_logger = FakeLogger()
-        monkeypatch.setattr("app.services.long_term_memory_service._log", _make_log_factory(fake_logger))
+        monkeypatch.setattr(
+            "app.services.long_term_memory_service._log", _make_log_factory(fake_logger)
+        )
 
         memory_row = MagicMock(
             id="m1",

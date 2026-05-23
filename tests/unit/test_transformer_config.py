@@ -17,6 +17,7 @@ from app.domain.classifier import (
 def _transformers_available() -> bool:
     try:
         import transformers  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -25,6 +26,7 @@ def _transformers_available() -> bool:
 def _accelerate_available() -> bool:
     try:
         import accelerate  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -33,6 +35,7 @@ def _accelerate_available() -> bool:
 def _sklearn_available() -> bool:
     try:
         import sklearn  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -160,11 +163,13 @@ class TestComputeMetrics:
         from sklearn.metrics import accuracy_score, f1_score
 
         # Simulate eval_pred: (logits, labels)
-        logits = np.array([
-            [2.0, 0.5, 0.1, 0.0],  # predict 0
-            [0.1, 2.0, 0.5, 0.0],  # predict 1
-            [0.0, 0.1, 2.0, 0.5],  # predict 2
-        ])
+        logits = np.array(
+            [
+                [2.0, 0.5, 0.1, 0.0],  # predict 0
+                [0.1, 2.0, 0.5, 0.0],  # predict 1
+                [0.0, 0.1, 2.0, 0.5],  # predict 2
+            ]
+        )
         labels = np.array([0, 1, 2])
 
         predictions = np.argmax(logits, axis=-1)

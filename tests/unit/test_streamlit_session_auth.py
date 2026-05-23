@@ -8,7 +8,6 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "streamlit_app"))
 
-from streamlit_app.models import CurrentUserView
 from streamlit_app.components.auth import (
     clear_auth,
     get_cookie_manager,
@@ -17,6 +16,7 @@ from streamlit_app.components.auth import (
     restore_session,
     set_authenticated,
 )
+from streamlit_app.models import CurrentUserView
 
 
 class _FakeSessionState(dict):

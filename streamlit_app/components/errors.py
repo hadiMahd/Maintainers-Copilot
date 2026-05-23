@@ -28,9 +28,7 @@ def display_error(error: UIErrorMessage | None) -> None:
     if error is None:
         return
 
-    severity, retry_hint = ERROR_DISPLAY_MAP.get(
-        error.code, ("error", False)
-    )
+    severity, retry_hint = ERROR_DISPLAY_MAP.get(error.code, ("error", False))
 
     message = error.message
     if retry_hint:

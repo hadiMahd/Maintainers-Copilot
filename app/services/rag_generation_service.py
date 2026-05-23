@@ -8,11 +8,9 @@ import uuid
 from app.domain.rag import (
     GroundedAnswer,
     RAGGenerationError,
-    RetrievalQuery,
     RetrievalResultSet,
 )
 from app.infra.rag_generation_client import BaseGenerationClient
-from app.infra.redaction import redact_rag_prompt
 
 logger = logging.getLogger(__name__)
 

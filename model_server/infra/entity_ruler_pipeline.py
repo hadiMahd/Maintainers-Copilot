@@ -25,7 +25,7 @@ _ENTITY_RULER_PATTERNS: list[dict] = [
         "label": "stack_trace_marker",
         "pattern": [
             {"TEXT": "File"},
-            {"TEXT": "\""},
+            {"TEXT": '"'},
         ],
     },
     {
@@ -96,12 +96,34 @@ _ENTITY_RULER_PATTERNS: list[dict] = [
     {
         "label": "command_snippet",
         "pattern": [
-            {"LOWER": {"IN": [
-                "pip", "pip3", "npm", "yarn", "docker", "git", "curl", "wget",
-                "node", "java", "go", "cargo", "pytest",
-                "make", "gcc", "g++", "mvn", "gradle", "cmake", "ssh", "scp",
-                "rsync",
-            ]}},
+            {
+                "LOWER": {
+                    "IN": [
+                        "pip",
+                        "pip3",
+                        "npm",
+                        "yarn",
+                        "docker",
+                        "git",
+                        "curl",
+                        "wget",
+                        "node",
+                        "java",
+                        "go",
+                        "cargo",
+                        "pytest",
+                        "make",
+                        "gcc",
+                        "g++",
+                        "mvn",
+                        "gradle",
+                        "cmake",
+                        "ssh",
+                        "scp",
+                        "rsync",
+                    ]
+                }
+            },
             {"OP": "{0,4}"},
         ],
     },
@@ -171,10 +193,12 @@ class EntityRulerPipeline:
                 paren_idx = entity_text.find("(")
                 if paren_idx != -1:
                     entity_text = entity_text[:paren_idx]
-            results.append(EntityExtractionResult(
-                text=entity_text,
-                entity_type=entity_label,
-                start=ent.start_char,
-                end=ent.end_char,
-            ))
+            results.append(
+                EntityExtractionResult(
+                    text=entity_text,
+                    entity_type=entity_label,
+                    start=ent.start_char,
+                    end=ent.end_char,
+                )
+            )
         return results

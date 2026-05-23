@@ -1,12 +1,12 @@
 """Unit tests for AuthService, TokenSigner, and PasswordHasher."""
 
 from contextlib import asynccontextmanager
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.domain.auth import AuthContext, RefreshRequest, TokenPair, UserCreate, UserLogin, UserRead
-from app.domain.errors import AuthenticationError, SigningKeyError, TokenError
+from app.domain.auth import AuthContext, TokenPair, UserCreate, UserLogin
+from app.domain.errors import AuthenticationError, SigningKeyError
 from app.infra.password_hasher import PasswordHasher
 
 
@@ -122,7 +122,6 @@ class TestAuthService:
     async def test_register_creates_user(self, mock_session_factory):
         from app.repositories.user_repository import UserRepository
         from app.services.auth_service import AuthService
-        from app.infra.token_signer import TokenSigner
 
         mock_user = MagicMock(id="u1", email="new@test.com", role="user", is_active=True)
         UserRepository.create = AsyncMock(return_value=mock_user)
@@ -162,16 +161,19 @@ class TestAuthService:
         assert hashed.startswith("$argon2id")
 
     async def test_login_returns_tokens(self, test_key_pair, mock_session_factory):
+        from app.infra.token_signer import TokenSigner
         from app.repositories.token_session_repository import TokenSessionRepository
         from app.repositories.user_repository import UserRepository
         from app.services.auth_service import AuthService
-        from app.infra.token_signer import TokenSigner
 
         hasher = PasswordHasher()
         hashed = hasher.hash("correct")
 
         mock_user = MagicMock(
-            id="u1", email="user@t.com", role="user", is_active=True,
+            id="u1",
+            email="user@t.com",
+            role="user",
+            is_active=True,
             hashed_password=hashed,
         )
         UserRepository.get_by_email = AsyncMock(return_value=mock_user)
@@ -200,7 +202,10 @@ class TestAuthService:
         hashed = hasher.hash("correct")
 
         mock_user = MagicMock(
-            id="u1", email="user@t.com", role="user", is_active=True,
+            id="u1",
+            email="user@t.com",
+            role="user",
+            is_active=True,
             hashed_password=hashed,
         )
         UserRepository.get_by_email = AsyncMock(return_value=mock_user)
@@ -224,7 +229,10 @@ class TestAuthService:
         hashed = hasher.hash("correct")
 
         mock_user = MagicMock(
-            id="u1", email="user@t.com", role="user", is_active=False,
+            id="u1",
+            email="user@t.com",
+            role="user",
+            is_active=False,
             hashed_password=hashed,
         )
         UserRepository.get_by_email = AsyncMock(return_value=mock_user)

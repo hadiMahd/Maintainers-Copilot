@@ -106,9 +106,7 @@ def resolve_jwt_key(client: hvac.Client, settings: AppSettings) -> dict:
     Raises ConfigError if the JWT key path is missing or required fields
     are absent.
     """
-    data = fetch_secrets(
-        client, settings.vault_secret_mount, settings.jwt_vault_key_path
-    )
+    data = fetch_secrets(client, settings.vault_secret_mount, settings.jwt_vault_key_path)
     private_key = data.get("private_key")
     public_key = data.get("public_key")
     if not private_key or not public_key:

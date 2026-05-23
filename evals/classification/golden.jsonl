@@ -1,0 +1,25 @@
+{"text":"Title: Add level argument to DataFrame.xs\n\nBody:","label":"feature","id":"pandas-dev/pandas#629"}
+{"text":"Title: Add JSON export option for DataFrame\n\nBody:","label":"feature","id":"pandas-dev/pandas#631"}
+{"text":"Title: Add ability to build secondary indexes inside MultiIndex\n\nBody: Selecting a level other than level=0 results in O(n) work","label":"feature","id":"pandas-dev/pandas#633"}
+{"text":"Title: More flexible multiple function application with DataFrameGroupBy\n\nBody: df.groupby(['A', 'B']).agg({'C' : [np.mean, np.std]})","label":"feature","id":"pandas-dev/pandas#642"}
+{"text":"Title: Implement flex comparison operators on DataFrame\n\nBody: Like DataFrame.add, but gt, lt, ge, le, etc.","label":"feature","id":"pandas-dev/pandas#652"}
+{"text":"Title: Implement isin on Index\n\nBody:","label":"feature","id":"pandas-dev/pandas#657"}
+{"text":"Title: Arrays of datetime64 not handled in DataFrame constructor with passed dict\n\nBody:","label":"bug","id":"pandas-dev/pandas#1037"}
+{"text":"Title: NumPy reductions don't work with convert / TimeGrouper\n\nBody: AttributeError Traceback during convert('BM', how=np.cumprod)","label":"bug","id":"pandas-dev/pandas#1045"}
+{"text":"Title: Alignment ops with irregular DatetimeIndex performance problems\n\nBody: Improperly boxing time stamps causes slow alignment operations","label":"bug","id":"pandas-dev/pandas#1046"}
+{"text":"Title: Segfault in .groupby() with empty groups\n\nBody: pandas.DataFrame([1,2,3]).groupby([]).groups segfaults","label":"bug","id":"pandas-dev/pandas#1048"}
+{"text":"Title: Adding float32 series to dataframe and then attempting to join()\n\nBody: Occurs when adding a float32 series after creating the DataFrame","label":"bug","id":"pandas-dev/pandas#1049"}
+{"text":"Title: Bug in DataFrame.to_html with MultiIndex\n\nBody: to_html generates malformed nested table output for MultiIndex columns","label":"bug","id":"pandas-dev/pandas#1053"}
+{"text":"Title: Improve documentation for pandas.core.groupby.GroupBy.transform\n\nBody: Currently there is no documentation other than the signature","label":"docs","id":"pandas-dev/pandas#6257"}
+{"text":"Title: [Docs] GroupsBy Example: Group by value of sum of columns\n\nBody: Suggest adding this df.groupby() example to the documentation","label":"docs","id":"pandas-dev/pandas#6288"}
+{"text":"Title: Add Clarification to Docs of Difference Between merge and join\n\nBody: It is not clear what the difference between these two methods is","label":"docs","id":"pandas-dev/pandas#6336"}
+{"text":"Title: DOC: more groupby examples\n\nBody: related to docs example request","label":"docs","id":"pandas-dev/pandas#6361"}
+{"text":"Title: DOC: API docs for PeriodIndex\n\nBody:","label":"docs","id":"pandas-dev/pandas#6384"}
+{"text":"Title: read_html and read_json should provide a cache\n\nBody: Documentation should describe cache options for HTML and JSON readers","label":"docs","id":"pandas-dev/pandas#6456"}
+{"text":"Title: Categorical.from_codes(codes, categories, ordered=False, name=None)\n\nBody: Does index-like include dictionaries?","label":"question","id":"pandas-dev/pandas#11952"}
+{"text":"Title: What processing is involved in transposing a dataframe?\n\nBody: Does transposing trigger a full re-allocation or is it a view?","label":"question","id":"pandas-dev/pandas#11971"}
+{"text":"Title: Datetime index error?\n\nBody: I upgraded pandas and now get TypeError: Argument arr has incorrect type","label":"question","id":"pandas-dev/pandas#11973"}
+{"text":"Title: How to concatenate two Panels without duplicating Items axis?\n\nBody: I am trying to concatenate two Panels with duplicate Items","label":"question","id":"pandas-dev/pandas#11982"}
+{"text":"Title: to_hdf emits PerformanceWarning when column names are unicode\n\nBody: Is this warning expected when column names are unicode?","label":"question","id":"pandas-dev/pandas#12016"}
+{"text":"Title: Plotting dataframe: vertical gridlines not shown\n\nBody: Why are vertical gridlines not showing on this DataFrame plot?","label":"question","id":"pandas-dev/pandas#12028"}
+{"text":"Title: Performance issue with DataFrames with numpy fortran-order arrays and pd.concat\n\nBody: Is this expected performance behavior for concat on fortran-order arrays?","label":"question","id":"pandas-dev/pandas#11958"}

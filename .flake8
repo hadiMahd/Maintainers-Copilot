@@ -1,0 +1,7 @@
+[flake8]
+max-line-length = 100
+extend-ignore = E203,W503,E402,E501
+exclude = .venv,.git,__pycache__,build,dist,*.egg-info,.mypy_cache,.pytest_cache,.ruff_cache,alembic/versions,migrations/versions,node_modules,widget/node_modules,widget/dist
+per-file-ignores =
+    __init__.py:F401
+    tests/*:F811

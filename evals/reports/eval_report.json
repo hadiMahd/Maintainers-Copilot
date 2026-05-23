@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "run_id": "1b2d697f88344c0c8ccbc804cca65d64",
+  "timestamp": "2026-05-22T21:36:26.386608+00:00",
+  "classifier": {
+    "accuracy": 0.68,
+    "macro_f1": 0.5969973009446694,
+    "per_class_f1": {
+      "bug": 0.631578947368421,
+      "docs": 0.0,
+      "feature": 0.8333333333333334,
+      "question": 0.9230769230769231
+    },
+    "threshold": 0.55,
+    "passed": true,
+    "failures": []
+  },
+  "rag": {
+    "hit_at_5": 1.0,
+    "mrr_at_10": 0.8733333333333333,
+    "faithfulness": 0.36836390806443825,
+    "answer_relevancy": 0.2559100469698631,
+    "threshold": 0.1,
+    "passed": true,
+    "failures": [],
+    "ragas": {
+      "enabled": true,
+      "context_precision": 0.79999999992,
+      "context_recall": 0.6,
+      "context_entity_recall": 0.4828571421220408,
+      "noise_sensitivity": 0.3088888888888889,
+      "faithfulness": 0.8,
+      "response_relevancy": 0.6505379285517965,
+      "failures": [],
+      "sample_count": 5,
+      "context_top_k": 1
+    }
+  },
+  "redaction": {
+    "passed": true,
+    "summary": ""
+  },
+  "static_secret_grep": {
+    "passed": true,
+    "summary": ""
+  },
+  "artifact_integrity": {
+    "passed": true,
+    "summary": ""
+  },
+  "startup": {
+    "passed": true,
+    "summary": ""
+  },
+  "tracing": {
+    "passed": true,
+    "summary": ""
+  },
+  "storage": {
+    "bucket": "evals",
+    "key": "eval_report_latest.json"
+  },
+  "previous_green_comparison": {
+    "available": false,
+    "previous_report_uri": null,
+    "passed": true,
+    "summary": "",
+    "regressions": []
+  },
+  "passed": true,
+  "thresholds": {
+    "classifier": {
+      "accuracy_min": 0.55,
+      "macro_f1_min": 0.5
+    },
+    "rag": {
+      "hit_at_5_min": 0.1,
+      "mrr_at_10_min": 0.1,
+      "faithfulness_min": 0.1,
+      "answer_relevancy_min": 0.1
+    }
+  }
+}

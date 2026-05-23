@@ -48,13 +48,9 @@ class GitHubClient:
                 if response.status_code == 404:
                     raise RuntimeError("Repository not found or not public")
                 if response.status_code >= 500:
-                    raise RuntimeError(
-                        f"GitHub API server error ({response.status_code})"
-                    )
+                    raise RuntimeError(f"GitHub API server error ({response.status_code})")
                 if response.status_code != 200:
-                    raise RuntimeError(
-                        f"Unexpected GitHub API response ({response.status_code})"
-                    )
+                    raise RuntimeError(f"Unexpected GitHub API response ({response.status_code})")
 
                 data = response.json()
                 if not isinstance(data, list):
@@ -94,13 +90,9 @@ class GitHubClient:
                         "GitHub API access forbidden (check token or secondary rate limit)"
                     )
                 if response.status_code >= 500:
-                    raise RuntimeError(
-                        f"GitHub API server error ({response.status_code})"
-                    )
+                    raise RuntimeError(f"GitHub API server error ({response.status_code})")
                 if response.status_code != 200:
-                    raise RuntimeError(
-                        f"Unexpected GitHub API response ({response.status_code})"
-                    )
+                    raise RuntimeError(f"Unexpected GitHub API response ({response.status_code})")
 
                 data = response.json()
                 if not isinstance(data, list):

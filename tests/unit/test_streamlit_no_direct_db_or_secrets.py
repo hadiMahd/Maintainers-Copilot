@@ -5,7 +5,6 @@ Phase 8 acceptance criteria SC-008, SC-009, FR-013, FR-014.
 
 from pathlib import Path
 
-
 STREAMLIT_DIR = Path(__file__).resolve().parent.parent.parent / "streamlit_app"
 
 FORBIDDEN_IMPORTS = [
@@ -40,9 +39,9 @@ def test_no_sqlalchemy_or_repository_imports():
     files = _read_all_streamlit_files()
     for filepath, content in files:
         for pattern in FORBIDDEN_IMPORTS:
-            assert pattern not in content, (
-                f"Forbidden import pattern '{pattern}' found in {filepath}"
-            )
+            assert (
+                pattern not in content
+            ), f"Forbidden import pattern '{pattern}' found in {filepath}"
 
 
 def test_no_hardcoded_secrets():
@@ -71,15 +70,7 @@ def test_no_hardcoded_secrets():
 def test_no_orm_model_imports():
     files = _read_all_streamlit_files()
     for filepath, content in files:
-        assert "orm_models" not in content, (
-            f"ORM model import found in {filepath}"
-        )
-        assert "app.infra" not in content, (
-            f"app.infra import found in {filepath}"
-        )
-        assert "app.repositories" not in content, (
-            f"app.repositories import found in {filepath}"
-        )
-        assert "app.api" not in content, (
-            f"app.api import found in {filepath}"
-        )
+        assert "orm_models" not in content, f"ORM model import found in {filepath}"
+        assert "app.infra" not in content, f"app.infra import found in {filepath}"
+        assert "app.repositories" not in content, f"app.repositories import found in {filepath}"
+        assert "app.api" not in content, f"app.api import found in {filepath}"

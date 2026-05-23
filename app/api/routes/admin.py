@@ -19,6 +19,7 @@ router = APIRouter()
 
 def _get_session_factory(request: Request):
     import app.infra.database as db_mod
+
     return db_mod.async_session_factory
 
 

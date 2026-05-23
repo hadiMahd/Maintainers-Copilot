@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from model_server.services.summarization_service import SummarizationService, _assemble_issue_text
 from model_server.domain.issue_analysis import SummarizationRequest
 from model_server.infra.summarization_adapter import FakeSummarizationAdapter
+from model_server.services.summarization_service import SummarizationService, _assemble_issue_text
 
 
 @pytest.fixture

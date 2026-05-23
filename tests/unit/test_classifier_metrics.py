@@ -1,19 +1,17 @@
 """Tests for classifier metric calculation and evaluation report building."""
 
 import json
-import tempfile
-import os
 from pathlib import Path
 
 import pytest
 
 from app.domain.classifier import (
     ApproachMetrics,
-    EvaluationReport,
     GoldenSetItem,
     SkippedApproach,
 )
 from app.services.classifier_evaluation import (
+    LABEL_ORDER,
     build_evaluation_report,
     compute_dataset_hash,
     compute_metrics,
@@ -21,7 +19,6 @@ from app.services.classifier_evaluation import (
     save_evaluation_report,
     save_predictions_jsonl,
     validate_golden_set,
-    LABEL_ORDER,
 )
 
 
@@ -116,12 +113,14 @@ class TestGoldenSetValidation:
         items = []
         labels = list(LABEL_ORDER)
         for i in range(25):
-            items.append(GoldenSetItem(
-                id=f"golden-{i:03d}",
-                title=f"Title {i}",
-                body=f"Body {i}",
-                label=labels[i % len(labels)],
-            ))
+            items.append(
+                GoldenSetItem(
+                    id=f"golden-{i:03d}",
+                    title=f"Title {i}",
+                    body=f"Body {i}",
+                    label=labels[i % len(labels)],
+                )
+            )
         errors = validate_golden_set(items)
         assert errors == []
 
@@ -135,7 +134,9 @@ class TestGoldenSetValidation:
 
     def test_missing_label_fails(self):
         """A golden set missing a label fails validation."""
-        items = [GoldenSetItem(id=f"g{i}", title=f"t{i}", body=f"b{i}", label="bug") for i in range(25)]
+        items = [
+            GoldenSetItem(id=f"g{i}", title=f"t{i}", body=f"b{i}", label="bug") for i in range(25)
+        ]
         errors = validate_golden_set(items)
         assert any("missing label" in e for e in errors)
 
@@ -175,12 +176,20 @@ class TestPredictionsJsonl:
 
         preds = [
             PredictionRecord(
-                record_id="r1", approach="classical", label_true="bug",
-                label_predicted="bug", model_version="0.1.0", confidence=0.9,
+                record_id="r1",
+                approach="classical",
+                label_true="bug",
+                label_predicted="bug",
+                model_version="0.1.0",
+                confidence=0.9,
             ),
             PredictionRecord(
-                record_id="r2", approach="classical", label_true="feature",
-                label_predicted="docs", model_version="0.1.0", confidence=0.6,
+                record_id="r2",
+                approach="classical",
+                label_true="feature",
+                label_predicted="docs",
+                model_version="0.1.0",
+                confidence=0.6,
             ),
         ]
         path = str(tmp_path / "preds.jsonl")

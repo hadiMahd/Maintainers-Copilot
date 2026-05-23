@@ -1,0 +1,32 @@
+Local validation summary for v0.1.0-week7
+
+Environment note:
+- `make` is not installed in this sandbox, so the Makefile targets were run through
+  their underlying scripts.
+
+Quality gates:
+- lint: PASS
+  Command: `scripts/ci/run_lint.sh`
+- format-check: PASS
+  Command: `scripts/ci/run_format_check.sh`
+- import-check: PASS
+  Command: `uv run isort --check-only .`
+- type-check: PASS
+  Command: `scripts/ci/run_type_check.sh`
+  Scope: `scripts/ci/`
+- tests: PASS
+  Command: `scripts/ci/run_tests.sh`
+  Result: 1007 passed, 1 skipped, 81 warnings
+
+Real RAG eval:
+- Command: `DATABASE_URL=postgresql+asyncpg://maintainer:maintainer@localhost:5432/maintainer USE_REAL_AZURE_EVALS=1 uv run python scripts/ci/run_rag_eval.py`
+- Hit@5: 1.0000
+- MRR@10: 0.8733
+- Faithfulness: 0.3572
+- Answer relevancy: 0.2344
+- Status: PASS
+
+Docker smoke:
+- backend `/health/live`: PASS
+- model_server `/health`: PASS
+- postgres, redis, minio, vault, model_server: healthy

@@ -71,6 +71,7 @@ class AppSettings(BaseSettings):
     rag_azure_generation_endpoint: str | None = None
     rag_azure_generation_api_key: str | None = None
     rag_azure_generation_model: str | None = None
+    huggingface_token: SecretStr | None = None
 
     # Phase 6 — Auth settings
     jwt_access_token_expire_minutes: int = 30

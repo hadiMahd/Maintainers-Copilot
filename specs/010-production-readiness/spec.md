@@ -17,29 +17,34 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Prove A Clean Repo Is Release-Ready (Priority: P1)
+### User Story 1 - Prove The Validation Workflow Is Wired (Priority: P1)
 
-A reviewer can run the project validation workflow on a clean checkout and see a
-single reliable result showing that linting, formatting, tests, builds, evals,
-security checks, and smoke tests all pass.
+A reviewer can run the project validation workflow on a clean checkout and see
+one reliable command surface that installs dependencies, invokes every required
+gate in order, and fails fast with inspectable output when any gate fails.
 
 **Why this priority**: This is the final release gate. The project is not
 review-ready unless repeatable automation proves the core system still works.
 
-**Independent Test**: Run the validation workflow from a clean repository state
-and verify every required gate passes and produces inspectable output.
+**Independent Test**: Run the validation workflow with fixture gate commands
+from a clean repository state and verify every required gate is invoked in order,
+paid-provider credentials are not required, and failures stop the workflow with
+safe inspectable output.
 
 **Acceptance Scenarios**:
 
-1. **Given** a clean repository with required local test fixtures and artifacts,
-   **When** the validation workflow runs, **Then** lint, format check,
-   type-check, tests,
-   Docker build validation, eval gates, redaction leak tests, artifact integrity
-   checks, tracing configuration checks, and stack smoke tests all pass.
-2. **Given** the workflow finishes successfully, **When** a reviewer inspects
-   outputs, **Then** they can find the combined evaluation report and all final
-   documentation needed to review setup, architecture, operations, evals, and
-   security.
+1. **Given** a clean repository with fixture gate commands, **When** the
+   validation workflow runs, **Then** dependency install, lint, format,
+   import-order, type-check, tests, Docker build validation, eval gates,
+   redaction leak tests, artifact integrity checks, tracing configuration
+   checks, stack smoke tests, report storage, and documentation validation are
+   invoked in the required order.
+2. **Given** one required gate returns a failure, **When** the validation
+   workflow runs, **Then** the workflow stops with the failing gate ID and a safe
+   summary.
+3. **Given** paid-provider credentials are absent, **When** the validation
+   workflow runs against local fixtures and fakes, **Then** dependency install
+   and gate orchestration do not require real paid API credentials.
 
 ---
 
@@ -204,18 +209,20 @@ unstated context.
   committed eval thresholds are zero or disabled.
 - **FR-024**: The validation workflow MUST validate tracing configuration and
   fail when required tracing settings are invalid.
-- **FR-025**: Final documentation MUST include README, ARCH, DECISIONS, RUNBOOK,
-  EVALS, and SECURITY documents.
+- **FR-025**: Final documentation MUST include `README.md`,
+  `docs/architecture.md`, `docs/decisions.md`, `docs/runbook.md`,
+  `docs/evals.md`, and `docs/security.md`.
 - **FR-026**: README MUST explain setup, architecture overview, common commands,
   and demo flow.
-- **FR-027**: DECISIONS MUST include numeric evidence for classifier, embedding,
-  chunking, retrieval weighting, reranking, memory type, and tracing backend
-  choices.
-- **FR-028**: EVALS MUST explain previous-green report diffing and regression
-  review.
-- **FR-029**: SECURITY MUST explain redaction patterns, static secret grep
-  checks, and secret policy.
-- **FR-030**: RUNBOOK MUST explain common failure paths and debugging steps.
+- **FR-027**: `docs/decisions.md` MUST include numeric evidence for
+  classifier, embedding, chunking, retrieval weighting, reranking, memory type,
+  and tracing backend choices.
+- **FR-028**: `docs/evals.md` MUST explain previous-green report diffing and
+  regression review.
+- **FR-029**: `docs/security.md` MUST explain redaction patterns, static secret
+  grep checks, and secret policy.
+- **FR-030**: `docs/runbook.md` MUST explain common failure paths and debugging
+  steps.
 - **FR-031**: The workflow MUST be able to run without real paid API credentials
   by using fakes, local fixtures, or mocked providers.
 
@@ -265,8 +272,9 @@ unstated context.
   exist and match SHA-256 values recorded in model cards.
 - **Startup Failure Check**: Validation that required Vault access and model
   artifacts, tracing configuration, and eval thresholds fail closed when unsafe.
-- **Documentation Set**: README, ARCH, DECISIONS, RUNBOOK, EVALS, and SECURITY
-  files required for review and operation.
+- **Documentation Set**: `README.md`, `docs/architecture.md`,
+  `docs/decisions.md`, `docs/runbook.md`, `docs/evals.md`, and
+  `docs/security.md` files required for review and operation.
 
 ## Success Criteria *(mandatory)*
 

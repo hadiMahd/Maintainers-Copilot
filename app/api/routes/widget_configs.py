@@ -13,10 +13,9 @@ router = APIRouter()
 
 
 def _get_widget_config_service(request: Request):
+    import app.infra.database as db_mod
     from app.repositories.widget_config_repository import WidgetConfigRepository
     from app.services.widget_config_service import WidgetConfigService
-
-    import app.infra.database as db_mod
 
     return WidgetConfigService(
         widget_config_repo=WidgetConfigRepository,
@@ -25,10 +24,9 @@ def _get_widget_config_service(request: Request):
 
 
 def _get_audit_service(request: Request):
+    import app.infra.database as db_mod
     from app.repositories.audit_log_repository import AuditLogRepository
     from app.services.audit_service import AuditService
-
-    import app.infra.database as db_mod
 
     return AuditService(
         audit_repo=AuditLogRepository,

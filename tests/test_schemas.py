@@ -1,8 +1,5 @@
 """Tests for raw and processed record schemas."""
 
-import pytest
-
-
 REQUIRED_RAW_FIELDS = [
     "repo",
     "issue_number",

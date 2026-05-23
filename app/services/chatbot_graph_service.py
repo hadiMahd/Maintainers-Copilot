@@ -6,7 +6,6 @@ from typing import Any
 
 from app.domain.chat import ChatGraphState, ConversationMessage
 from app.domain.chat_tools import (
-    LLMCompletion,
     MemoryWriteIntent,
     ToolExecutionResult,
     detect_write_memory_intent,

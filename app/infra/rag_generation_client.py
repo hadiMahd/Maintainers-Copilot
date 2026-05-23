@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import re
-
 from abc import ABC, abstractmethod
 
 from app.domain.rag import GroundedAnswer, RetrievalResult
@@ -57,18 +56,26 @@ class FakeGenerationClient(BaseGenerationClient):
     def provider_backend(self) -> str:
         return "fake_provider"
 
-    def _build_answer(self, question: str, chunk_count: int) -> GroundedAnswer:
-        key = _hash_text(question)
-        if chunk_count == 0:
+    def _build_answer(
+        self,
+        question: str,
+        retrieved: list[RetrievalResult],
+    ) -> GroundedAnswer:
+        if not retrieved:
             return GroundedAnswer(
                 answer="Insufficient evidence to answer the question.",
                 supporting_chunk_ids=[],
                 insufficient_evidence=True,
                 limitations=["No relevant chunks found"],
             )
+        top_chunks = retrieved[:3]
+        answer = " ".join(chunk.chunk.content.strip() for chunk in top_chunks)
+        if not answer:
+            key = _hash_text(question)
+            answer = f"Grounded answer for question {key}."
         return GroundedAnswer(
-            answer=f"Answer for question {key}: the evidence suggests a resolution.",
-            supporting_chunk_ids=[f"chunk-{key}"],
+            answer=answer[:500],
+            supporting_chunk_ids=[chunk.chunk.chunk_id for chunk in top_chunks],
             insufficient_evidence=False,
             limitations=None,
         )
@@ -78,7 +85,7 @@ class FakeGenerationClient(BaseGenerationClient):
         question: str,
         retrieved: list[RetrievalResult],
     ) -> GroundedAnswer:
-        return self._build_answer(question, len(retrieved))
+        return self._build_answer(question, retrieved)
 
 
 def _hash_text(text: str) -> int:
@@ -133,12 +140,9 @@ class AzureGenerationClient(BaseGenerationClient):
         self._human_message_cls = HumanMessage
         self._system_message_cls = SystemMessage
 
-    def _build_evidence_prompt(
-        self, question: str, retrieved: list[RetrievalResult]
-    ) -> str:
+    def _build_evidence_prompt(self, question: str, retrieved: list[RetrievalResult]) -> str:
         chunks_text = "\n\n---\n\n".join(
-            f"[chunk_id: {r.chunk.chunk_id}]\n{r.chunk.content[:2000]}"
-            for r in retrieved[:10]
+            f"[chunk_id: {r.chunk.chunk_id}]\n{r.chunk.content[:2000]}" for r in retrieved[:10]
         )
         return (
             f"Question: {question}\n\n"
@@ -155,10 +159,12 @@ class AzureGenerationClient(BaseGenerationClient):
         evidence = self._build_evidence_prompt(question, retrieved)
         try:
             response = await asyncio.wait_for(
-                self._model.ainvoke([
-                    self._system_message_cls(content=_GENERATION_SYSTEM_PROMPT),
-                    self._human_message_cls(content=evidence),
-                ]),
+                self._model.ainvoke(
+                    [
+                        self._system_message_cls(content=_GENERATION_SYSTEM_PROMPT),
+                        self._human_message_cls(content=evidence),
+                    ]
+                ),
                 timeout=self._timeout_seconds,
             )
         except TimeoutError:
@@ -187,8 +193,7 @@ def _parse_generation_response(
             data = json.loads(json_match.group())
             answer = data.get("answer", content.strip()[:500])
             supporting_chunk_ids = [
-                cid for cid in data.get("supporting_chunk_ids", [])
-                if cid in available_chunk_ids
+                cid for cid in data.get("supporting_chunk_ids", []) if cid in available_chunk_ids
             ]
             return GroundedAnswer(
                 answer=answer,
@@ -206,13 +211,28 @@ def _parse_generation_response(
     )
 
 
-def resolve_generation_client() -> BaseGenerationClient:
-    """Return a generation client based on available Azure credentials."""
-    endpoint = os.environ.get("RAG_AZURE_GENERATION_ENDPOINT")
-    api_key = os.environ.get("RAG_AZURE_GENERATION_API_KEY")
-    model = os.environ.get("RAG_AZURE_GENERATION_MODEL")
+def resolve_generation_client(settings: object | None = None) -> BaseGenerationClient:
+    """Return a generation client based on settings or Azure env vars."""
+    endpoint = (
+        getattr(settings, "rag_azure_generation_endpoint", None)
+        or getattr(settings, "azure_openai_endpoint", None)
+        or os.environ.get("RAG_AZURE_GENERATION_ENDPOINT")
+    )
+    api_key = (
+        getattr(settings, "rag_azure_generation_api_key", None)
+        or _secret_value(getattr(settings, "azure_openai_api_key", None))
+        or os.environ.get("RAG_AZURE_GENERATION_API_KEY")
+    )
+    model = (
+        getattr(settings, "rag_azure_generation_model", None)
+        or getattr(settings, "azure_openai_model", None)
+        or os.environ.get("RAG_AZURE_GENERATION_MODEL")
+    )
     if endpoint and api_key and model:
-        timeout = int(os.environ.get("RAG_GENERATION_TIMEOUT_SECONDS", "30"))
+        timeout = int(
+            getattr(settings, "rag_generation_timeout_seconds", None)
+            or os.environ.get("RAG_GENERATION_TIMEOUT_SECONDS", "30")
+        )
         return AzureGenerationClient(
             endpoint=endpoint,
             api_key=api_key,
@@ -220,6 +240,15 @@ def resolve_generation_client() -> BaseGenerationClient:
             timeout_seconds=timeout,
         )
     return FakeGenerationClient()
+
+
+def _secret_value(value: object | None) -> str | None:
+    if value is None:
+        return None
+    getter = getattr(value, "get_secret_value", None)
+    if getter is not None:
+        return str(getter())
+    return str(value)
 
 
 __all__ = [

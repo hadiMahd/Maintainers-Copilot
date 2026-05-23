@@ -5,10 +5,10 @@ from __future__ import annotations
 import pytest
 
 from app.domain.chat import ChatGraphState, ChatLimits, ChatRequest, ConversationState
+from app.infra.tracing import FakeTraceAdapter
+from app.services.chat_tracing_service import ChatTracingService
 from app.services.chatbot_service import ChatbotService
 from app.services.conversation_state_service import ConversationStateService
-from app.services.chat_tracing_service import ChatTracingService
-from app.infra.tracing import FakeTraceAdapter
 
 
 class _DictConversationAdapter:
@@ -24,7 +24,9 @@ class _DictConversationAdapter:
     async def write(self, user_id: str, conversation_id: str, messages, ttl_seconds: int):
         if self.fail:
             raise RuntimeError("redis unavailable")
-        state = ConversationState(user_id=user_id, conversation_id=conversation_id, messages=messages)
+        state = ConversationState(
+            user_id=user_id, conversation_id=conversation_id, messages=messages
+        )
         self.store[(user_id, conversation_id)] = state
         return state
 
@@ -57,7 +59,9 @@ def _build_service(adapter):
         per_tool_timeout_seconds=5,
     )
     return ChatbotService(
-        conversation_state_service=ConversationStateService(adapter=adapter, ttl_seconds=1800, context_size_limit_chars=12000),
+        conversation_state_service=ConversationStateService(
+            adapter=adapter, ttl_seconds=1800, context_size_limit_chars=12000
+        ),
         chatbot_graph_service=_FakeGraphService(),
         tracing_service=ChatTracingService(FakeTraceAdapter()),
         limits=limits,
@@ -68,8 +72,14 @@ def _build_service(adapter):
 async def test_same_user_conversation_state_is_persisted_and_scoped():
     adapter = _DictConversationAdapter()
     service = _build_service(adapter)
-    await service.execute_chat(user_id="u1", body=ChatRequest(conversation_id="c1", message="hello"), request_id="req-1")
-    await service.execute_chat(user_id="u1", body=ChatRequest(conversation_id="c1", message="follow up"), request_id="req-2")
+    await service.execute_chat(
+        user_id="u1", body=ChatRequest(conversation_id="c1", message="hello"), request_id="req-1"
+    )
+    await service.execute_chat(
+        user_id="u1",
+        body=ChatRequest(conversation_id="c1", message="follow up"),
+        request_id="req-2",
+    )
     assert adapter.store[("u1", "c1")].messages
     assert ("u2", "c1") not in adapter.store
 

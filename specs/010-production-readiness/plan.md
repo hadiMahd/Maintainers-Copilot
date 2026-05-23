@@ -5,25 +5,26 @@
 
 ## Summary
 
-Build the final Phase 10 release-readiness layer: GitHub Actions CI, local
-validation commands, uv dependency installation, ruff lint and format checks,
-type-checking, pytest tests, classifier and RAG eval gates, redaction leak
-checks, static secret grep checks, Docker build validation, Docker Compose smoke
-tests, eval report generation, MinIO storage, previous-green report diffing,
-model artifact hash validation, Vault/model-artifact/tracing/eval-threshold
-startup failure checks, tracing configuration validation, and final review
-documentation. The workflow must run without real paid API credentials by using
-fake providers, committed small golden sets, and local artifacts.
+Build the final Phase 10 release-readiness layer: GitHub Actions CI, Makefile
+local validation commands, uv dependency installation, flake8 lint checks,
+black format checks, isort import-order checks, mypy type-checking, pytest
+tests, classifier and RAG eval gates, redaction leak checks, static secret grep
+checks, Docker build validation, Docker Compose smoke tests, eval report
+generation, MinIO storage, previous-green report diffing, model artifact hash
+validation, Vault/model-artifact/tracing/eval-threshold startup failure checks,
+tracing configuration validation, and final review documentation. The workflow
+must run without real paid API credentials by using fake providers, committed
+small golden sets, and local artifacts.
 
 ## Technical Context
 
-**Language/Version**: Python 3.11 or newer; GitHub Actions workflow YAML; Bash
-or Python scripts for local validation orchestration  
-**Primary Dependencies**: uv, ruff, pytest, httpx, Docker Compose, existing
-classifier and RAG eval scripts, existing redaction/tracing/model artifact
-helpers, type checker such as pyright when no project checker exists, MinIO
-storage adapter with local-compatible dev/test fallback, fake provider clients
-or mocked provider calls  
+**Language/Version**: Python 3.11 or newer; GitHub Actions workflow YAML;
+Makefile targets; Bash or Python scripts for local validation orchestration
+**Primary Dependencies**: uv, flake8, black, isort, mypy, pytest, httpx,
+Docker Compose, existing classifier and RAG eval scripts, existing
+redaction/tracing/model artifact helpers, MinIO storage adapter with
+local-compatible dev/test fallback, fake provider clients or mocked provider
+calls
 **Storage**: Generated `eval_report.json` written to a local artifact path and
 stored in MinIO for CI; MinIO-compatible local paths are dev/test adapters only;
 committed non-zero and enabled `eval_thresholds.yaml`; previous-green report
@@ -32,22 +33,23 @@ metadata; no real secrets or paid-provider credentials in CI
 static grep failures, previous-green regressions, artifact hash mismatch,
 Vault/model/tracing/eval-threshold startup failures, tracing validation,
 documentation completeness, and CI script behavior; Docker Compose smoke test
-for core stack health  
+for the full production-functional stack including model server
 **Target Platform**: GitHub Actions on Linux plus local Linux/container
 development environment  
 **Project Type**: Release validation, security/eval gate, smoke-test, and
 documentation completion feature  
-**Performance Goals**: Normal CI validation completes within a bootcamp-friendly
-time budget using compact committed golden sets and local artifacts; smoke test
-starts only the core stack required for health validation  
+**Performance Goals**: Normal CI validation should complete in under 15 minutes
+for compact committed golden sets and local artifacts; smoke test starts the
+full production-functional stack required by the spec, including the model
+server, and reaches backend health within a repeatable bounded run
 **Constraints**: Phase 10 only; no new product behavior, model behavior, RAG
 behavior, chatbot behavior, widget behavior, or heavy infrastructure; CI must
 not depend on real paid APIs; every release gate fails closed with a clear
 reason; eval thresholds must be non-zero and not disabled  
-**Scale/Scope**: One CI workflow, local validation scripts, eval report schema
-and MinIO storage, previous-green diffing, security/startup/artifact/tracing
-checks, stack smoke test, and final README, ARCH, DECISIONS, RUNBOOK, EVALS, and
-SECURITY documentation
+**Scale/Scope**: One CI workflow, one Makefile for local gate orchestration,
+local validation scripts, eval report schema and MinIO storage, previous-green
+diffing, security/startup/artifact/tracing checks, stack smoke test, and final
+README, architecture, decisions, runbook, evals, and security documentation
 
 ## Constitution Check
 
@@ -78,17 +80,17 @@ SECURITY documentation
 - **AI Evidence And Eval Gates**: PASS. Classifier and RAG evals run against
   committed small golden sets/local artifacts, compare results to non-zero
   enabled thresholds, write `eval_report.json`, store it in MinIO, diff it
-  against the previous green build, and feed final `DECISIONS.md` and `EVALS.md`
-  numbers.
+  against the previous green build, and feed final `docs/decisions.md` and
+  `docs/evals.md` numbers.
 - **Critical Tests And CI**: PASS. Tests cover zero thresholds, below-threshold
   classifier/RAG results, previous-green regressions, fake secret leaks, static
   secret grep failures, model hash mismatch, missing model artifacts, Vault
   unreachable startup failure, tracing config failure, disabled-threshold startup
   failure, smoke test health, MinIO eval report storage, and documentation
   completeness.
-- **Simplicity**: PASS. The plan uses GitHub Actions, uv, ruff, pytest, Docker
-  Compose, local fakes, and small committed eval assets. It does not add Kafka,
-  Kubernetes, Celery, or additional datastores.
+- **Simplicity**: PASS. The plan uses GitHub Actions, uv, flake8, black, isort,
+  mypy, pytest, Docker Compose, local fakes, and small committed eval assets.
+  It does not add Kafka, Kubernetes, Celery, or additional datastores.
 
 ## Project Structure
 
@@ -112,6 +114,8 @@ specs/010-production-readiness/
 .github/
 └── workflows/
     └── ci.yml
+
+Makefile
 
 scripts/
 └── ci/
@@ -146,11 +150,11 @@ artifacts/
 └── evals/
 
 docs/
-├── ARCH.md
-├── DECISIONS.md
-├── EVALS.md
-├── RUNBOOK.md
-└── SECURITY.md
+├── architecture.md
+├── decisions.md
+├── evals.md
+├── runbook.md
+└── security.md
 
 README.md
 

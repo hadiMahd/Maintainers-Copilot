@@ -2,16 +2,24 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.domain.rag import RAGChunk, RetrievalResult
 
 
-def _make_chunk(chunk_id: str, source_type: str = "docs", source_path: str | None = None, labels: list[str] | None = None) -> RAGChunk:
+def _make_chunk(
+    chunk_id: str,
+    source_type: str = "docs",
+    source_path: str | None = None,
+    labels: list[str] | None = None,
+) -> RAGChunk:
     return RAGChunk(
-        chunk_id=chunk_id, parent_id=f"p-{chunk_id}", source_type=source_type,
-        source_path=source_path, labels=labels or [],
-        content="test content", content_hash="abc", token_count=2,
+        chunk_id=chunk_id,
+        parent_id=f"p-{chunk_id}",
+        source_type=source_type,
+        source_path=source_path,
+        labels=labels or [],
+        content="test content",
+        content_hash="abc",
+        token_count=2,
     )
 
 
@@ -86,6 +94,7 @@ class TestQueryTransformation:
 
 
 # -- Helpers (mirror retrieval service/filter logic) --------------------------
+
 
 def _apply_metadata_filters(
     results: list[RetrievalResult],

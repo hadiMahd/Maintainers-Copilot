@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from app.domain.chat import ChatLimits, ChatRequest, ConversationMessage, ConversationState
@@ -31,13 +29,19 @@ class _DictConversationAdapter:
     async def read(self, user_id: str, conversation_id: str):
         if self.fail:
             raise RuntimeError("redis unavailable")
-        if self.state and self.state.user_id == user_id and self.state.conversation_id == conversation_id:
+        if (
+            self.state
+            and self.state.user_id == user_id
+            and self.state.conversation_id == conversation_id
+        ):
             return self.state
         return None
 
     async def write(self, user_id: str, conversation_id: str, messages, ttl_seconds: int):
         _ = ttl_seconds
-        self.state = ConversationState(user_id=user_id, conversation_id=conversation_id, messages=messages)
+        self.state = ConversationState(
+            user_id=user_id, conversation_id=conversation_id, messages=messages
+        )
         return self.state
 
 
@@ -91,7 +95,9 @@ def _build_chat_service(*, completions, limits, initial_state=None):
 
 def test_conversation_state_shapes_context_to_limit():
     adapter = _DictConversationAdapter()
-    service = ConversationStateService(adapter=adapter, ttl_seconds=1800, context_size_limit_chars=12)
+    service = ConversationStateService(
+        adapter=adapter, ttl_seconds=1800, context_size_limit_chars=12
+    )
     state = ConversationState(
         user_id="u1",
         conversation_id="c1",
@@ -155,8 +161,12 @@ async def test_max_tool_call_limit_returns_error_event():
     )
     service = _build_chat_service(
         completions=[
-            LLMCompletion(tool_calls=[LLMToolCall(name="classify_issue", arguments={"title": "bug"})]),
-            LLMCompletion(tool_calls=[LLMToolCall(name="classify_issue", arguments={"title": "bug"})]),
+            LLMCompletion(
+                tool_calls=[LLMToolCall(name="classify_issue", arguments={"title": "bug"})]
+            ),
+            LLMCompletion(
+                tool_calls=[LLMToolCall(name="classify_issue", arguments={"title": "bug"})]
+            ),
         ],
         limits=limits,
     )

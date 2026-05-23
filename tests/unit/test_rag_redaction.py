@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.infra.redaction import (
     redact_chunk_preview,
+    redact_eval_report,
     redact_rag_prompt,
     redact_snapshot_row,
-    redact_eval_report,
 )
 
 

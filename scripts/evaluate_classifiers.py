@@ -139,7 +139,9 @@ def calculate_approach_metrics(
         accuracy=computed_metrics.get("accuracy", saved_metrics.get("accuracy")),
         macro_f1=computed_metrics.get("macro_f1", saved_metrics.get("macro_f1")),
         per_class_f1=computed_metrics.get("per_class_f1", saved_metrics.get("per_class_f1")),
-        confusion_matrix=computed_metrics.get("confusion_matrix", saved_metrics.get("confusion_matrix")),
+        confusion_matrix=computed_metrics.get(
+            "confusion_matrix", saved_metrics.get("confusion_matrix")
+        ),
         latency=latency_summary,
         cost=cost_summary,
         artifact_path=artifact_path_str,

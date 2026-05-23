@@ -11,6 +11,7 @@ export interface ResizeMessage {
   type: typeof RESIZE_EVENT_TYPE;
   height: number;
   width: number;
+  position?: string;
 }
 
 const DEFAULT_HEIGHT = 500;
@@ -28,11 +29,13 @@ export function postResize(
   height?: number,
   width?: number,
   targetOrigin: string = '*',
+  position?: string,
 ): void {
   const msg: ResizeMessage = {
     type: RESIZE_EVENT_TYPE,
     height: clamp(height ?? DEFAULT_HEIGHT, MIN_HEIGHT, MAX_HEIGHT),
     width: clamp(width ?? DEFAULT_WIDTH, MIN_WIDTH, MAX_WIDTH),
+    ...(position ? { position } : {}),
   };
   targetWindow.postMessage(msg, targetOrigin);
 }

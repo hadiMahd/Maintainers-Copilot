@@ -10,10 +10,9 @@ from __future__ import annotations
 import hashlib
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import AsyncContextManager, Callable
+from typing import Callable
 
 import structlog
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.auth import AuthContext, RefreshRequest, TokenPair, UserCreate, UserLogin, UserRead
 from app.domain.errors import AuthenticationError, EmailAlreadyRegisteredError, TokenError
@@ -111,9 +110,7 @@ class AuthService:
                 log.warning("login_rollback")
                 raise
 
-    async def refresh_token(
-        self, data: RefreshRequest, request_id: str | None = None
-    ) -> TokenPair:
+    async def refresh_token(self, data: RefreshRequest, request_id: str | None = None) -> TokenPair:
         t = self._trace(request_id)
         log = _log().bind(**t)
         async with self._session_factory() as session:
@@ -156,9 +153,7 @@ class AuthService:
                 log.warning("refresh_rollback")
                 raise
 
-    async def get_current_user(
-        self, user_id: str, request_id: str | None = None
-    ) -> AuthContext:
+    async def get_current_user(self, user_id: str, request_id: str | None = None) -> AuthContext:
         t = self._trace(request_id)
         log = _log().bind(**t)
         async with self._session_factory() as session:

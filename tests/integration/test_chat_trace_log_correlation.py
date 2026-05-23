@@ -38,7 +38,9 @@ class _DictConversationAdapter:
     async def write(self, user_id: str, conversation_id: str, messages, ttl_seconds: int):
         from app.domain.chat import ConversationState
 
-        return ConversationState(user_id=user_id, conversation_id=conversation_id, messages=messages)
+        return ConversationState(
+            user_id=user_id, conversation_id=conversation_id, messages=messages
+        )
 
 
 class _FakeSnapshotService:
@@ -57,8 +59,8 @@ class _FakeSnapshotService:
 
 @pytest.mark.asyncio
 async def test_trace_run_ids_appear_in_chat_logs(monkeypatch):
-    import app.services.chatbot_service as chatbot_mod
     import app.services.chat_tracing_service as tracing_mod
+    import app.services.chatbot_service as chatbot_mod
 
     logger = _ListLogger()
     monkeypatch.setattr(chatbot_mod, "_log", lambda: logger)
@@ -81,10 +83,14 @@ async def test_trace_run_ids_appear_in_chat_logs(monkeypatch):
         per_tool_timeout_seconds=5,
     )
     graph_service = ChatbotGraphService(
-        llm_adapter=FakeLLMAdapter([
-            LLMCompletion(tool_calls=[LLMToolCall(name="classify_issue", arguments={"title": "bug"})]),
-            LLMCompletion(message="final answer"),
-        ]),
+        llm_adapter=FakeLLMAdapter(
+            [
+                LLMCompletion(
+                    tool_calls=[LLMToolCall(name="classify_issue", arguments={"title": "bug"})]
+                ),
+                LLMCompletion(message="final answer"),
+            ]
+        ),
         prompt_registry=PromptRegistry.from_settings(
             __import__("app.core.config", fromlist=["AppSettings"]).AppSettings(
                 vault_addr="http://fake",
@@ -96,7 +102,9 @@ async def test_trace_run_ids_appear_in_chat_logs(monkeypatch):
         tracing_service=tracing_service,
     )
     service = ChatbotService(
-        conversation_state_service=ConversationStateService(_DictConversationAdapter(), 1800, 12000),
+        conversation_state_service=ConversationStateService(
+            _DictConversationAdapter(), 1800, 12000
+        ),
         chatbot_graph_service=graph_service,
         tracing_service=tracing_service,
         limits=limits,

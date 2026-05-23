@@ -6,8 +6,6 @@ import uuid
 
 import structlog
 
-from app.domain.errors import WidgetSessionError
-
 _log = structlog.get_logger
 
 
@@ -63,10 +61,14 @@ class WidgetChatService:
         )
         result = await self._chatbot_service.execute_chat(
             user_id=f"widget:{widget_id}",
-            body=type("ChatRequest", (), {
-                "conversation_id": conversation_id,
-                "message": message,
-            })(),
+            body=type(
+                "ChatRequest",
+                (),
+                {
+                    "conversation_id": conversation_id,
+                    "message": message,
+                },
+            )(),
             request_id=request_id or uuid.uuid4().hex,
         )
         for event in result.events:

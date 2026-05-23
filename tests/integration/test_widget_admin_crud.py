@@ -1,14 +1,14 @@
 """Integration test for admin create -> view -> update -> delete -> audit workflow."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
+import pytest
 from fastapi import FastAPI
 
-from app.api.routes.widget_configs import router as widget_configs_router
 from app.api.dependencies.auth import get_current_user
+from app.api.routes.widget_configs import router as widget_configs_router
 from app.domain.auth import AuthContext
 
 
@@ -41,10 +41,14 @@ async def test_create_view_update_delete_audit():
     mock_audit.log_action = AsyncMock(side_effect=mock_log_action)
 
     created = MagicMock(
-        model_dump=lambda mode=None: _make_read_dict(id="cfg-1", name="Integration Test", widget_id="wid-abc"),
+        model_dump=lambda mode=None: _make_read_dict(
+            id="cfg-1", name="Integration Test", widget_id="wid-abc"
+        ),
     )
     updated = MagicMock(
-        model_dump=lambda mode=None: _make_read_dict(id="cfg-1", name="Integration Test", widget_id="wid-abc", theme="light"),
+        model_dump=lambda mode=None: _make_read_dict(
+            id="cfg-1", name="Integration Test", widget_id="wid-abc", theme="light"
+        ),
     )
     deleted = MagicMock(
         id="cfg-1",
@@ -65,6 +69,7 @@ async def test_create_view_update_delete_audit():
 
     async def _mock_update(config_id, data, updated_by_user_id, audit_service, request_id=None):
         from app.domain.widget_config import WidgetConfigUpdate
+
         theme = "dark"
         if isinstance(data, WidgetConfigUpdate) and data.theme:
             theme = data.theme
@@ -94,15 +99,18 @@ async def test_create_view_update_delete_audit():
     mock_svc = MagicMock()
     mock_svc.list_configs = AsyncMock(return_value=[])
     mock_svc.create_config = AsyncMock(side_effect=_mock_create)
-    mock_svc.get_config = AsyncMock(side_effect=lambda config_id, request_id=None: MagicMock(
-        model_dump=lambda mode=None: _make_read_dict(id=config_id, name="Integration Test", widget_id="wid-abc"),
-    ))
+    mock_svc.get_config = AsyncMock(
+        side_effect=lambda config_id, request_id=None: MagicMock(
+            model_dump=lambda mode=None: _make_read_dict(
+                id=config_id, name="Integration Test", widget_id="wid-abc"
+            ),
+        )
+    )
     mock_svc.update_config = AsyncMock(side_effect=_mock_update)
     mock_svc.delete_config = AsyncMock(side_effect=_mock_delete)
 
     import app.api.routes.widget_configs as wc_routes
-    orig_get_svc = wc_routes._get_widget_config_service
-    orig_get_audit = wc_routes._get_audit_service
+
     wc_routes._get_widget_config_service = lambda request: mock_svc
     wc_routes._get_audit_service = lambda request: mock_audit
 
@@ -117,7 +125,9 @@ async def test_create_view_update_delete_audit():
     app.include_router(widget_configs_router, prefix="/admin/widget-configs")
     register_error_handlers(app)
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         # 1. Create
         resp = await ac.post(
             "/admin/widget-configs/",

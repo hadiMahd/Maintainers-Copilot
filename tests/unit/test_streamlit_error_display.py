@@ -2,14 +2,12 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "streamlit_app"))
 
+from streamlit_app.components.errors import ERROR_DISPLAY_MAP, display_error
 from streamlit_app.models import UIErrorMessage
-from streamlit_app.components.errors import display_error, ERROR_DISPLAY_MAP
 
 
 def test_display_error_none_does_nothing():
@@ -25,11 +23,13 @@ def test_display_auth_error():
         display_error(err)
         mock_st.error.assert_called_once()
 
+
 def test_display_validation_error():
     with patch("streamlit_app.components.errors.st") as mock_st:
         err = UIErrorMessage(code="validation_error", message="Invalid input")
         display_error(err)
         mock_st.warning.assert_called_once()
+
 
 def test_display_timeout_error_shows_retry_hint():
     with patch("streamlit_app.components.errors.st") as mock_st:
@@ -38,10 +38,16 @@ def test_display_timeout_error_shows_retry_hint():
         call_args = mock_st.warning.call_args[0]
         assert "try again" in str(call_args[0]).lower()
 
+
 def test_error_display_map_coverage():
     expected_codes = [
-        "authentication_required", "access_denied", "validation_error",
-        "request_too_large", "backend_timeout", "backend_unavailable", "backend_error",
+        "authentication_required",
+        "access_denied",
+        "validation_error",
+        "request_too_large",
+        "backend_timeout",
+        "backend_unavailable",
+        "backend_error",
     ]
     for code in expected_codes:
         assert code in ERROR_DISPLAY_MAP, f"Missing display mapping for {code}"

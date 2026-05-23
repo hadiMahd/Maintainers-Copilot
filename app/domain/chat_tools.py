@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
 import re
 import uuid
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-
 
 ToolName = Literal[
     "classify_issue",
     "extract_entities",
     "summarize_issue",
     "answer_project_question",
+    "recall_memory",
     "write_memory",
 ]
 
@@ -181,6 +181,22 @@ class WriteMemoryInput(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class RecalledMemoryItem(BaseModel):
+    id: str
+    memory_type: str
+    content: str
+    audit_log_id: str
+
+
+class RecallMemoryInput(BaseModel):
+    query: str = Field(min_length=1)
+    limit: int = Field(default=5, ge=1, le=20)
+
+
+class RecallMemoryOutput(BaseModel):
+    items: list[RecalledMemoryItem] = Field(default_factory=list)
+
+
 class WriteMemoryOutput(BaseModel):
     memory_id: str
     audit_log_id: str
@@ -271,6 +287,16 @@ def build_default_tool_definitions(timeout_seconds: int) -> dict[str, ToolDefini
             description="Answer a maintainer question using retrieved project evidence.",
             input_model=AnswerProjectQuestionInput,
             output_model=RAGToolResult,
+            timeout_seconds=timeout_seconds,
+        ),
+        "recall_memory": ToolDefinition(
+            name="recall_memory",
+            description=(
+                "Search same-user long-term semantic memory for user-approved facts, "
+                "preferences, tools, environments, and workflow context relevant to the request."
+            ),
+            input_model=RecallMemoryInput,
+            output_model=RecallMemoryOutput,
             timeout_seconds=timeout_seconds,
         ),
         "write_memory": ToolDefinition(

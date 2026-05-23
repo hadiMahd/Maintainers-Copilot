@@ -80,17 +80,19 @@ with tab_list:
     else:
         for cfg in configs:
             with st.expander(f"{cfg.name} ({'enabled' if cfg.is_enabled else 'disabled'})"):
-                st.json({
-                    "Widget ID": cfg.widget_id,
-                    "Name": cfg.name,
-                    "Origins": cfg.allowed_origins,
-                    "Theme": cfg.theme,
-                    "Greeting": cfg.greeting,
-                    "Position": cfg.position,
-                    "Enabled Tools": cfg.enabled_tools,
-                    "Enabled": cfg.is_enabled,
-                    "Updated": cfg.updated_at,
-                })
+                st.json(
+                    {
+                        "Widget ID": cfg.widget_id,
+                        "Name": cfg.name,
+                        "Origins": cfg.allowed_origins,
+                        "Theme": cfg.theme,
+                        "Greeting": cfg.greeting,
+                        "Position": cfg.position,
+                        "Enabled Tools": cfg.enabled_tools,
+                        "Enabled": cfg.is_enabled,
+                        "Updated": cfg.updated_at,
+                    }
+                )
                 col_edit, col_snippet, col_delete = st.columns(3)
                 with col_edit:
                     if st.button(f"Edit {cfg.name}", key=f"edit_{cfg.id}"):
@@ -164,8 +166,10 @@ with tab_create:
 
         with st.form("widget_config_form"):
             name = st.text_input(
-                "Name", value=edit_defaults.get("name", ""),
-                max_chars=120, placeholder="My Widget",
+                "Name",
+                value=edit_defaults.get("name", ""),
+                max_chars=120,
+                placeholder="My Widget",
             )
             origins_text = st.text_area(
                 "Allowed Origins (one per line)",
@@ -174,21 +178,31 @@ with tab_create:
                 help="Each origin on its own line.",
             )
             greeting = st.text_area(
-                "Greeting", value=edit_defaults.get("greeting", ""),
-                max_chars=500, placeholder="Hello! How can I help?",
+                "Greeting",
+                value=edit_defaults.get("greeting", ""),
+                max_chars=500,
+                placeholder="Hello! How can I help?",
             )
             col_theme, col_position = st.columns(2)
             with col_theme:
                 theme = st.selectbox(
-                    "Theme", THEME_OPTIONS,
-                    index=THEME_OPTIONS.index(edit_defaults.get("theme", "light"))
-                    if edit_defaults.get("theme") in THEME_OPTIONS else 0,
+                    "Theme",
+                    THEME_OPTIONS,
+                    index=(
+                        THEME_OPTIONS.index(edit_defaults.get("theme", "light"))
+                        if edit_defaults.get("theme") in THEME_OPTIONS
+                        else 0
+                    ),
                 )
             with col_position:
                 position = st.selectbox(
-                    "Position", POSITION_OPTIONS,
-                    index=POSITION_OPTIONS.index(edit_defaults.get("position", "bottom-right"))
-                    if edit_defaults.get("position") in POSITION_OPTIONS else 0,
+                    "Position",
+                    POSITION_OPTIONS,
+                    index=(
+                        POSITION_OPTIONS.index(edit_defaults.get("position", "bottom-right"))
+                        if edit_defaults.get("position") in POSITION_OPTIONS
+                        else 0
+                    ),
                 )
             tools_default = edit_defaults.get("tools", [])
             enabled_tools = st.multiselect(

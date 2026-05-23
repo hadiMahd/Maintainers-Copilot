@@ -1,19 +1,14 @@
 """Tests for MLflow run metadata and MinIO manifest validation."""
 
 import json
-import tempfile
 from pathlib import Path
 
-import pytest
-
-from app.domain.classifier import ArtifactManifest
+from app.infra.mlflow.tracking import build_run_metadata, save_run_metadata
+from app.infra.redaction import redact_run_metadata
 from app.infra.storage.classifier_artifacts import (
     build_manifest,
     save_manifest,
-    validate_artifact_hash,
 )
-from app.infra.mlflow.tracking import build_run_metadata, save_run_metadata
-from app.infra.redaction import redact_run_metadata
 
 
 class TestRunMetadataRedaction:

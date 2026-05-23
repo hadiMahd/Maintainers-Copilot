@@ -12,15 +12,14 @@ from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 import hvac
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-
 
 REQUIRED_ENV_VARS = (
     "APP_DATABASE_URL",
@@ -29,6 +28,9 @@ REQUIRED_ENV_VARS = (
     "APP_MINIO_ACCESS_KEY",
     "APP_MINIO_SECRET_KEY",
     "JWT_SIGNING_KEY",
+)
+
+OPTIONAL_ENV_VARS = (
     "AZURE_OPENAI_KEY",
     "AZURE_OPENAI_ENDPOINT",
     "AZURE_OPENAI_MODEL",
@@ -100,12 +102,31 @@ def resolve_jwt_keypair(env_vars: dict[str, str]) -> tuple[str, str]:
     return private_pem, public_pem
 
 
-def seed_vault(env_path: str = ".env", *, timeout_seconds: float = 30.0) -> None:
-    """Seed Vault dev mode with secrets from .env."""
-    env_vars = load_env_file(env_path)
+def seed_vault(
+    env_path: str = ".env",
+    *,
+    timeout_seconds: float = 30.0,
+    from_env: bool = False,
+) -> None:
+    """Seed Vault dev mode with secrets from a file and optional process env."""
+    env_vars = load_env_file(env_path) if Path(env_path).is_file() else {}
+    if from_env:
+        for name in (
+            *REQUIRED_ENV_VARS,
+            *OPTIONAL_ENV_VARS,
+            "VAULT_ADDR",
+            "VAULT_TOKEN",
+            "JWT_PRIVATE_KEY",
+            "JWT_PUBLIC_KEY",
+        ):
+            value = os.environ.get(name)
+            if value:
+                env_vars[name] = value
     require_seed_values(env_vars)
 
-    vault_addr = os.environ.get("VAULT_ADDR") or env_vars.get("VAULT_ADDR") or "http://localhost:8200"
+    vault_addr = (
+        os.environ.get("VAULT_ADDR") or env_vars.get("VAULT_ADDR") or "http://localhost:8200"
+    )
     vault_token = os.environ.get("VAULT_TOKEN") or env_vars.get("VAULT_TOKEN") or "dev-root-token"
 
     wait_for_vault(vault_addr, timeout_seconds)
@@ -198,12 +219,17 @@ def parse_args() -> argparse.Namespace:
         default=30.0,
         help="Seconds to wait for Vault health before failing (default: 30).",
     )
+    parser.add_argument(
+        "--from-env",
+        action="store_true",
+        help="Merge required seed values from process environment.",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     env_path = Path(args.env_path)
-    if not env_path.is_file():
+    if not env_path.is_file() and not args.from_env:
         raise SystemExit(f"env file not found: {env_path}")
-    seed_vault(str(env_path), timeout_seconds=args.timeout)
+    seed_vault(str(env_path), timeout_seconds=args.timeout, from_env=args.from_env)

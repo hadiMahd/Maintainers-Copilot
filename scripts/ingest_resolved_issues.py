@@ -26,10 +26,16 @@ _DEFAULT_OUTPUT_CHUNKS = "data/processed/rag_chunks.jsonl"
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Ingest resolved issues for RAG corpus")
     parser.add_argument("--input", required=True, help="Path to issues JSONL input file")
-    parser.add_argument("--output-sources", default=_DEFAULT_OUTPUT_SOURCES, help="Output JSONL for sources")
-    parser.add_argument("--output-chunks", default=_DEFAULT_OUTPUT_CHUNKS, help="Output JSONL for chunks")
+    parser.add_argument(
+        "--output-sources", default=_DEFAULT_OUTPUT_SOURCES, help="Output JSONL for sources"
+    )
+    parser.add_argument(
+        "--output-chunks", default=_DEFAULT_OUTPUT_CHUNKS, help="Output JSONL for chunks"
+    )
     parser.add_argument("--max-chunk-tokens", type=int, default=300, help="Max tokens per chunk")
-    parser.add_argument("--classifier-source-ids", help="Path to file with classifier source IDs (one per line)")
+    parser.add_argument(
+        "--classifier-source-ids", help="Path to file with classifier source IDs (one per line)"
+    )
     return parser.parse_args(argv)
 
 
@@ -89,4 +95,5 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

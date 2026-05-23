@@ -41,9 +41,16 @@ class TestNerRouteBoundaries:
         data = response.json()
         for entity in data["entities"]:
             assert entity["type"] in (
-                "file_path", "function_name", "class_name", "package_name",
-                "version_number", "error_code", "url", "stack_trace_marker",
-                "environment_name", "command_snippet",
+                "file_path",
+                "function_name",
+                "class_name",
+                "package_name",
+                "version_number",
+                "error_code",
+                "url",
+                "stack_trace_marker",
+                "environment_name",
+                "command_snippet",
             )
 
 

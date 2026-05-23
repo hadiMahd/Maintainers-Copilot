@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import hashlib
 
-import pytest
-
 from app.domain.rag import RAGChunk, RAGSource
 
 
@@ -13,7 +11,15 @@ def _hash(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def _chunk_text(text: str, parent_id: str, max_chunk_tokens: int = 200, *, source_type: str = "docs", source_path: str = "test/doc.md", title: str = "Test Document") -> list[RAGChunk]:
+def _chunk_text(
+    text: str,
+    parent_id: str,
+    max_chunk_tokens: int = 200,
+    *,
+    source_type: str = "docs",
+    source_path: str = "test/doc.md",
+    title: str = "Test Document",
+) -> list[RAGChunk]:
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     chunks: list[RAGChunk] = []
     buffer = ""
@@ -23,14 +29,40 @@ def _chunk_text(text: str, parent_id: str, max_chunk_tokens: int = 200, *, sourc
             buffer = combined
         else:
             if buffer:
-                chunks.append(_build_chunk(parent_id, buffer, len(chunks), source_type=source_type, source_path=source_path, title=title))
+                chunks.append(
+                    _build_chunk(
+                        parent_id,
+                        buffer,
+                        len(chunks),
+                        source_type=source_type,
+                        source_path=source_path,
+                        title=title,
+                    )
+                )
             buffer = p
     if buffer:
-        chunks.append(_build_chunk(parent_id, buffer, len(chunks), source_type=source_type, source_path=source_path, title=title))
+        chunks.append(
+            _build_chunk(
+                parent_id,
+                buffer,
+                len(chunks),
+                source_type=source_type,
+                source_path=source_path,
+                title=title,
+            )
+        )
     return chunks
 
 
-def _build_chunk(parent_id: str, content: str, chunk_index: int, *, source_type: str = "docs", source_path: str = "test/doc.md", title: str = "Test Document") -> RAGChunk:
+def _build_chunk(
+    parent_id: str,
+    content: str,
+    chunk_index: int,
+    *,
+    source_type: str = "docs",
+    source_path: str = "test/doc.md",
+    title: str = "Test Document",
+) -> RAGChunk:
     content_hash = _hash(content.strip())
     chunk_id = _hash(f"{parent_id}:{chunk_index}")
     return RAGChunk(
@@ -123,18 +155,26 @@ class TestClassifierDataLeakage:
         def _is_held_out(source: RAGSource) -> bool:
             return source.source_id not in _classifier_source_ids()
 
-        assert _is_held_out(RAGSource(
-            source_id="rag-heldout-1", source_type="issue",
-            source_path="issues/42.json", title="Bug report",
-            content="issue text", content_hash="abc",
-        ))
+        assert _is_held_out(
+            RAGSource(
+                source_id="rag-heldout-1",
+                source_type="issue",
+                source_path="issues/42.json",
+                title="Bug report",
+                content="issue text",
+                content_hash="abc",
+            )
+        )
 
     def test_classifier_source_ids_are_excluded(self):
         classifier_ids = {"classifier-1", "classifier-2"}
         rag_source = RAGSource(
-            source_id="rag-1", source_type="issue",
-            source_path="issues/99.json", title="Question",
-            content="issue text", content_hash="def",
+            source_id="rag-1",
+            source_type="issue",
+            source_path="issues/99.json",
+            title="Question",
+            content="issue text",
+            content_hash="def",
         )
         assert rag_source.source_id not in classifier_ids
 

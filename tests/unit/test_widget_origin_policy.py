@@ -1,8 +1,6 @@
 """Unit tests for WidgetEmbedService origin policy."""
 
-import pytest
-
-from app.services.widget_embed_service import WidgetEmbedService, OriginDecision
+from app.services.widget_embed_service import WidgetEmbedService
 
 
 class TestNormalizeOrigin:

@@ -12,7 +12,7 @@
 ## Run Full Local Validation
 
 ```bash
-scripts/ci/run_all.sh
+make validate
 ```
 
 Expected result: lint, format, type-check, tests, evals, redaction leak checks,
@@ -25,10 +25,11 @@ without real paid API credentials.
 
 ```bash
 uv sync --all-extras --dev
-uv run ruff check .
-uv run ruff format --check .
-scripts/ci/run_type_check.sh
-uv run pytest
+make lint
+make format-check
+make import-check
+make type-check
+make test
 uv run python scripts/ci/check_eval_thresholds.py
 scripts/ci/run_evals.sh classifier
 scripts/ci/run_evals.sh rag
@@ -109,11 +110,11 @@ Review:
 
 ```text
 README.md
-docs/ARCH.md
-docs/DECISIONS.md
-docs/EVALS.md
-docs/RUNBOOK.md
-docs/SECURITY.md
+docs/architecture.md
+docs/decisions.md
+docs/evals.md
+docs/runbook.md
+docs/security.md
 ```
 
 Expected result: setup, architecture, commands, demo, decisions with numbers,
@@ -124,6 +125,7 @@ are documented.
 
 Push the branch or open a pull request.
 
-Expected result: the CI workflow runs the same required gates using uv, ruff,
-pytest, compact eval fixtures, fake providers, Docker build validation, and a
-core stack smoke test where practical.
+Expected result: the CI workflow runs the same required gates using uv, flake8,
+black, isort, mypy, pytest, compact eval fixtures, fake providers, Docker build
+validation, and a full production-functional stack smoke test including the
+model server where practical.

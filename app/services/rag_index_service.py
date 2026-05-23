@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
-from pathlib import Path
 
 from app.domain.rag import RAGChunk, RAGEmbedding
-from app.infra.embedding_client import BaseEmbeddingClient, FakeEmbeddingClient
+from app.infra.embedding_client import BaseEmbeddingClient
 from app.repositories.rag_embedding_repository import RAGEmbeddingRepository
 
 logger = logging.getLogger(__name__)
@@ -30,14 +28,16 @@ class RAGIndexService:
         vectors = self._embedding_client.encode(texts)
         embeddings: list[RAGEmbedding] = []
         for chunk, vector in zip(chunks, vectors):
-            embeddings.append(RAGEmbedding(
-                embedding_id=uuid.uuid4().hex,
-                chunk_id=chunk.chunk_id,
-                content_hash=chunk.content_hash,
-                embedding_model=self._embedding_client.model_name,
-                embedding_dim=len(vector),
-                vector=list(vector),
-            ))
+            embeddings.append(
+                RAGEmbedding(
+                    embedding_id=uuid.uuid4().hex,
+                    chunk_id=chunk.chunk_id,
+                    content_hash=chunk.content_hash,
+                    embedding_model=self._embedding_client.model_name,
+                    embedding_dim=len(vector),
+                    vector=list(vector),
+                )
+            )
         logger.info(
             "Generated %d embeddings for model %s",
             len(embeddings),

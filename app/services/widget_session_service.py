@@ -7,8 +7,6 @@ from datetime import datetime, timedelta, timezone
 
 import structlog
 
-from app.domain.errors import WidgetSessionError
-
 _log = structlog.get_logger
 
 _SESSION_TTL_MINUTES = 60

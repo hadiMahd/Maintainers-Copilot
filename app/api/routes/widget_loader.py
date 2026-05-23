@@ -3,20 +3,28 @@
 Thin HTTP mapping — no SQLAlchemy, Vault, or Redis access directly.
 """
 
+import json
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, Response
 
 from app.domain.errors import WidgetEmbedError
-from app.infra.widget_assets import serve_widget_asset
+from app.infra.widget_assets import (
+    get_widget_main_asset_path,
+    get_widget_stylesheet_asset_paths,
+    serve_widget_asset,
+)
 from app.services.widget_embed_service import WidgetEmbedService
 
 router = APIRouter(prefix="/widget", tags=["widget"])
+loader_alias_router = APIRouter(tags=["widget"])
 
 
 def _get_widget_config_service(request: Request):
+    import app.infra.database as db_mod
     from app.repositories.widget_config_repository import WidgetConfigRepository
     from app.services.widget_config_service import WidgetConfigService
-    import app.infra.database as db_mod
+
     return WidgetConfigService(
         widget_config_repo=WidgetConfigRepository,
         session_factory=db_mod.async_session_factory,
@@ -40,7 +48,14 @@ async def serve_loader(request: Request) -> Response:
         )
 
 
+@loader_alias_router.get("/widget.js")
+async def serve_loader_alias(request: Request) -> Response:
+    """Serve the production embed loader at the public /widget.js path."""
+    return await serve_loader(request)
+
+
 @router.get("/frame/{widget_id}")
+@loader_alias_router.get("/widget/frame/{widget_id}")
 async def serve_widget_frame(widget_id: str, request: Request) -> HTMLResponse:
     """Serve the widget iframe shell with CSP frame-ancestors header."""
     request_id = getattr(request.state, "request_id", None)
@@ -73,24 +88,28 @@ async def serve_widget_frame(widget_id: str, request: Request) -> HTMLResponse:
         )
 
     csp = embed_svc.build_csp_frame_ancestors(config["allowed_origins"])
+    widget_main_asset = get_widget_main_asset_path()
+    stylesheet_links = "".join(
+        f"<link rel='stylesheet' href='{path}'>" for path in get_widget_stylesheet_asset_paths()
+    )
     html = (
         "<!DOCTYPE html>"
         "<html><head>"
         "<meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         f"<meta http-equiv='Content-Security-Policy' content=\"{csp}\">"
+        f"{stylesheet_links}"
         "</head><body>"
         "<div id='root'></div>"
-        f"<script>window.__WIDGET_ID__='{widget_id}';</script>"
-        f"<script>window.__ORIGIN__='{origin or ''}';</script>"
-        "<script type='module' src='/widget/assets/widget-main.js'></script>"
+        f"<script>window.__WIDGET_ID__={json.dumps(widget_id)};</script>"
+        f"<script>window.__ORIGIN__={json.dumps(origin or '')};</script>"
+        f"<script type='module' src='{widget_main_asset}'></script>"
         "</body></html>"
     )
     return HTMLResponse(
         content=html,
         headers={
             "Content-Security-Policy": csp,
-            "X-Frame-Options": "SAMEORIGIN",
             "X-Request-ID": request_id or "",
         },
     )

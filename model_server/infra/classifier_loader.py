@@ -230,7 +230,9 @@ class ClassifierLoader:
                 reason="invalid_artifact",
                 message="Transformer artifact is missing model weights",
             )
-        if not any((artifact_dir / file_name).exists() for file_name in TRANSFORMER_TOKENIZER_FILES):
+        if not any(
+            (artifact_dir / file_name).exists() for file_name in TRANSFORMER_TOKENIZER_FILES
+        ):
             raise ArtifactLoadError(
                 reason="invalid_artifact",
                 message="Transformer artifact is missing tokenizer files",
@@ -301,9 +303,7 @@ class ClassifierLoader:
             predicted_id = int(torch.argmax(probabilities).item())
             confidence = float(probabilities[predicted_id].item())
 
-        label_lookup = getattr(self._model.config, "id2label", None) or dict(
-            enumerate(LABEL_ORDER)
-        )
+        label_lookup = getattr(self._model.config, "id2label", None) or dict(enumerate(LABEL_ORDER))
         predicted = label_lookup[predicted_id]
         return str(predicted).lower(), confidence
 

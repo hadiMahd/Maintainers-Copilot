@@ -5,22 +5,26 @@ from __future__ import annotations
 import pytest
 
 from app.domain.rag import (
+    GroundedAnswer,
+    RAGChunk,
+    RAGGenerationError,
+    RAGInsufficientEvidenceError,
+    RAGRetrievalError,
     RetrievalQuery,
     RetrievalResult,
     RetrievalResultSet,
-    GroundedAnswer,
-    RAGChunk,
-    RAGRetrievalError,
-    RAGGenerationError,
-    RAGInsufficientEvidenceError,
 )
 
 
 class TestRetrievalResultSchema:
     def test_retrieval_result_has_required_fields(self):
         chunk = RAGChunk(
-            chunk_id="c1", parent_id="p1", source_type="docs",
-            content="test content", content_hash="abc123", token_count=2,
+            chunk_id="c1",
+            parent_id="p1",
+            source_type="docs",
+            content="test content",
+            content_hash="abc123",
+            token_count=2,
         )
         result = RetrievalResult(rank=1, final_score=0.9, chunk=chunk)
         assert result.rank == 1
@@ -29,12 +33,20 @@ class TestRetrievalResultSchema:
 
     def test_retrieval_result_optional_scores(self):
         chunk = RAGChunk(
-            chunk_id="c1", parent_id="p1", source_type="docs",
-            content="test", content_hash="abc", token_count=1,
+            chunk_id="c1",
+            parent_id="p1",
+            source_type="docs",
+            content="test",
+            content_hash="abc",
+            token_count=1,
         )
         result = RetrievalResult(
-            rank=1, final_score=0.9, chunk=chunk,
-            sparse_score=0.5, dense_score=0.8, rerank_score=0.95,
+            rank=1,
+            final_score=0.9,
+            chunk=chunk,
+            sparse_score=0.5,
+            dense_score=0.8,
+            rerank_score=0.95,
         )
         assert result.sparse_score == 0.5
         assert result.dense_score == 0.8

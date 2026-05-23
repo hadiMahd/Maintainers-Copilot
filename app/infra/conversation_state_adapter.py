@@ -26,7 +26,9 @@ class ConversationStateAdapter:
         return ConversationState(
             user_id=user_id,
             conversation_id=conversation_id,
-            messages=[ConversationMessage.model_validate(item) for item in data.get("messages", [])],
+            messages=[
+                ConversationMessage.model_validate(item) for item in data.get("messages", [])
+            ],
             updated_at=data.get("updated_at"),
             expires_at=data.get("expires_at"),
             degraded=False,

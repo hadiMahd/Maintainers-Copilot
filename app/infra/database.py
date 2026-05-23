@@ -3,11 +3,15 @@
 from typing import AsyncGenerator
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.domain.errors import DependencyError
 from app.domain.models import ReadinessCheck
-
 
 async_session_factory: async_sessionmaker[AsyncSession] | None = None
 

@@ -1,8 +1,8 @@
 """Tests for error handling."""
 
+import httpx
 import pytest
 from fastapi import FastAPI
-import httpx
 
 from app.api.error_handlers import register_error_handlers
 from app.core.config import AppSettings

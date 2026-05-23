@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 from model_server.domain.issue_analysis import (
-    SummarizationRequest,
     IssueSummary,
+    SummarizationRequest,
     normalize_comments,
 )
 from model_server.infra.summarization_adapter import (

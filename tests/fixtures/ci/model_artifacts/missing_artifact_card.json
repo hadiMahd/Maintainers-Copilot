@@ -1,0 +1,1 @@
+{"model_version": "0.1.0", "architecture": "distilbert-base-uncased", "artifacts": [{"path": "nonexistent_model.pt", "sha256": "abc123def456"}]}

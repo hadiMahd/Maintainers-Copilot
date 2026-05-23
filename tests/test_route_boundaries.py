@@ -3,8 +3,6 @@
 import ast
 from pathlib import Path
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).parent.parent
 API_DIR = PROJECT_ROOT / "app" / "api"
 

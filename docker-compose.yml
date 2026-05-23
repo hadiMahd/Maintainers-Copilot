@@ -79,6 +79,47 @@ services:
     ports:
       - "8200:8200"
 
+  vault_seed:
+    build:
+      context: ./
+    depends_on:
+      vault:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-postgresql+asyncpg://maintainer:maintainer@postgres:5432/maintainer}
+      APP_REDIS_URL: ${APP_REDIS_URL:-redis://redis:6379/0}
+      APP_MINIO_ENDPOINT: ${APP_MINIO_ENDPOINT:-minio:9000}
+      APP_MINIO_ACCESS_KEY: ${APP_MINIO_ACCESS_KEY:-minioadmin}
+      APP_MINIO_SECRET_KEY: ${APP_MINIO_SECRET_KEY:-minioadmin}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev-jwt-bootstrap-only}
+      AZURE_OPENAI_KEY: ${AZURE_OPENAI_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_MODEL: ${AZURE_OPENAI_MODEL:-}
+      AZURE_EMBEDDING_MODEL: ${AZURE_EMBEDDING_MODEL:-text-embedding-3-small}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-week-7-copilot}
+    command:
+      [
+        "uv",
+        "run",
+        "python",
+        "scripts/seed_vault_from_env.py",
+        "--from-env",
+        "--timeout",
+        "60",
+      ]
+    restart: "no"
+
   migrations:
     build:
       context: ./
@@ -102,6 +143,8 @@ services:
         condition: service_healthy
       vault:
         condition: service_healthy
+      vault_seed:
+        condition: service_completed_successfully
       migrations:
         condition: service_completed_successfully
       model_server:
@@ -110,11 +153,9 @@ services:
       VAULT_ADDR: http://vault:8200
       VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
       CHAT_MODEL_SERVER_BASE_URL: http://model_server:8001
-      RAG_AZURE_GENERATION_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      RAG_AZURE_GENERATION_API_KEY: ${AZURE_OPENAI_KEY}
-      RAG_AZURE_GENERATION_MODEL: ${AZURE_OPENAI_MODEL:-gpt-5.4-nano}
-      RAG_AZURE_EMBEDDING_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      RAG_AZURE_EMBEDDING_API_KEY: ${AZURE_OPENAI_KEY}
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
+      HF_TOKEN: ${HUGGINGFACE_TOKEN:-}
+      HUGGING_FACE_HUB_TOKEN: ${HUGGINGFACE_TOKEN:-}
     ports:
       - "8000:8000"
 
@@ -139,7 +180,7 @@ services:
         "--server.port=8501",
       ]
     ports:
-      - "8501:8501"
+      - "8502:8501"
 
   pgadmin:
     image: dpage/pgadmin4:8
@@ -164,10 +205,11 @@ services:
     depends_on:
       vault:
         condition: service_healthy
+      vault_seed:
+        condition: service_completed_successfully
     environment:
-      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_KEY}
-      AZURE_OPENAI_MODEL: ${AZURE_OPENAI_MODEL:-gpt-5.4-nano}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN:-dev-root-token}
     ports:
       - "8001:8001"
     healthcheck:
@@ -179,21 +221,40 @@ services:
 
   chatbot:
     build:
-      context: ./chatbot
-    profiles:
-      - skeletal
+      context: ./
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      MAINTAINER_COPILOT_UI_BASE_URL: http://backend:8000
+      STREAMLIT_SERVER_HEADLESS: "true"
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+    command:
+      [
+        "streamlit",
+        "run",
+        "streamlit_app/app.py",
+        "--server.address=0.0.0.0",
+        "--server.port=8501",
+      ]
+    ports:
+      - "8501:8501"
 
   widget:
     build:
       context: ./widget
-    profiles:
-      - skeletal
+    ports:
+      - "8082:80"
 
   demo_host:
     build:
       context: ./demo/host
-    profiles:
-      - skeletal
+    environment:
+      BACKEND_URL: ${WIDGET_BACKEND_URL:-http://localhost:8000}
+      WIDGET_ID: ${DEMO_WIDGET_ID:-YOUR_WIDGET_ID}
+    ports:
+      - "8080:80"
+      - "8081:80"
 
 volumes:
   pgadmin-data:

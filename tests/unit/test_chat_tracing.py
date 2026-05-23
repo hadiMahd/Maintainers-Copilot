@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.infra.tracing import BaseTraceAdapter, FakeTraceAdapter
+from app.infra.tracing import BaseTraceAdapter, FakeTraceAdapter, LangSmithTraceAdapter
 from app.services.chat_tracing_service import ChatTracingService
 
 
@@ -17,6 +17,18 @@ class _BrokenTraceAdapter(BaseTraceAdapter):
 
     async def finish(self, handle, status: str, metadata: dict):
         raise RuntimeError("boom")
+
+
+class _FakeLangSmithClient:
+    def __init__(self) -> None:
+        self.created: list[dict] = []
+        self.updated: list[dict] = []
+
+    def create_run(self, **kwargs):
+        self.created.append(kwargs)
+
+    def update_run(self, **kwargs):
+        self.updated.append(kwargs)
 
 
 @pytest.mark.asyncio
@@ -47,3 +59,19 @@ async def test_tracing_adapter_failures_are_safe():
         request_id="req-1",
     )
     assert root is None
+
+
+@pytest.mark.asyncio
+async def test_langsmith_adapter_creates_parented_runs():
+    client = _FakeLangSmithClient()
+    adapter = LangSmithTraceAdapter(client=client, project_name="test-project")
+
+    root = await adapter.start_root("chat_request", {"request_id": "req-1"})
+    span = await adapter.start_span("tool_call", {"tool_name": "rag"}, root)
+    await adapter.finish(span, "success", {"request_id": "req-1"})
+
+    assert client.created[0]["project_name"] == "test-project"
+    assert client.created[0]["run_type"] == "chain"
+    assert client.created[1]["run_type"] == "tool"
+    assert client.created[1]["parent_run_id"] == client.created[0]["id"]
+    assert client.updated[0]["run_id"] == client.created[1]["id"]

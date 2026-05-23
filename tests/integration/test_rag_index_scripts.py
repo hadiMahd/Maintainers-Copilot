@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import tempfile
-
-import pytest
 
 from app.domain.rag import RAGChunk, RAGEmbedding, RAGSource
 
@@ -19,7 +15,11 @@ def _hash(text: str) -> str:
 class TestRepeatableIngestion:
     def test_same_input_produces_same_chunks(self):
         docs = [
-            {"source_path": "docs/install.md", "title": "Installation", "content": "Line one.\n\nLine two."},
+            {
+                "source_path": "docs/install.md",
+                "title": "Installation",
+                "content": "Line one.\n\nLine two.",
+            },
         ]
         chunks1 = _ingest_docs(docs)
         chunks2 = _ingest_docs(docs)
@@ -29,17 +29,25 @@ class TestRepeatableIngestion:
             assert c1.content_hash == c2.content_hash
 
     def test_different_input_produces_different_chunks(self):
-        chunks_a = _ingest_docs([
-            {"source_path": "a.md", "title": "A", "content": "Content A."},
-        ])
-        chunks_b = _ingest_docs([
-            {"source_path": "b.md", "title": "B", "content": "Content B."},
-        ])
+        chunks_a = _ingest_docs(
+            [
+                {"source_path": "a.md", "title": "A", "content": "Content A."},
+            ]
+        )
+        chunks_b = _ingest_docs(
+            [
+                {"source_path": "b.md", "title": "B", "content": "Content B."},
+            ]
+        )
         assert chunks_a[0].chunk_id != chunks_b[0].chunk_id
 
     def test_stable_source_output(self):
         docs = [
-            {"source_path": "docs/readme.md", "title": "README", "content": "Project overview.\n\nSetup guide."},
+            {
+                "source_path": "docs/readme.md",
+                "title": "README",
+                "content": "Project overview.\n\nSetup guide.",
+            },
         ]
         sources, chunks = _ingest_with_sources(docs)
         assert len(sources) == 1
@@ -53,36 +61,54 @@ class TestRepeatableIngestion:
 class TestDuplicateEmbeddingSkipping:
     def test_same_content_hash_and_model_is_duplicate(self):
         embedding1 = RAGEmbedding(
-            embedding_id="e1", chunk_id="c1", content_hash="abc123",
-            embedding_model="all-MiniLM-L6-v2", embedding_dim=384,
+            embedding_id="e1",
+            chunk_id="c1",
+            content_hash="abc123",
+            embedding_model="all-MiniLM-L6-v2",
+            embedding_dim=384,
             vector=[0.1] * 384,
         )
         embedding2 = RAGEmbedding(
-            embedding_id="e2", chunk_id="c1", content_hash="abc123",
-            embedding_model="all-MiniLM-L6-v2", embedding_dim=384,
+            embedding_id="e2",
+            chunk_id="c1",
+            content_hash="abc123",
+            embedding_model="all-MiniLM-L6-v2",
+            embedding_dim=384,
             vector=[0.1] * 384,
         )
         assert _is_duplicate(embedding1, embedding2)
 
     def test_different_content_hash_not_duplicate(self):
         embedding1 = RAGEmbedding(
-            embedding_id="e1", chunk_id="c1", content_hash="abc",
-            embedding_model="all-MiniLM-L6-v2", embedding_dim=384,
+            embedding_id="e1",
+            chunk_id="c1",
+            content_hash="abc",
+            embedding_model="all-MiniLM-L6-v2",
+            embedding_dim=384,
         )
         embedding2 = RAGEmbedding(
-            embedding_id="e2", chunk_id="c1", content_hash="def",
-            embedding_model="all-MiniLM-L6-v2", embedding_dim=384,
+            embedding_id="e2",
+            chunk_id="c1",
+            content_hash="def",
+            embedding_model="all-MiniLM-L6-v2",
+            embedding_dim=384,
         )
         assert not _is_duplicate(embedding1, embedding2)
 
     def test_different_model_not_duplicate(self):
         embedding1 = RAGEmbedding(
-            embedding_id="e1", chunk_id="c1", content_hash="abc",
-            embedding_model="all-MiniLM-L6-v2", embedding_dim=384,
+            embedding_id="e1",
+            chunk_id="c1",
+            content_hash="abc",
+            embedding_model="all-MiniLM-L6-v2",
+            embedding_dim=384,
         )
         embedding2 = RAGEmbedding(
-            embedding_id="e2", chunk_id="c1", content_hash="abc",
-            embedding_model="text-embedding-3-small", embedding_dim=1536,
+            embedding_id="e2",
+            chunk_id="c1",
+            content_hash="abc",
+            embedding_model="text-embedding-3-small",
+            embedding_dim=1536,
         )
         assert not _is_duplicate(embedding1, embedding2)
 
@@ -98,6 +124,7 @@ class TestDuplicateEmbeddingSkipping:
 
 # -- Helpers (mirror ingestion service logic) --------------------------------
 
+
 def _ingest_docs(docs: list[dict]) -> list[RAGChunk]:
     chunks: list[RAGChunk] = []
     for doc in docs:
@@ -105,17 +132,19 @@ def _ingest_docs(docs: list[dict]) -> list[RAGChunk]:
         paras = [p.strip() for p in doc["content"].split("\n\n") if p.strip()]
         for i, p in enumerate(paras):
             chunk_id = _hash(f"{source_id}:{i}")
-            chunks.append(RAGChunk(
-                chunk_id=chunk_id,
-                parent_id=source_id,
-                source_type="docs",
-                source_path=doc["source_path"],
-                title=doc["title"],
-                chunk_index=i,
-                content=p,
-                content_hash=_hash(p),
-                token_count=len(p.split()),
-            ))
+            chunks.append(
+                RAGChunk(
+                    chunk_id=chunk_id,
+                    parent_id=source_id,
+                    source_type="docs",
+                    source_path=doc["source_path"],
+                    title=doc["title"],
+                    chunk_index=i,
+                    content=p,
+                    content_hash=_hash(p),
+                    token_count=len(p.split()),
+                )
+            )
     return chunks
 
 
@@ -125,28 +154,32 @@ def _ingest_with_sources(docs: list[dict]) -> tuple[list[RAGSource], list[RAGChu
     for doc in docs:
         source_id = _hash(doc["source_path"])
         content_hash = _hash(doc["content"])
-        sources.append(RAGSource(
-            source_id=source_id,
-            source_type="docs",
-            source_path=doc["source_path"],
-            title=doc["title"],
-            content=doc["content"],
-            content_hash=content_hash,
-        ))
-        paras = [p.strip() for p in doc["content"].split("\n\n") if p.strip()]
-        for i, p in enumerate(paras):
-            chunk_id = _hash(f"{source_id}:{i}")
-            chunks.append(RAGChunk(
-                chunk_id=chunk_id,
-                parent_id=source_id,
+        sources.append(
+            RAGSource(
+                source_id=source_id,
                 source_type="docs",
                 source_path=doc["source_path"],
                 title=doc["title"],
-                chunk_index=i,
-                content=p,
-                content_hash=_hash(p),
-                token_count=len(p.split()),
-            ))
+                content=doc["content"],
+                content_hash=content_hash,
+            )
+        )
+        paras = [p.strip() for p in doc["content"].split("\n\n") if p.strip()]
+        for i, p in enumerate(paras):
+            chunk_id = _hash(f"{source_id}:{i}")
+            chunks.append(
+                RAGChunk(
+                    chunk_id=chunk_id,
+                    parent_id=source_id,
+                    source_type="docs",
+                    source_path=doc["source_path"],
+                    title=doc["title"],
+                    chunk_index=i,
+                    content=p,
+                    content_hash=_hash(p),
+                    token_count=len(p.split()),
+                )
+            )
     return sources, chunks
 
 

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import structlog
 
-from app.domain.errors import WidgetEmbedError
-
 _log = structlog.get_logger
 
 

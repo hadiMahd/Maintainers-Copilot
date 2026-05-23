@@ -58,9 +58,16 @@ class TestNerEndpoint:
             assert "type" in entity
             assert len(entity["text"]) >= 1
             assert entity["type"] in (
-                "file_path", "function_name", "class_name", "package_name",
-                "version_number", "error_code", "url", "stack_trace_marker",
-                "environment_name", "command_snippet",
+                "file_path",
+                "function_name",
+                "class_name",
+                "package_name",
+                "version_number",
+                "error_code",
+                "url",
+                "stack_trace_marker",
+                "environment_name",
+                "command_snippet",
             )
 
     async def test_ner_returns_request_id_when_provided(self, client):
@@ -100,7 +107,9 @@ class TestSummarizeEndpoint:
 
     async def test_summarize_returns_request_id(self, client):
         payload = {"title": "Test issue"}
-        response = await client.post("/summarize", json=payload, headers={"X-Request-ID": "req-456"})
+        response = await client.post(
+            "/summarize", json=payload, headers={"X-Request-ID": "req-456"}
+        )
         assert response.status_code == 200
         assert response.headers.get("X-Request-ID") == "req-456"
 

@@ -125,6 +125,7 @@ class TestLongTermMemoryService:
 
     async def test_embedding_boundary_uses_asyncio_to_thread(self, monkeypatch):
         import asyncio
+
         from app.infra.memory_embedding_client import MemoryEmbeddingClient
 
         called: dict[str, bool] = {"value": False}

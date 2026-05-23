@@ -45,7 +45,7 @@ def main() -> None:
     health_url = vault_addr.rstrip("/") + "/v1/sys/health"
     try:
         req = urllib.request.Request(health_url, method="GET")
-        with urllib.request.urlopen(req, timeout=3) as response:
+        with urllib.request.urlopen(req, timeout=3):
             checks.append(("Vault health endpoint", True))
     except Exception as exc:
         checks.append(("Vault health endpoint", False))

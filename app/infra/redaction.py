@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 _SECRET_PATTERNS = [
-    re.compile(r"sk-[A-Za-z0-9]{20,}", re.IGNORECASE),
+    re.compile(r"sk-[A-Za-z0-9_-]{10,}", re.IGNORECASE),
     re.compile(r"(?:api[_\-]?key|token|secret|password|credential)\s*[:=]\s*\S+", re.IGNORECASE),
 ]
 
@@ -19,7 +19,7 @@ _MEMORY_KEY_VALUE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_RAW_TOKEN_PATTERN = re.compile(r"sk-[A-Za-z0-9]{20,}", re.IGNORECASE)
+_RAW_TOKEN_PATTERN = re.compile(r"sk-[A-Za-z0-9_-]{10,}", re.IGNORECASE)
 
 _MAX_TEXT_FIELD_LENGTH = 500
 
@@ -44,7 +44,10 @@ def redact_dict(data: dict[str, Any], text_fields: set[str] | None = None) -> di
     redacted: dict[str, Any] = {}
     for key, value in data.items():
         key_lower = key.lower()
-        if any(pat in key_lower for pat in ("secret", "password", "token", "api_key", "apikey", "credential")):
+        if any(
+            pat in key_lower
+            for pat in ("secret", "password", "token", "api_key", "apikey", "credential")
+        ):
             redacted[key] = _REDACTED
             continue
         redacted[key] = _redact_value(value, key, text_fields)
@@ -110,8 +113,7 @@ def redact_issue_analysis_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
                 safe[key] = value
             elif isinstance(value, list):
                 safe[key] = [
-                    redact_string(item) if isinstance(item, str) else item
-                    for item in value
+                    redact_string(item) if isinstance(item, str) else item for item in value
                 ]
             else:
                 safe[key] = str(value)
@@ -284,8 +286,16 @@ def redact_rag_prompt(payload: dict[str, Any]) -> dict[str, Any]:
 def redact_snapshot_row(row: dict[str, Any]) -> dict[str, Any]:
     """Redact a snapshot row for safe storage — keep chunk IDs and scores only."""
     safe: dict[str, Any] = {}
-    for key in {"snapshot_id", "conversation_id", "message_id", "trace_id",
-                "chunk_ids", "scores", "created_at", "query"}:
+    for key in {
+        "snapshot_id",
+        "conversation_id",
+        "message_id",
+        "trace_id",
+        "chunk_ids",
+        "scores",
+        "created_at",
+        "query",
+    }:
         if key in row:
             if key == "query":
                 safe[key] = redact_string(row[key])
@@ -304,8 +314,7 @@ def redact_eval_report(report: dict[str, Any]) -> dict[str, Any]:
             safe[key] = redact_dict(value, _RAG_REDACTED_FIELDS)
         elif isinstance(value, list):
             safe[key] = [
-                redact_chunk_preview(item) if isinstance(item, dict) else item
-                for item in value
+                redact_chunk_preview(item) if isinstance(item, dict) else item for item in value
             ]
         elif isinstance(value, str):
             safe[key] = redact_string(value)

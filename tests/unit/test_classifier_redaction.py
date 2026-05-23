@@ -1,7 +1,5 @@
 """Tests for redaction before telemetry/artifact persistence."""
 
-import pytest
-
 from app.infra.redaction import (
     redact_dict,
     redact_model_card,
@@ -19,6 +17,13 @@ def test_redact_string_removes_sk_keys():
     """OpenAI-style sk- keys are replaced."""
     result = redact_string("key=sk-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789")
     assert "sk-" not in result
+    assert "[REDACTED]" in result
+
+
+def test_redact_string_removes_fake_sk_probe_with_hyphens():
+    """CI fake sk- probes with hyphens are replaced."""
+    result = redact_string("key=sk-fake-test-key-12345")
+    assert "sk-fake-test-key-12345" not in result
     assert "[REDACTED]" in result
 
 

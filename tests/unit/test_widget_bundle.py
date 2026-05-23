@@ -32,10 +32,7 @@ def _find_widget_bundles() -> list[Path]:
     assets = WIDGET_DIST / "assets"
     if not assets.exists():
         return []
-    return sorted(
-        p for p in assets.glob("*.js")
-        if "widget-" in p.name and "loader" not in p.name
-    )
+    return sorted(p for p in assets.glob("*.js") if "widget-" in p.name and "loader" not in p.name)
 
 
 def _find_all_js() -> list[Path]:
@@ -56,17 +53,16 @@ def test_loader_under_5kb_gzip():
     loader = _find_loader()
     assert loader is not None
     size = _gzip_size(loader)
-    assert size < LOADER_MAX_GZIP, (
-        f"loader.js gzip size {size / 1024:.2f} KB exceeds {LOADER_MAX_GZIP / 1024:.0f} KB limit"
-    )
+    assert (
+        size < LOADER_MAX_GZIP
+    ), f"loader.js gzip size {size / 1024:.2f} KB exceeds {LOADER_MAX_GZIP / 1024:.0f} KB limit"
 
 
 @pytest.mark.skipif(not WIDGET_DIST.exists(), reason="widget/dist not built")
 def test_one_standalone_initial_bundle():
     bundles = _find_widget_bundles()
     assert len(bundles) == 1, (
-        f"Expected exactly 1 widget bundle, found {len(bundles)}: "
-        f"{[b.name for b in bundles]}"
+        f"Expected exactly 1 widget bundle, found {len(bundles)}: " f"{[b.name for b in bundles]}"
     )
 
 
@@ -76,9 +72,9 @@ def test_bundle_under_150kb_gzip():
     assert len(bundles) >= 1
     bundle = bundles[0]
     size = _gzip_size(bundle)
-    assert size <= BUNDLE_MAX_GZIP, (
-        f"Widget bundle gzip size {size / 1024:.2f} KB exceeds {BUNDLE_MAX_GZIP / 1024:.0f} KB limit"
-    )
+    assert (
+        size <= BUNDLE_MAX_GZIP
+    ), f"Widget bundle gzip size {size / 1024:.2f} KB exceeds {BUNDLE_MAX_GZIP / 1024:.0f} KB limit"
 
 
 @pytest.mark.skipif(not WIDGET_DIST.exists(), reason="widget/dist not built")
@@ -93,6 +89,4 @@ def test_no_extra_initial_js_assets():
     expected.update(bundles)
 
     extra = set(all_js) - expected
-    assert not extra, (
-        f"Unexpected initial JS assets in dist: {[p.name for p in extra]}"
-    )
+    assert not extra, f"Unexpected initial JS assets in dist: {[p.name for p in extra]}"

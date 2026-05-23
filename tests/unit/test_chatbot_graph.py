@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from app.domain.chat import ChatLimits, ConversationMessage, TraceRoot
+from app.domain.chat import ChatLimits, ConversationMessage
 from app.domain.chat_tools import LLMCompletion
 from app.infra.llm_adapter import FakeLLMAdapter
+from app.infra.memory_tool_client import FakeMemoryToolClient
 from app.infra.model_server_tools import FakeModelServerTools
 from app.infra.prompt_registry import PromptRegistry
 from app.infra.rag_tool_client import FakeRAGToolClient
-from app.infra.memory_tool_client import FakeMemoryToolClient
 from app.infra.tracing import FakeTraceAdapter
 from app.services.chat_rag_snapshot_coordinator import ChatRAGSnapshotCoordinator
 from app.services.chat_tracing_service import ChatTracingService
@@ -32,7 +32,9 @@ class _FakeSnapshotService:
         )
 
 
-def _build_graph_service(completions: list[LLMCompletion]) -> tuple[ChatbotGraphService, ChatTracingService]:
+def _build_graph_service(
+    completions: list[LLMCompletion],
+) -> tuple[ChatbotGraphService, ChatTracingService]:
     tracing_service = ChatTracingService(FakeTraceAdapter())
     tool_service = ToolExecutionService(
         model_server_tools=FakeModelServerTools(),
@@ -66,7 +68,9 @@ async def test_graph_node_shape_stays_single_llm():
 
 @pytest.mark.asyncio
 async def test_graph_completes_without_tools():
-    graph_service, tracing_service = _build_graph_service([LLMCompletion(message="hello maintainer")])
+    graph_service, tracing_service = _build_graph_service(
+        [LLMCompletion(message="hello maintainer")]
+    )
     handle = await tracing_service.start_chat_trace(
         user_id="u1",
         conversation_id="c1",

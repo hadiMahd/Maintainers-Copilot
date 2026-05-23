@@ -5,9 +5,11 @@ from __future__ import annotations
 import pytest
 
 from app.infra.rag_judge_client import (
-    TokenOverlapJudge,
-    compute_unigram_f1,
     _DEFAULT_JUDGE_ID,
+    RagasMetricResult,
+    TokenOverlapJudge,
+    _average_metric,
+    compute_unigram_f1,
 )
 
 
@@ -39,6 +41,15 @@ class TestTokenOverlapJudge:
         )
         assert 0.0 < score <= 1.0
 
+    def test_answer_relevancy_not_diluted_by_long_context(self):
+        judge = TokenOverlapJudge()
+        score = judge.score_answer_relevancy(
+            "install numpy with pip",
+            "how to install numpy",
+            " ".join(f"irrelevant-{i}" for i in range(1000)),
+        )
+        assert score > 0.3
+
     def test_judge_id_stable(self):
         judge = TokenOverlapJudge()
         assert judge.judge_id == _DEFAULT_JUDGE_ID
@@ -64,11 +75,47 @@ class TestUnigramF1:
         assert 0.0 < score < 1.0
 
 
+class TestRagasMetricResult:
+    def test_report_dict_contains_requested_ragas_metrics(self):
+        result = RagasMetricResult(
+            context_precision=0.9,
+            context_recall=0.8,
+            context_entity_recall=0.7,
+            noise_sensitivity=0.1,
+            faithfulness=0.95,
+            response_relevancy=0.85,
+        )
+
+        report = result.to_report_dict()
+
+        assert report["enabled"] is True
+        assert report["context_precision"] == 0.9
+        assert report["context_recall"] == 0.8
+        assert report["context_entity_recall"] == 0.7
+        assert report["noise_sensitivity"] == 0.1
+        assert report["faithfulness"] == 0.95
+        assert report["response_relevancy"] == 0.85
+        assert report["failures"] == []
+
+    def test_average_metric_ignores_missing_and_nan_scores(self):
+        rows = [
+            {"context_precision": 1.0},
+            {"context_precision": None},
+            {"context_precision": float("nan")},
+            {"context_precision": 0.5},
+        ]
+
+        assert _average_metric(rows, "context_precision") == pytest.approx(0.75)
+
+
 class TestHitAt5:
     def test_hit_when_expected_in_top_5(self):
         results = [
-            {"chunk_id": "a"}, {"chunk_id": "b"}, {"chunk_id": "c"},
-            {"chunk_id": "d"}, {"chunk_id": "e"},
+            {"chunk_id": "a"},
+            {"chunk_id": "b"},
+            {"chunk_id": "c"},
+            {"chunk_id": "d"},
+            {"chunk_id": "e"},
         ]
         hit = _compute_hit_at_5(results, ["c"])
         assert hit == 1.0
@@ -80,8 +127,11 @@ class TestHitAt5:
 
     def test_hit_with_multiple_expected(self):
         results = [
-            {"chunk_id": "a"}, {"chunk_id": "b"}, {"chunk_id": "c"},
-            {"chunk_id": "d"}, {"chunk_id": "e"},
+            {"chunk_id": "a"},
+            {"chunk_id": "b"},
+            {"chunk_id": "c"},
+            {"chunk_id": "d"},
+            {"chunk_id": "e"},
         ]
         hit = _compute_hit_at_5(results, ["b", "z"])
         assert hit == 1.0
@@ -105,7 +155,10 @@ class TestMRR:
 
     def test_mrr_rank_3(self):
         results = [
-            {"chunk_id": "x"}, {"chunk_id": "y"}, {"chunk_id": "a"}, {"chunk_id": "z"},
+            {"chunk_id": "x"},
+            {"chunk_id": "y"},
+            {"chunk_id": "a"},
+            {"chunk_id": "z"},
         ]
         mrr = _compute_mrr_at_10(results, ["a"])
         assert mrr == pytest.approx(1.0 / 3.0)
@@ -143,6 +196,7 @@ class TestLatencyAggregation:
 
 
 # -- Helper implementations (mirror the eval service logic) -------------------
+
 
 def _compute_hit_at_5(results: list[dict], expected_chunks: list[str]) -> float:
     for r in results[:5]:

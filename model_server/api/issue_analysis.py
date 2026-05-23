@@ -2,21 +2,18 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Request
 
 from model_server.domain.issue_analysis import (
-    IssueAnalysisRequest,
-    SummarizationRequest,
-    NerResponse,
-    IssueSummary,
+    MAX_COMBINED_INPUT_CHARS,
     ErrorBody,
+    IssueAnalysisRequest,
+    IssueSummary,
+    NerResponse,
+    SummarizationRequest,
     ToolError,
     count_combined_characters,
-    MAX_COMBINED_INPUT_CHARS,
 )
-from model_server.services.ner_service import NerService
-from model_server.services.summarization_service import SummarizationService
 from model_server.infra.entity_ruler_pipeline import EntityRulerPipeline
 from model_server.infra.summarization_adapter import (
     BaseSummarizationAdapter,
@@ -24,6 +21,8 @@ from model_server.infra.summarization_adapter import (
     SummarizationTimeout,
     SummarizerUnavailable,
 )
+from model_server.services.ner_service import NerService
+from model_server.services.summarization_service import SummarizationService
 
 router = APIRouter()
 
@@ -38,7 +37,9 @@ def _get_ner_service(request: Request) -> NerService | None:
 
 
 def _get_summarization_service(request: Request) -> SummarizationService | None:
-    adapter: BaseSummarizationAdapter | None = getattr(request.app.state, "summarization_adapter", None)
+    adapter: BaseSummarizationAdapter | None = getattr(
+        request.app.state, "summarization_adapter", None
+    )
     if adapter is None or not adapter.configured:
         return None
     return SummarizationService(adapter)
@@ -154,4 +155,3 @@ async def summarize_issue(payload: SummarizationRequest, request: Request):
                 )
             ).model_dump(),
         )
-

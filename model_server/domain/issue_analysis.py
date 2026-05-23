@@ -45,7 +45,9 @@ def _non_blank(text: str) -> bool:
     return bool(text and text.strip())
 
 
-def count_combined_characters(title: str | None, body: str | None, comments: list[str] | None) -> int:
+def count_combined_characters(
+    title: str | None, body: str | None, comments: list[str] | None
+) -> int:
     t = title or ""
     b = body or ""
     c = "".join(comments or [])
@@ -82,9 +84,7 @@ class IssueAnalysisRequest(BaseModel):
     def check_at_least_one_non_blank(self) -> IssueAnalysisRequest:
         title_ok = self.title and self.title.strip()
         body_ok = self.body and self.body.strip()
-        comments_ok = self.comments and any(
-            c for c in self.comments if c and c.strip()
-        )
+        comments_ok = self.comments and any(c for c in self.comments if c and c.strip())
         if not (title_ok or body_ok or comments_ok):
             raise ValueError("At least one of title, body, or comments must be non-empty")
         return self

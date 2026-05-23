@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from fastapi import HTTPException
@@ -38,6 +37,26 @@ def serve_widget_asset(asset_path: str) -> FileResponse:
             "Cache-Control": f"public, max-age={max_age}, immutable",
         },
     )
+
+
+def get_widget_main_asset_path() -> str:
+    """Return the built widget app JS path served under /widget/assets."""
+    assets_dir = _WIDGET_DIST_DIR / "assets"
+    candidates = sorted(
+        path.name
+        for path in assets_dir.glob("widget-*.js")
+        if path.is_file() and path.name != "loader.js"
+    )
+    if not candidates:
+        raise HTTPException(status_code=404, detail="Widget main asset not found")
+    return f"/widget/assets/{candidates[0]}"
+
+
+def get_widget_stylesheet_asset_paths() -> list[str]:
+    """Return built widget stylesheet paths served under /widget/assets."""
+    assets_dir = _WIDGET_DIST_DIR / "assets"
+    candidates = sorted(path.name for path in assets_dir.glob("*.css") if path.is_file())
+    return [f"/widget/assets/{name}" for name in candidates]
 
 
 def _guess_content_type(path: Path) -> str:

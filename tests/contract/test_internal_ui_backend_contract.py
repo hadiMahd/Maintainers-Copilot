@@ -59,6 +59,7 @@ def _patch_app_state(app, test_key_pair, mock_session_factory):
     app.state.settings = settings
 
     import app.infra.database as db_mod
+
     db_mod.async_session_factory = mock_session_factory
 
 
@@ -87,8 +88,8 @@ class TestWidgetConfigList:
 
     async def test_list_returns_items_array(self, client, monkeypatch):
         app = client._transport.app
-        from app.api.dependencies.authorization import require_admin
         from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
 
         admin_ctx = AuthContext(user_id="admin-1", email="a@t.com", role="admin")
 
@@ -102,10 +103,14 @@ class TestWidgetConfigList:
         mock_svc.list_configs = AsyncMock(
             return_value=[
                 WidgetConfigRead(
-                    id="cfg-1", name="Test Widget",
-                    allowed_origins=["https://example.com"], theme="default",
+                    id="cfg-1",
+                    name="Test Widget",
+                    allowed_origins=["https://example.com"],
+                    theme="default",
                     is_enabled=True,
-                    widget_id="wid-1", position="bottom-right", enabled_tools=[],
+                    widget_id="wid-1",
+                    position="bottom-right",
+                    enabled_tools=[],
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc),
                 )
@@ -113,6 +118,7 @@ class TestWidgetConfigList:
         )
 
         import app.api.routes.widget_configs as wc_mod
+
         monkeypatch.setattr(wc_mod, "_get_widget_config_service", lambda r: mock_svc)
 
         resp = await client.get("/admin/widget-configs/")
@@ -126,8 +132,8 @@ class TestWidgetConfigList:
 class TestWidgetConfigCreate:
     async def test_create_returns_201(self, client, monkeypatch):
         app = client._transport.app
-        from app.api.dependencies.authorization import require_admin
         from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
 
         admin_ctx = AuthContext(user_id="admin-1", email="a@t.com", role="admin")
 
@@ -140,16 +146,22 @@ class TestWidgetConfigCreate:
         mock_svc = AsyncMock()
         mock_svc.create_config = AsyncMock(
             return_value=WidgetConfigRead(
-                id="cfg-new", name="New Widget",
-                allowed_origins=["http://localhost"], theme="dark",
-                welcome_message="Hello", is_enabled=True,
-                    widget_id="wid-1", position="bottom-right", enabled_tools=[],
+                id="cfg-new",
+                name="New Widget",
+                allowed_origins=["http://localhost"],
+                theme="dark",
+                welcome_message="Hello",
+                is_enabled=True,
+                widget_id="wid-1",
+                position="bottom-right",
+                enabled_tools=[],
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )
         )
 
         import app.api.routes.widget_configs as wc_mod
+
         monkeypatch.setattr(wc_mod, "_get_widget_config_service", lambda r: mock_svc)
 
         resp = await client.post(
@@ -165,8 +177,8 @@ class TestWidgetConfigCreate:
 class TestEmbedSnippet:
     async def test_embed_snippet_response_shape(self, client, monkeypatch):
         app = client._transport.app
-        from app.api.dependencies.authorization import require_admin
         from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
 
         async def mock_admin():
             return AuthContext(user_id="admin-1", email="a@t.com", role="admin")
@@ -178,24 +190,25 @@ class TestEmbedSnippet:
         mock_svc.generate_embed_snippet = AsyncMock(
             return_value=EmbedSnippetRead(
                 widget_config_id="cfg-1",
-                snippet='<script data-mc-widget-config="cfg-1"></script>\n<script src="BASE_URL/widget/loader.js"></script>',
+                snippet='<script src="BASE_URL/widget.js" data-widget-id="wid-1"></script>',
                 generated_at=datetime.now(timezone.utc),
             )
         )
 
         import app.api.routes.widget_configs as wc_mod
+
         monkeypatch.setattr(wc_mod, "_get_widget_config_service", lambda r: mock_svc)
 
         resp = await client.get("/admin/widget-configs/cfg-1/embed-snippet")
         assert resp.status_code == 200
         data = resp.json()
         assert data["widget_config_id"] == "cfg-1"
-        assert "loader.js" in data["snippet"]
+        assert "/widget.js" in data["snippet"]
 
     async def test_embed_snippet_not_found_returns_404(self, client, monkeypatch):
         app = client._transport.app
-        from app.api.dependencies.authorization import require_admin
         from app.api.dependencies.auth import get_current_user
+        from app.api.dependencies.authorization import require_admin
 
         async def mock_admin():
             return AuthContext(user_id="admin-1", email="a@t.com", role="admin")
@@ -209,6 +222,7 @@ class TestEmbedSnippet:
         )
 
         import app.api.routes.widget_configs as wc_mod
+
         monkeypatch.setattr(wc_mod, "_get_widget_config_service", lambda r: mock_svc)
 
         resp = await client.get("/admin/widget-configs/nonexistent/embed-snippet")
@@ -234,8 +248,11 @@ class TestMemoryInspection:
             return_value=MemoryInspectionResult(
                 items=[
                     MemoryRecordRead(
-                        id="mem-1", owner_user_id="u1", memory_type="semantic",
-                        redacted_content="[REDACTED]", source="chat",
+                        id="mem-1",
+                        owner_user_id="u1",
+                        memory_type="semantic",
+                        redacted_content="[REDACTED]",
+                        source="chat",
                         created_at=datetime.now(timezone.utc),
                     )
                 ],
@@ -244,6 +261,7 @@ class TestMemoryInspection:
         )
 
         import app.api.routes.memory_inspector as mi_mod
+
         monkeypatch.setattr(mi_mod, "_get_memory_inspector_service", lambda r: mock_svc)
 
         resp = await client.get("/memory/long-term?limit=5")
@@ -267,6 +285,7 @@ class TestMemoryInspection:
         )
 
         import app.api.routes.memory_inspector as mi_mod
+
         monkeypatch.setattr(mi_mod, "_get_memory_inspector_service", lambda r: mock_svc)
 
         resp = await client.get("/memory/long-term?limit=5")

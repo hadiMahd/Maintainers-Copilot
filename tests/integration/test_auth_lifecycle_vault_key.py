@@ -51,11 +51,11 @@ def _make_settings(**kw):
 
 @pytest.fixture
 def auth_service_with_keys(test_key_pair, mock_session_factory):
-    from app.repositories.user_repository import UserRepository
-    from app.repositories.token_session_repository import TokenSessionRepository
-    from app.services.auth_service import AuthService
     from app.infra.password_hasher import PasswordHasher
     from app.infra.token_signer import TokenSigner
+    from app.repositories.token_session_repository import TokenSessionRepository
+    from app.repositories.user_repository import UserRepository
+    from app.services.auth_service import AuthService
 
     signer = TokenSigner(_make_settings(**test_key_pair))
     hasher = PasswordHasher()
@@ -72,22 +72,30 @@ def auth_service_with_keys(test_key_pair, mock_session_factory):
 class TestRegistrationLoginLifecycle:
     async def test_register_then_login(self, auth_service_with_keys):
         from app.domain.auth import UserCreate, UserLogin
-        from app.repositories.user_repository import UserRepository
-        from app.repositories.token_session_repository import TokenSessionRepository
 
         svc = auth_service_with_keys
         svc._user_repo_cls.get_by_email = AsyncMock(return_value=None)
-        svc._user_repo_cls.create = AsyncMock(return_value=MagicMock(
-            id="u1", email="life@test.com", role="user", is_active=True,
-        ))
+        svc._user_repo_cls.create = AsyncMock(
+            return_value=MagicMock(
+                id="u1",
+                email="life@test.com",
+                role="user",
+                is_active=True,
+            )
+        )
 
         user = await svc.register(UserCreate(email="life@test.com", password="pass1234"))
         assert user.email == "life@test.com"
 
-        svc._user_repo_cls.get_by_email = AsyncMock(return_value=MagicMock(
-            id="u1", email="life@test.com", role="user", is_active=True,
-            hashed_password=svc._hasher.hash("pass1234"),
-        ))
+        svc._user_repo_cls.get_by_email = AsyncMock(
+            return_value=MagicMock(
+                id="u1",
+                email="life@test.com",
+                role="user",
+                is_active=True,
+                hashed_password=svc._hasher.hash("pass1234"),
+            )
+        )
         svc._token_repo_cls.create = AsyncMock()
 
         token_pair = await svc.login(UserLogin(email="life@test.com", password="pass1234"))
@@ -97,13 +105,17 @@ class TestRegistrationLoginLifecycle:
 
     async def test_login_bad_password(self, auth_service_with_keys):
         from app.domain.auth import UserLogin
-        from app.repositories.user_repository import UserRepository
 
         svc = auth_service_with_keys
-        svc._user_repo_cls.get_by_email = AsyncMock(return_value=MagicMock(
-            id="u1", email="x@t.com", role="user", is_active=True,
-            hashed_password=svc._hasher.hash("real-password"),
-        ))
+        svc._user_repo_cls.get_by_email = AsyncMock(
+            return_value=MagicMock(
+                id="u1",
+                email="x@t.com",
+                role="user",
+                is_active=True,
+                hashed_password=svc._hasher.hash("real-password"),
+            )
+        )
 
         with pytest.raises(AuthenticationError):
             await svc.login(UserLogin(email="x@t.com", password="wrong-password"))
@@ -120,8 +132,8 @@ class TestRegistrationLoginLifecycle:
             await svc.register(UserCreate(email="exists@test.com", password="pass1234"))
 
     async def test_signing_key_unavailable(self):
-        from app.infra.token_signer import TokenSigner
         from app.domain.errors import SigningKeyError
+        from app.infra.token_signer import TokenSigner
 
         signer = TokenSigner(_make_settings())
         with pytest.raises(SigningKeyError):

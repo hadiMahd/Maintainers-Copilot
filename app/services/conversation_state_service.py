@@ -80,9 +80,7 @@ class ConversationStateService:
         if prior_state.degraded:
             return prior_state
         messages = list(prior_state.messages)
-        messages.append(
-            ConversationMessage(role="user", content=redact_chat_message(user_message))
-        )
+        messages.append(ConversationMessage(role="user", content=redact_chat_message(user_message)))
         messages.append(
             ConversationMessage(role="assistant", content=redact_chat_message(assistant_message))
         )
