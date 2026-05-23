@@ -25,7 +25,10 @@ def evaluate_rag(golden_path: str) -> dict[str, Any]:
     from app.infra.rag_judge_client import resolve_judge
     from app.services.rag_evaluation_service import RAGEvaluationService
 
-    settings = AppSettings()  # type: ignore[call-arg]
+    settings = AppSettings(  # type: ignore[call-arg]
+        vault_addr=os.environ.get("VAULT_ADDR", "http://localhost:8200"),
+        vault_token=os.environ.get("VAULT_TOKEN", "ci-eval-token"),
+    )
     judge = resolve_judge()
     gen = FakeGenerationClient()
     service = RAGEvaluationService(settings=settings, generation_client=gen, judge=judge)

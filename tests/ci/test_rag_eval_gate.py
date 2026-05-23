@@ -46,6 +46,19 @@ class TestRAGEvalGate:
         assert 0.0 <= result["mrr_at_10"] <= 1.0
         assert "ragas" not in result
 
+    def test_run_rag_eval_without_vault_env(self, monkeypatch):
+        import importlib.util
+
+        monkeypatch.delenv("VAULT_ADDR", raising=False)
+        monkeypatch.delenv("VAULT_TOKEN", raising=False)
+
+        spec = importlib.util.spec_from_file_location("run_rag_eval", "scripts/ci/run_rag_eval.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        result = mod.evaluate_rag("evals/rag/golden.jsonl")
+        assert result["dataset_id"] == "golden"
+
     def test_ragas_real_eval_flag_is_documented_in_runner(self):
         content = Path("scripts/ci/run_rag_eval.py").read_text()
         assert "USE_RAGAS_EVALS" in content
