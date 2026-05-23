@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import httpx
+import yaml
 
 
 class TestStackSmokeHealth:
@@ -24,6 +25,14 @@ class TestStackSmokeHealth:
     def test_docker_compose_includes_backend(self):
         content = Path("docker-compose.yml").read_text()
         assert "backend:" in content
+
+    def test_vault_seed_waits_for_runtime_dependencies(self):
+        with open("docker-compose.yml") as f:
+            compose = yaml.safe_load(f)
+
+        depends_on = compose["services"]["vault_seed"]["depends_on"]
+        for service in ("vault", "postgres", "redis", "minio"):
+            assert depends_on[service]["condition"] == "service_healthy"
 
     def test_backend_has_health_endpoint(self):
         """Backend application should have health check endpoints (/live, /ready)."""

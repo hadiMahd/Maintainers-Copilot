@@ -12,6 +12,7 @@ import pytest
 from app.domain.classifier import ClassifierRequest
 from model_server.api.classifier import predict
 from model_server.infra.classifier_loader import ArtifactLoadError, ClassifierLoader
+from model_server.main import lifespan
 from model_server.services.classifier_service import ClassifierService
 
 
@@ -108,6 +109,18 @@ class TestClassifierModelLifecycle:
         payload = json.loads(response.body)
         assert payload["error"]["code"] == "classifier_model_unavailable"
         assert payload["error"]["details"]["reason"] == "missing_artifact"
+
+    def test_model_server_lifespan_continues_without_artifact(self, monkeypatch):
+        monkeypatch.setenv("CLASSIFIER_ARTIFACT_DIR", "/nonexistent/path")
+        app = SimpleNamespace(state=SimpleNamespace())
+
+        async def _run_lifespan():
+            async with lifespan(app):
+                loader = app.state.classifier_loader
+                assert loader.is_loaded is False
+                assert loader.get_unavailable_error().error.details.reason == "missing_artifact"
+
+        asyncio.run(_run_lifespan())
 
     def test_unavailable_error_has_no_stack_trace(self):
         loader = ClassifierLoader(artifact_dir="/nonexistent/path")

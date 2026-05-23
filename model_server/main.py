@@ -44,8 +44,7 @@ async def lifespan(app: FastAPI):
         classifier_loader.load()
         logger.info("Classifier artifact loaded: version=%s", classifier_loader.model_version)
     except ArtifactLoadError as exc:
-        logger.error("Classifier artifact could not be loaded: %s", exc.message)
-        raise
+        logger.warning("Classifier artifact could not be loaded: %s", exc.message)
     except Exception as exc:
         logger.error("Unexpected error loading classifier artifact: %s", exc)
         raise

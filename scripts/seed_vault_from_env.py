@@ -28,6 +28,9 @@ REQUIRED_ENV_VARS = (
     "APP_MINIO_ACCESS_KEY",
     "APP_MINIO_SECRET_KEY",
     "JWT_SIGNING_KEY",
+)
+
+OPTIONAL_ENV_VARS = (
     "AZURE_OPENAI_KEY",
     "AZURE_OPENAI_ENDPOINT",
     "AZURE_OPENAI_MODEL",
@@ -110,6 +113,7 @@ def seed_vault(
     if from_env:
         for name in (
             *REQUIRED_ENV_VARS,
+            *OPTIONAL_ENV_VARS,
             "VAULT_ADDR",
             "VAULT_TOKEN",
             "JWT_PRIVATE_KEY",
