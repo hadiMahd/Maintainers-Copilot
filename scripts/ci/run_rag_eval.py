@@ -17,6 +17,8 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from pydantic import SecretStr
+
 
 def evaluate_rag(golden_path: str) -> dict[str, Any]:
     """Run RAG evaluation using the project's RAGEvaluationService with fake providers."""
@@ -27,7 +29,7 @@ def evaluate_rag(golden_path: str) -> dict[str, Any]:
 
     settings = AppSettings(  # type: ignore[call-arg]
         vault_addr=os.environ.get("VAULT_ADDR", "http://localhost:8200"),
-        vault_token=os.environ.get("VAULT_TOKEN", "ci-eval-token"),
+        vault_token=SecretStr(os.environ.get("VAULT_TOKEN", "ci-eval-token")),
     )
     judge = resolve_judge()
     gen = FakeGenerationClient()
