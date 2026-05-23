@@ -55,6 +55,11 @@ class TestStackSmokeHealth:
         content = Path("scripts/ci/smoke_stack.sh").read_text()
         assert "health" in content.lower()
 
+    def test_smoke_script_uses_mounted_liveness_path(self):
+        content = Path("scripts/ci/smoke_stack.sh").read_text()
+        assert "http://localhost:8000/health/live" in content
+        assert "http://localhost:8000/health " not in content
+
 
 class TestValidateStackHealth:
     """Test the validate_stack_health.py script."""
@@ -104,3 +109,7 @@ class TestSmokeNoCredentials:
         content = Path("scripts/ci/validate_stack_health.py").read_text()
         assert "AZURE_OPENAI_KEY" not in content
         assert "OPENAI_API_KEY" not in content
+
+    def test_health_validator_uses_mounted_liveness_path(self):
+        content = Path("scripts/ci/validate_stack_health.py").read_text()
+        assert "http://localhost:8000/health/live" in content

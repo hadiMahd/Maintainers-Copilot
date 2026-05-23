@@ -8,6 +8,7 @@ import pytest
 from fastapi import FastAPI
 
 from app.api.error_handlers import register_error_handlers
+from app.api.routes.widget_loader import loader_alias_router
 from app.api.routes.widget_loader import router as widget_loader_router
 from app.api.routes.widget_public import router as widget_public_router
 
@@ -89,6 +90,32 @@ async def test_frame_csp_includes_allowed_origins():
             csp = resp.headers.get("Content-Security-Policy", "")
             assert "https://example.com" in csp
             assert "https://other.com" in csp
+
+
+@pytest.mark.asyncio
+async def test_frame_available_from_alias_router():
+    """The frame path is available even if the loader alias router is included alone."""
+    app = FastAPI()
+    app.include_router(loader_alias_router)
+    register_error_handlers(app)
+
+    async def _mock_get_by_widget_id(widget_id, request_id=None):
+        return _make_config_dict(widget_id=widget_id)
+
+    with patch("app.api.routes.widget_loader._get_widget_config_service") as mock_get_svc:
+        mock_svc = MagicMock()
+        mock_svc.get_by_widget_id = AsyncMock(side_effect=_mock_get_by_widget_id)
+        mock_get_svc.return_value = mock_svc
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as ac:
+            resp = await ac.get(
+                "/widget/frame/wid-1",
+                headers={"Origin": "https://example.com"},
+            )
+            assert resp.status_code == 200
+            assert "frame-ancestors" in resp.headers.get("Content-Security-Policy", "")
 
 
 @pytest.mark.asyncio

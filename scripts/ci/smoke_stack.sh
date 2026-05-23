@@ -21,7 +21,7 @@ echo "Step 3: Waiting for backend health..."
 MAX_WAIT=60
 WAITED=0
 while [ $WAITED -lt $MAX_WAIT ]; do
-    if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -sf http://localhost:8000/health/live > /dev/null 2>&1; then
         echo "Backend health endpoint reached after ${WAITED}s"
         break
     fi

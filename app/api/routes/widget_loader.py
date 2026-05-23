@@ -55,6 +55,7 @@ async def serve_loader_alias(request: Request) -> Response:
 
 
 @router.get("/frame/{widget_id}")
+@loader_alias_router.get("/widget/frame/{widget_id}")
 async def serve_widget_frame(widget_id: str, request: Request) -> HTMLResponse:
     """Serve the widget iframe shell with CSP frame-ancestors header."""
     request_id = getattr(request.state, "request_id", None)

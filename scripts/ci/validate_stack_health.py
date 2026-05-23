@@ -38,7 +38,7 @@ def collect_safe_logs(service: str) -> str:
 
 
 if __name__ == "__main__":
-    ok = check_health("http://localhost:8000/health")
+    ok = check_health("http://localhost:8000/health/live")
     if not ok:
         print("Backend health check failed")
         print(collect_safe_logs("backend"))
